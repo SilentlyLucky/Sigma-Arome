@@ -1,1190 +1,1496 @@
-# PRD: Sigma Arome Smart Operations & IoT QC Platform
+# Product Requirements Document (PRD)
 
-**Version:** 2.0
-**Format:** Kiro-ready PRD
-**Architecture Style:** Microservices-oriented modular monorepo for MVP
-**Target:** Hackathon / competition prototype using the provided `test-starter.zip` Kiro template
-**Product:** Website-based smart operations platform for natural extract manufacturing
-**Source Direction:** Based on your Sigma Arome smart operations, IoT QC, warehouse, production, dashboard, RBAC, and traceability prompt. 
+# Sigma Arome Smart Operations Website
+
+## Scope: Raw Material Warehouse Receiving → Finished Product Warehouse Putaway
 
 ---
 
-# 1. Executive Summary
+## 1. Document Control
 
-Sigma Arome needs a web-based smart operations system that improves visibility and control across raw material receiving, QC, warehouse storage, cold-chain monitoring, production, finished goods release, shipping, and auditability.
-
-The product should not be positioned as a fully automated factory. It should be positioned as a **Smart Operations Control Tower** where IoT and computer vision support human decisions.
-
-The MVP will be built as a **modular monorepo** using the Kiro starter template, but the PRD will define service boundaries in a microservices-friendly way. This allows the team to build quickly for the hackathon while still presenting a scalable architecture.
-
-The system will support role-specific dashboards and role-specific UI views. PPIC, Warehouse, QC, Manager, Production, Maintenance, Auditor, and Admin may read some of the same underlying records, but they should not see the same screens, columns, filters, or action buttons.
-
----
-
-# 2. Product Vision
-
-Create a practical, auditable smart operations website that gives Sigma Arome one source of truth for:
-
-* Raw material receiving.
-* Batch ID generation.
-* QC sampling and inspection.
-* Computer vision-assisted QC review.
-* QC approval, rejection, or hold.
-* Smart warehouse storage assignment.
-* Cold-chain and warehouse IoT monitoring.
-* Alert handling.
-* Production scheduling.
-* Raw material issuance.
-* Production execution.
-* Finished goods QC.
-* Shipping readiness and dispatch.
-* Role-based dashboards.
-* Audit trail and traceability.
-
-The product should feel realistic for a natural extract manufacturer serving F&B, cosmetics, and wellness customers.
+| Item                     | Details                                                                                                                       |
+| ------------------------ | ----------------------------------------------------------------------------------------------------------------------------- |
+| Product Name             | Sigma Arome Smart Operations Website                                                                                           |
+| Product Type             | Web-based manufacturing operations system with QC, warehouse, production, IoT monitoring, and batch traceability              |                                                                               |
+| Scope Boundary           | Starts when raw material arrives at warehouse and ends when approved finished product is placed into finished goods warehouse |
+| Excluded for Current MVP | Demand forecasting, purchase planning, sales, customer order management, shipping, invoicing, external ERP integration        |
+| Future Scope             | Forecasting, purchasing, supplier management expansion, sales order, dispatch, delivery, invoicing, ERP integration           |
+| Target Build Style       | Role-by-role implementation with role-specific UI, data visibility, and action permissions                                    |
 
 ---
 
-# 3. Problem Statement
+## 2. Executive Summary
 
-Sigma Arome currently faces operational risks caused by fragmented systems, spreadsheet-based storage tracking, manual QC bottlenecks, cold-chain monitoring gaps, manual batch movement logging, and unclear production visibility.
+Sigma Arome needs a practical smart operations website to control and monitor the internal factory flow from raw material arrival until finished product storage.
 
-The current process creates these problems:
+This PRD scopes the MVP to the internal production chain only:
 
-| Problem                              | Business Impact                                                    |
-| ------------------------------------ | ------------------------------------------------------------------ |
-| Manual QC and fragmented logs        | Slow release, inconsistent inspection records                      |
-| Spreadsheet-based warehouse tracking | Location errors, poor FEFO control, hazard conflict risk           |
-| Cold-chain issues detected late      | Product quality and compliance risk                                |
-| Poor batch traceability              | Hard to trace raw material to finished goods and customer shipment |
-| No shared operational dashboard      | Managers cannot quickly see bottlenecks                            |
-| Manual movement logging              | Missing or inaccurate batch history                                |
-| No strong role separation            | Fraud, mistake, and compliance risk                                |
-| No structured audit log              | Hard to prove who made critical decisions                          |
+```text
+Raw Material Arrival
+→ Batch ID Creation
+→ QC Sampling
+→ Computer Vision-Assisted QC Review
+→ QC Decision
+→ Smart Storage Assignment
+→ Raw Material Putaway
+→ IoT Warehouse Monitoring
+→ Alert Handling
+→ Material Issue to Production
+→ Production Execution
+→ Finished Product Batch Creation
+→ Finished Product QC
+→ Finished Product Warehouse Putaway
+→ Dashboard, Traceability, and Audit Log
+```
 
----
+The product should not include sales, external customer shipment, demand forecasting, or supplier purchasing in the current version. Those can be future modules.
 
-# 4. Goals and Non-Goals
-
-## 4.1 Product Goals
-
-| Goal                       | Description                                                                                      | Success Indicator                                                   |
-| -------------------------- | ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------- |
-| Centralize operations      | Create one website for PPIC, Warehouse, QC, Production, Maintenance, Manager, Auditor, and Admin | Users can complete the end-to-end batch flow in one platform        |
-| Improve batch traceability | Track raw material batch from arrival to finished goods and shipping                             | Batch detail page shows full movement and genealogy                 |
-| Improve QC visibility      | Show QC queue, CV result, QC decision, and status history                                        | QC Staff can approve, reject, or hold with required notes           |
-| Improve warehouse control  | Recommend storage based on hazard, cold-chain, FEFO, and capacity                                | System generates storage recommendation before putaway              |
-| Monitor cold-chain risk    | Simulate or ingest IoT sensor readings                                                           | Alerts trigger when temperature exceeds range                       |
-| Support role-specific UI   | Show each role only the data and actions relevant to their work                                  | PPIC, Warehouse, QC, and Manager dashboards are different           |
-| Enforce release controls   | Prevent production or shipping from using unreleased batches                                     | System blocks invalid material issue or dispatch                    |
-| Enable auditability        | Log critical actions and decisions                                                               | Audit log records who, what, when, old value, new value, and reason |
-
-## 4.2 Non-Goals for MVP
-
-| Non-Goal                            | Reason                                               |
-| ----------------------------------- | ---------------------------------------------------- |
-| Full ERP replacement                | Too broad for hackathon                              |
-| Full MES replacement                | MVP only needs basic production tracking             |
-| Full LIMS implementation            | QC parameter entry is enough for prototype           |
-| Real hardware dependency            | Sensor data should be simulated for demo reliability |
-| Fully trained computer vision model | Controlled mock results are acceptable for MVP       |
-| Accounting and costing              | Not required for the operations demo                 |
-| Complex ML forecasting              | CSV/mock forecast is enough                          |
+The system must be implemented role by role. Each role should have a different UI, different dashboard, different table columns, different action buttons, and different data scope, even when several roles read from the same database.
 
 ---
 
-# 5. Target Users and Personas
+## 3. Problem Statement
 
-## 5.1 Admin
+Sigma Arome's factory operations need stronger control over raw material quality, warehouse storage, cold-chain risks, production visibility, and finished product release.
 
-**Objective:** Configure the system.
+Current operational pain points include:
 
-**Needs:**
+* Raw material receiving is manually recorded.
+* Batch IDs and movement records may be fragmented.
+* QC queues and decisions are not visible in real time.
+* Warehouse storage decisions depend on manual judgment or spreadsheets.
+* Cold-chain and storage-condition risks may be detected late.
+* Material movement from warehouse to production is difficult to trace.
+* Production progress and raw material consumption are not connected clearly to finished product batches.
+* Finished product release and storage are not always connected to batch genealogy.
+* Managers lack a single dashboard showing batch status, QC bottlenecks, warehouse alerts, and production progress.
 
-* Manage users.
-* Manage roles and permissions.
-* Manage master data.
-* Manage hazard rules.
-* Manage storage policies.
+---
+
+## 4. Product Vision
+
+Create a role-based smart operations website that gives Sigma Arome one source of truth for internal batch movement, QC release, storage status, IoT alerts, production execution, finished product release, and traceability.
+
+The product should be realistic for manufacturing operations:
+
+* QC Staff makes the final QC decision.
+* Computer vision supports inspection but does not automatically approve material.
+* IoT readings support monitoring but require human handling for alerts.
+* Warehouse movement is confirmed using batch and location records.
+* Every critical decision is auditable.
+
+---
+
+## 5. Product Goals
+
+| Goal                             | Description                                                                                | Success Indicator                                                   |
+| -------------------------------- | ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------- |
+| Control raw material receiving   | Record incoming raw material and create internal batch identity                            | Every received lot has a unique batch ID                            |
+| Improve QC visibility            | Show QC queue, sampling, CV result, and decision status                                    | QC Staff can process pending batches from one screen                |
+| Support QC with computer vision  | Use image-based inspection support for visible defects, label issues, and packaging damage | QC page shows defect score and recommendation                       |
+| Improve warehouse storage        | Recommend storage locations based on status, temperature, hazard, capacity, and FEFO       | Approved batches receive storage recommendation                     |
+| Monitor storage condition        | Display simulated or real temperature/humidity readings                                    | Alerts appear when readings exceed limits                           |
+| Trace material to production     | Link raw material batches to production orders and finished product batches                | Batch detail page shows genealogy                                   |
+| Control finished product release | Require FG QC before finished product can become available in warehouse                    | Only approved finished product can be put into FG available storage |
+| Enforce role-specific work       | Each role sees only relevant data and actions                                              | UI differs by role, not only by page access                         |
+| Maintain audit trail             | Log all critical changes and approvals                                                     | Audit log shows who, what, when, and why                            |
+
+---
+
+## 6. Scope
+
+## 6.1 In Scope for Current MVP
+
+| Module                             | Included? | Description                                                                         |
+| ---------------------------------- | --------: | ----------------------------------------------------------------------------------- |
+| Role-based login                   |       Yes | Users log in and are redirected to role-specific dashboard                          |
+| Raw material receiving             |       Yes | Warehouse records raw material arrival                                              |
+| Batch ID generation                |       Yes | System generates internal batch ID                                                  |
+| Raw material QC queue              |       Yes | QC sees batches pending inspection                                                  |
+| QC sampling                        |       Yes | QC records sample details                                                           |
+| Computer vision-assisted review    |       Yes | Simulated or simple image result shown to QC                                        |
+| QC decision                        |       Yes | QC approves, rejects, or holds raw material                                         |
+| Quarantine handling                |       Yes | Hold/rejected lots stay in quarantine status/location                               |
+| Smart storage assignment           |       Yes | System recommends storage location for approved batches                             |
+| Warehouse map                      |       Yes | Shows raw material and finished goods zones                                         |
+| Raw material putaway               |       Yes | Warehouse confirms physical storage                                                 |
+| IoT monitoring                     |       Yes | Simulated or real sensor readings for storage areas                                 |
+| Alert center                       |       Yes | Alerts for temperature anomaly, near expiry, hazard conflict, sensor issue, QC hold |
+| Material issue to production       |       Yes | Warehouse issues approved raw material to production                                |
+| Production execution               |       Yes | Production logs process stage, consumption, yield, and output                       |
+| Finished product batch             |       Yes | System creates finished product batch from production order                         |
+| Finished product QC                |       Yes | QC releases, rejects, or holds finished product                                     |
+| Finished product warehouse putaway |       Yes | Warehouse stores approved finished product                                          |
+| Manager dashboard                  |       Yes | Shows internal factory KPIs only                                                    |
+| Batch traceability                 |       Yes | Raw material batch → production → finished product batch                            |
+| Audit log                          |       Yes | Tracks critical actions                                                             |
+| Admin settings                     |       Yes | Users, roles, master data, storage rules, hazard rules                              |
+
+## 6.2 Out of Scope for Current MVP
+
+| Excluded Module              | Reason                                        | Future Phase              |
+| ---------------------------- | --------------------------------------------- | ------------------------- |
+| Demand forecasting           | Happens before raw material warehouse arrival | Future planning module    |
+| Purchase order creation      | Outside current scope boundary                | Future procurement module |
+| Supplier scoring             | Useful but not needed for internal flow MVP   | Future quality analytics  |
+| Sales order                  | Happens after finished product warehouse      | Future sales module       |
+| Shipping / dispatch          | After final product is placed into warehouse  | Future logistics module   |
+| Customer delivery            | Outside current internal operations scope     | Future logistics module   |
+| Invoice / payment            | Not relevant to warehouse-to-production MVP   | Future ERP integration    |
+| Full ERP integration         | Too large for hackathon MVP                   | Future integration phase  |
+| Real IoT hardware dependency | MVP should work without hardware              | Future real deployment    |
+| Fully trained CV model       | Requires dataset and validation               | Future AI model phase     |
+
+---
+
+## 7. Users and Role-Specific Purpose
+
+## 7.1 Admin
+
+**Purpose:** Configure the system, users, roles, master data, hazard rules, storage rules, and audit visibility.
+
+**Primary UI:** Admin Control Center.
+
+**Primary Data:** Users, roles, permissions, materials, products, warehouse zones, sensors, storage rules, hazard rules, audit logs.
+
+**Should Not Be Default Actor For:** QC approval, raw material putaway, production execution, finished product QC.
+
+## 7.2 Manager / Plant Head
+
+**Purpose:** Monitor factory health, bottlenecks, alerts, QC status, production progress, and traceability.
+
+**Primary UI:** Executive Operations Dashboard.
+
+**Primary Data:** Summarized KPIs, exception records, batch status, production status, QC bottlenecks, alert severity, audit summaries.
+
+**Main Actions:** Review, approve major exceptions, view traceability, monitor performance.
+
+## 7.3 Warehouse Operator
+
+**Purpose:** Receive raw material, confirm storage, issue material to production, and put away finished product.
+
+**Primary UI:** Warehouse Task Dashboard.
+
+**Primary Data:** Receiving tasks, batch labels, storage assignments, exact locations, warehouse map, movement tasks, warehouse alerts.
+
+**Main Actions:** Receive, create batch, confirm putaway, move batch, issue material, store finished product, acknowledge warehouse alerts.
+
+## 7.4 QC Staff
+
+**Purpose:** Inspect raw materials and finished products, review CV result, and make QC decisions.
+
+**Primary UI:** QC Workbench.
+
+**Primary Data:** QC queue, samples, COA summary if available, CV results, QC parameters, defect records, hold/reject reasons.
+
+**Main Actions:** Create sample, enter QC result, review CV result, approve, reject, hold.
+
+## 7.5 Production Staff
+
+**Purpose:** Execute production using approved raw material and create finished product output.
+
+**Primary UI:** Production Execution Board.
+
+**Primary Data:** Production orders, material readiness, issued batches, process stages, consumption, yield, output batch.
+
+**Main Actions:** Start production, record stage, consume material, record yield, complete production.
+
+## 7.6 Maintenance / IoT Technician
+
+**Purpose:** Monitor sensor health and resolve sensor or storage-condition technical issues.
+
+**Primary UI:** IoT Maintenance Dashboard.
+
+**Primary Data:** Sensors, readings, calibration status, sensor alerts, anomaly history.
+
+**Main Actions:** Acknowledge sensor alert, mark sensor checked, enter calibration/maintenance notes.
+
+## 7.7 Auditor / Viewer
+
+**Purpose:** Review records, traceability, and audit logs without changing operations.
+
+**Primary UI:** Read-Only Audit & Traceability View.
+
+**Primary Data:** Batch history, QC decisions, movement logs, production records, audit logs.
+
+**Main Actions:** Search, filter, view, export if allowed.
+
+---
+
+## 8. Role-Based UI and Data Visibility Requirements
+
+## 8.1 Principle
+
+Access control is not enough. The system must also control what each role sees on screen.
+
+Two roles may both have read access to the same database entity, but they should not see the same columns, filters, dashboard cards, or actions.
+
+Example:
+
+* PPIC is future scope for this MVP, so PPIC screens are not implemented now.
+* Warehouse sees exact bin, rack, scan status, and movement action.
+* QC sees sample result, CV score, QC parameter values, and decision buttons.
+* Manager sees summarized operational status and exceptions.
+* Auditor sees read-only history and audit trail.
+
+## 8.2 Role-Based UI Rules
+
+| Requirement ID | Requirement                                                                                                                              |
+| -------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| RBUI-001       | The system shall render dashboard widgets based on user role.                                                                            |
+| RBUI-002       | The system shall apply role-specific table columns for shared data such as batches, inventory, QC status, alerts, and production orders. |
+| RBUI-003       | The system shall filter records by operational relevance, not only permission level.                                                     |
+| RBUI-004       | The system shall hide action buttons that the current role is not allowed to use.                                                        |
+| RBUI-005       | The system shall show exact warehouse location only to Warehouse, Manager, Admin, and Auditor roles.                                     |
+| RBUI-006       | The system shall show detailed QC parameter values only to QC, Manager, Admin, and Auditor roles.                                        |
+| RBUI-007       | The system shall show production execution action buttons only to Production Staff.                                                      |
+| RBUI-008       | The system shall show sensor maintenance actions only to Maintenance / IoT Technician.                                                   |
+| RBUI-009       | The system shall show approval actions only to authorized roles.                                                                         |
+| RBUI-010       | The system shall show all operational records to Auditor in read-only mode.                                                              |
+
+## 8.3 Role-Specific Batch List Views
+
+| Field / Action             | Admin | Manager                | Warehouse    | QC                | Production               | Maintenance                     | Auditor |
+| -------------------------- | ----- | ---------------------- | ------------ | ----------------- | ------------------------ | ------------------------------- | ------- |
+| Batch ID                   | Show  | Show                   | Show         | Show              | Show                     | Show if sensor/location related | Show    |
+| Material Name              | Show  | Show                   | Show         | Show              | Show                     | Show if relevant                | Show    |
+| Supplier Lot               | Show  | Show                   | Show         | Show              | Hide by default          | Hide                            | Show    |
+| QC Status                  | Show  | Show                   | Summary only | Detailed          | Summary only             | Hide unless alert related       | Show    |
+| QC Parameter Values        | Show  | Show                   | Hide         | Show              | Hide                     | Hide                            | Show    |
+| CV Result                  | Show  | Summary                | Hide         | Show              | Hide                     | Hide                            | Show    |
+| Exact Location             | Show  | Show                   | Show         | Read-only summary | Pick/issue location only | Sensor zone only                | Show    |
+| Quantity                   | Show  | Show                   | Show         | Show              | Issued/required qty only | Hide                            | Show    |
+| Expiry Date                | Show  | Show                   | Show         | Show              | Show if issued           | Hide                            | Show    |
+| Production Link            | Show  | Show                   | Read-only    | Read-only         | Show                     | Hide                            | Show    |
+| Receive Button             | Hide  | Hide                   | Show         | Hide              | Hide                     | Hide                            | Hide    |
+| QC Decision Button         | Hide  | Manager exception only | Hide         | Show              | Hide                     | Hide                            | Hide    |
+| Putaway Button             | Hide  | Hide                   | Show         | Hide              | Hide                     | Hide                            | Hide    |
+| Issue to Production Button | Hide  | Hide                   | Show         | Hide              | Confirm receipt only     | Hide                            | Hide    |
+| Production Action Button   | Hide  | Hide                   | Hide         | Hide              | Show                     | Hide                            | Hide    |
+| Sensor Action Button       | Hide  | Hide                   | Hide         | Hide              | Hide                     | Show                            | Hide    |
+
+---
+
+## 9. End-to-End Process Flow
+
+## 9.1 Raw Material Receiving
+
+1. Warehouse Operator logs in.
+2. Operator opens Raw Material Receiving page.
+3. Operator records incoming material:
+
+   * material name
+   * supplier name or supplier lot, if available
+   * received quantity
+   * unit
+   * expiry date or manufacturing date
+   * packaging condition
+   * delivery note reference, if available
+4. System generates receipt number.
+5. System generates internal batch ID.
+6. Batch status becomes `QC Pending`.
+7. Batch location becomes `Receiving / Quarantine`.
+8. Audit log records receipt and batch creation.
+
+## 9.2 Raw Material QC
+
+1. QC Staff logs in.
+2. QC dashboard shows QC Pending batches.
+3. QC Staff opens QC inspection detail.
+4. QC Staff creates sample record.
+5. QC Staff uploads/selects inspection image.
+6. System displays computer vision-assisted result:
+
+   * defect type
+   * confidence score
+   * recommendation
+7. QC Staff records manual QC parameters.
+8. QC Staff decides:
+
+   * Approve
+   * Hold
+   * Reject
+9. System updates batch status.
+10. Audit log records decision and reason.
+
+## 9.3 Smart Storage Assignment
+
+1. Approved raw material triggers storage assignment.
+2. System checks:
+
+   * material storage temperature
+   * hazard class
+   * available capacity
+   * quarantine/approved status
+   * FEFO priority
+3. System recommends warehouse location.
+4. Warehouse Operator confirms location.
+5. Batch status becomes `Stored - Available`.
+6. Audit log records putaway.
+
+## 9.4 IoT Monitoring and Alert Handling
+
+1. System receives or simulates sensor readings.
+2. System compares readings against storage thresholds.
+3. If reading is out of range, system creates alert.
+4. Alert appears on Warehouse, Maintenance, and Manager dashboards.
+5. Assigned user acknowledges alert.
+6. User enters corrective action.
+7. Alert status becomes Resolved.
+8. Audit log records alert lifecycle.
+
+## 9.5 Material Issue to Production
+
+1. Production Staff sees available production task.
+2. Warehouse receives material issue task.
+3. Warehouse selects approved raw material batch.
+4. System validates:
+
+   * batch status is Available
+   * batch is not expired
+   * batch is not on hold
+   * quantity is sufficient
+5. Warehouse issues material to production.
+6. Production confirms material received.
+7. Inventory quantity decreases.
+8. Audit log records issue transaction.
+
+## 9.6 Production Execution
+
+1. Production Staff starts production order.
+2. System links production order to issued raw material batches.
+3. Production Staff records production stage updates.
+4. Production Staff records material consumption.
+5. Production Staff records output quantity and yield.
+6. System creates finished product batch.
+7. Finished product status becomes `FG QC Pending`.
+8. Audit log records production completion.
+
+## 9.7 Finished Product QC
+
+1. QC Staff sees finished product QC queue.
+2. QC Staff opens finished product batch.
+3. QC Staff records finished product QC parameters.
+4. QC Staff decides:
+
+   * Approved
+   * Hold
+   * Rejected
+5. Approved finished product becomes eligible for FG warehouse putaway.
+6. Hold/rejected finished product remains in quarantine or blocked status.
+7. Audit log records decision.
+
+## 9.8 Finished Product Warehouse Putaway
+
+1. Warehouse sees approved finished product putaway task.
+2. System recommends finished goods warehouse location.
+3. Warehouse confirms putaway.
+4. Finished product batch status becomes `Stored - Finished Goods Available`.
+5. Current MVP ends here.
+
+---
+
+## 10. Functional Requirements
+
+## 10.1 Authentication and Role Routing
+
+| ID       | Requirement                                           | Priority  |
+| -------- | ----------------------------------------------------- | --------- |
+| AUTH-001 | Users must log in using account credentials.          | Must Have |
+| AUTH-002 | System must identify user role after login.           | Must Have |
+| AUTH-003 | System must redirect user to role-specific dashboard. | Must Have |
+| AUTH-004 | User must not access pages outside role permission.   | Must Have |
+| AUTH-005 | Unauthorized action buttons must not be visible.      | Must Have |
+
+## 10.2 Raw Material Receiving
+
+| ID         | Requirement                                                                  | Priority     |
+| ---------- | ---------------------------------------------------------------------------- | ------------ |
+| RM-REC-001 | Warehouse Operator must create raw material receiving record.                | Must Have    |
+| RM-REC-002 | System must generate receipt number.                                         | Must Have    |
+| RM-REC-003 | System must generate unique internal batch ID.                               | Must Have    |
+| RM-REC-004 | Newly received raw material must default to QC Pending.                      | Must Have    |
+| RM-REC-005 | Newly received raw material must default to Receiving / Quarantine location. | Must Have    |
+| RM-REC-006 | System must support packaging condition notes.                               | Must Have    |
+| RM-REC-007 | System should support delivery note or COA attachment.                       | Nice to Have |
+
+## 10.3 Batch Management
+
+| ID        | Requirement                                                                                   | Priority  |
+| --------- | --------------------------------------------------------------------------------------------- | --------- |
+| BATCH-001 | Each batch must have unique internal batch ID.                                                | Must Have |
+| BATCH-002 | Batch must track material, quantity, unit, status, location, expiry date, and source receipt. | Must Have |
+| BATCH-003 | Batch detail must show movement history.                                                      | Must Have |
+| BATCH-004 | Batch detail must show QC history.                                                            | Must Have |
+| BATCH-005 | Batch detail must show production genealogy if used in production.                            | Must Have |
+| BATCH-006 | Batch status changes must follow controlled workflow.                                         | Must Have |
+
+## 10.4 Raw Material QC
+
+| ID        | Requirement                                                | Priority  |
+| --------- | ---------------------------------------------------------- | --------- |
+| RM-QC-001 | QC Staff must see QC Pending raw material queue.           | Must Have |
+| RM-QC-002 | QC Staff must create sample record.                        | Must Have |
+| RM-QC-003 | QC Staff must enter manual QC parameter results.           | Must Have |
+| RM-QC-004 | QC Staff must review CV result when image is available.    | Must Have |
+| RM-QC-005 | QC Staff must approve, reject, or hold raw material batch. | Must Have |
+| RM-QC-006 | Hold and reject decisions must require reason code.        | Must Have |
+| RM-QC-007 | System must block non-QC role from making QC decision.     | Must Have |
+
+## 10.5 Computer Vision-Assisted QC
+
+| ID     | Requirement                                                                 | Priority  |
+| ------ | --------------------------------------------------------------------------- | --------- |
+| CV-001 | QC Staff must be able to upload or select sample image.                     | Must Have |
+| CV-002 | System must display CV defect result, confidence score, and recommendation. | Must Have |
+| CV-003 | CV result must be marked as decision support only.                          | Must Have |
+| CV-004 | CV result must be stored with inspection record.                            | Must Have |
+| CV-005 | MVP may simulate CV result using mock data.                                 | Must Have |
+
+## 10.6 Storage Assignment
+
+| ID       | Requirement                                               | Priority     |
+| -------- | --------------------------------------------------------- | ------------ |
+| STOR-001 | System must recommend location only for approved batches. | Must Have    |
+| STOR-002 | Recommendation must consider storage temperature.         | Must Have    |
+| STOR-003 | Recommendation must consider hazard compatibility.        | Must Have    |
+| STOR-004 | Recommendation must consider location capacity.           | Must Have    |
+| STOR-005 | Recommendation should consider FEFO.                      | Nice to Have |
+| STOR-006 | Warehouse Operator must confirm putaway.                  | Must Have    |
+| STOR-007 | Putaway must update inventory location.                   | Must Have    |
+
+## 10.7 Warehouse Map
+
+| ID         | Requirement                                                                                                                         | Priority  |
+| ---------- | ----------------------------------------------------------------------------------------------------------------------------------- | --------- |
+| WH-MAP-001 | Warehouse map must show receiving/quarantine, raw material storage, cold storage, production staging, and finished goods warehouse. | Must Have |
+| WH-MAP-002 | Warehouse map must show slot status: empty, occupied, reserved, blocked, alert.                                                     | Must Have |
+| WH-MAP-003 | User must click location to see batches stored there.                                                                               | Must Have |
+| WH-MAP-004 | Warehouse role must see exact rack/bin/slot.                                                                                        | Must Have |
+| WH-MAP-005 | Manager and Auditor must see exact location in read-only mode.                                                                      | Must Have |
+
+## 10.8 IoT Monitoring
+
+| ID      | Requirement                                                    | Priority     |
+| ------- | -------------------------------------------------------------- | ------------ |
+| IOT-001 | System must display temperature and humidity readings by zone. | Must Have    |
+| IOT-002 | MVP may use simulated sensor data.                             | Must Have    |
+| IOT-003 | System must compare readings against allowed thresholds.       | Must Have    |
+| IOT-004 | System must create alert for out-of-range readings.            | Must Have    |
+| IOT-005 | Maintenance must see sensor health and calibration status.     | Nice to Have |
+
+## 10.9 Alert Management
+
+| ID        | Requirement                                             | Priority  |
+| --------- | ------------------------------------------------------- | --------- |
+| ALERT-001 | System must create alerts for temperature anomaly.      | Must Have |
+| ALERT-002 | System must create alerts for near-expiry raw material. | Must Have |
+| ALERT-003 | System must create alerts for hazard conflict.          | Must Have |
+| ALERT-004 | System must create alerts for QC hold.                  | Must Have |
+| ALERT-005 | Assigned users must acknowledge alerts.                 | Must Have |
+| ALERT-006 | Assigned users must resolve alerts with action notes.   | Must Have |
+| ALERT-007 | Manager must see all critical open alerts.              | Must Have |
+
+## 10.10 Material Issue to Production
+
+| ID        | Requirement                                                            | Priority  |
+| --------- | ---------------------------------------------------------------------- | --------- |
+| ISSUE-001 | Warehouse must issue only approved and available raw material batches. | Must Have |
+| ISSUE-002 | System must block held, rejected, expired, or insufficient batches.    | Must Have |
+| ISSUE-003 | Production Staff must confirm received material.                       | Must Have |
+| ISSUE-004 | Inventory quantity must decrease after issue.                          | Must Have |
+| ISSUE-005 | Issue transaction must link raw material batch to production order.    | Must Have |
+
+## 10.11 Production Execution
+
+| ID       | Requirement                                                            | Priority  |
+| -------- | ---------------------------------------------------------------------- | --------- |
+| PROD-001 | Production Staff must see assigned production orders.                  | Must Have |
+| PROD-002 | Production Staff must start production order.                          | Must Have |
+| PROD-003 | Production Staff must record stage updates.                            | Must Have |
+| PROD-004 | Production Staff must record actual material consumption.              | Must Have |
+| PROD-005 | Production Staff must record output quantity and yield.                | Must Have |
+| PROD-006 | System must create finished product batch after production completion. | Must Have |
+| PROD-007 | Finished product batch must link to consumed raw material batches.     | Must Have |
+
+## 10.12 Finished Product QC
+
+| ID        | Requirement                                                             | Priority  |
+| --------- | ----------------------------------------------------------------------- | --------- |
+| FG-QC-001 | QC Staff must see finished product QC queue.                            | Must Have |
+| FG-QC-002 | QC Staff must enter finished product QC result.                         | Must Have |
+| FG-QC-003 | QC Staff must approve, reject, or hold finished product batch.          | Must Have |
+| FG-QC-004 | Hold and reject must require reason code.                               | Must Have |
+| FG-QC-005 | Only approved finished product can be stored as available FG inventory. | Must Have |
+
+## 10.13 Finished Product Warehouse Putaway
+
+| ID        | Requirement                                                              | Priority  |
+| --------- | ------------------------------------------------------------------------ | --------- |
+| FG-WH-001 | Warehouse must see approved FG putaway tasks.                            | Must Have |
+| FG-WH-002 | System must recommend finished goods warehouse location.                 | Must Have |
+| FG-WH-003 | Warehouse must confirm FG putaway.                                       | Must Have |
+| FG-WH-004 | System must update FG batch status to Stored - Finished Goods Available. | Must Have |
+| FG-WH-005 | Current MVP must end after FG putaway.                                   | Must Have |
+
+## 10.14 Audit Log
+
+| ID        | Requirement                                                                                                                                          | Priority  |
+| --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | --------- |
+| AUDIT-001 | System must log receiving, batch creation, QC decision, storage, issue, production completion, FG QC, FG putaway, alert handling, and admin changes. | Must Have |
+| AUDIT-002 | Audit log must include user, role, action, entity, entity ID, timestamp, old value, new value, and reason when applicable.                           | Must Have |
+| AUDIT-003 | Audit log must be read-only for all normal users.                                                                                                    | Must Have |
+| AUDIT-004 | Auditor, Manager, and Admin must view audit logs.                                                                                                    | Must Have |
+
+---
+
+## 11. Business Rules
+
+## 11.1 Raw Material Batch Status Flow
+
+```text
+Received
+→ QC Pending
+→ Under QC
+→ Approved / Hold / Rejected
+→ Storage Assigned
+→ Stored - Available
+→ Issued to Production
+→ Consumed in Production
+```
+
+Rules:
+
+* New raw material batch must start as `QC Pending`.
+* Only QC Staff can approve, hold, or reject.
+* Hold/reject requires reason.
+* Only Approved batch can receive storage assignment.
+* Only Stored - Available batch can be issued to production.
+* Rejected batch cannot be used in production.
+
+## 11.2 Finished Product Batch Status Flow
+
+```text
+Created from Production
+→ FG QC Pending
+→ FG Approved / FG Hold / FG Rejected
+→ FG Storage Assigned
+→ Stored - Finished Goods Available
+```
+
+Rules:
+
+* Finished product batch must be created from production order.
+* Finished product batch must link to consumed raw material batches.
+* Only QC Staff can release finished product.
+* Only FG Approved batch can be put away into available finished goods storage.
+* MVP ends when FG batch is stored in warehouse.
+
+## 11.3 Warehouse Rules
+
+* Warehouse can receive material but cannot approve QC.
+* Warehouse can put away only approved raw material or approved finished goods.
+* Warehouse can issue only approved raw material to production.
+* Exact location changes must be logged.
+* Location override must require reason.
+
+## 11.4 QC Rules
+
+* Computer vision result is recommendation only.
+* QC Staff must make final decision.
+* QC decisions must include timestamp and user.
+* Hold/reject must include reason code.
+* QC result cannot be deleted, only superseded or corrected through controlled update.
+
+## 11.5 Production Rules
+
+* Production cannot consume material that has not been issued.
+* Actual consumption must link to raw material batch ID.
+* Finished product output must create FG batch.
+* Yield variance should be displayed on production and manager dashboards.
+
+## 11.6 IoT and Alert Rules
+
+* Sensor readings outside threshold must create alert.
+* Critical alert must remain open until resolved.
+* Alert resolution requires action note.
+* Sensor failure must not silently mark storage as safe.
+
+---
+
+## 12. RBAC Matrix
+
+Legend: C = Create, R = Read, U = Update, D = Delete, A = Approve, X = No Access.
+
+| Module                   |   Admin |   Manager | Warehouse |        QC |  Production | Maintenance | Auditor |
+| ------------------------ | ------: | --------: | --------: | --------: | ----------: | ----------: | ------: |
+| User Management          | C/R/U/D |         X |         X |         X |           X |           X |       X |
+| Master Data              | C/R/U/D |         R |         R |         R |           R |           R |       R |
+| Raw Material Receiving   |       R |         R |     C/R/U |         R |           X |           X |       R |
+| Batch Master             |       R |         R |     C/R/U |       R/U |           R |   R limited |       R |
+| Raw Material QC          |       R |         R | R summary |   C/R/U/A |           X |           X |       R |
+| CV Review                |       R | R summary |         X |     C/R/U |           X |           X |       R |
+| Storage Assignment       |       R |         R |     C/R/U |         R |           R |           X |       R |
+| Warehouse Map            |       R |         R |     C/R/U | R limited |   R limited | R zone only |       R |
+| IoT Monitoring           |       R |         R |         R |         R |   R limited |       C/R/U |       R |
+| Alert Center             |       R |       R/A |       R/U |     R/U/A | R/U limited |       C/R/U |       R |
+| Material Issue           |       R |         R |     C/R/U |         R | R/U confirm |           X |       R |
+| Production Execution     |       R |         R |         R |         R |       C/R/U |           X |       R |
+| Finished Product QC      |       R |         R |         R |   C/R/U/A |           R |           X |       R |
+| Finished Product Putaway |       R |         R |     C/R/U |         R |           R |           X |       R |
+| Dashboard                |       R |         R |         R |         R |           R |           R |       R |
+| Audit Log                |       R |         R |         X |         X |           X |           X |       R |
+
+---
+
+## 13. Role-by-Role Implementation Plan
+
+## Implementation Principle
+
+Build the web app one role at a time. Each role must be usable independently before adding the next role.
+
+Recommended order:
+
+```text
+1. Admin
+2. Warehouse Operator
+3. QC Staff
+4. Production Staff
+5. Maintenance / IoT Technician
+6. Manager / Plant Head
+7. Auditor / Viewer
+```
+
+This order works because Admin creates setup data, Warehouse starts the real process, QC controls release, Production consumes material, Maintenance handles IoT alerts, Manager views everything, and Auditor validates traceability.
+
+---
+
+## 13.1 Phase 1 — Admin Role
+
+## Goal
+
+Create the system foundation.
+
+## Screens
+
+* Admin Dashboard
+* User Management
+* Role Management
+* Material Master
+* Product Master
+* Warehouse Location Master
+* Hazard Class Rules
+* Storage Rules
+* Sensor Master
+* Audit Log Viewer
+
+## Admin Dashboard Widgets
+
+* Total users
+* Active roles
+* Master data completion
+* Warehouse locations configured
+* Sensors configured
+* Recent admin changes
+
+## Admin Actions
+
+* Create users.
+* Assign roles.
+* Create raw material master.
+* Create product master.
+* Create warehouse locations.
+* Define storage temperature ranges.
+* Define hazard classes.
+* Define sensors.
 * View audit logs.
 
-**Should not be default actor for:**
+## Acceptance Criteria
 
-* QC approval.
-* Warehouse putaway.
-* Production completion.
-* Shipping dispatch.
-
----
-
-## 5.2 Manager / Plant Head
-
-**Objective:** Monitor plant performance and approve exceptions.
-
-**Needs:**
-
-* See cross-functional KPIs.
-* Monitor QC bottlenecks.
-* Monitor rejected and hold batches.
-* Monitor cold-chain risk.
-* Monitor production schedule adherence.
-* View batch traceability.
-* Approve high-risk exceptions.
+* Admin can create all required master data.
+* Admin can create at least one user per role.
+* Admin actions are logged.
+* Non-admin users cannot access Admin pages.
 
 ---
 
-## 5.3 PPIC Staff
+## 13.2 Phase 2 — Warehouse Operator Role
 
-**Objective:** Plan demand, purchasing, production, and shipping.
+## Goal
 
-**Needs:**
+Enable raw material receiving and warehouse movement.
 
-* Create demand forecast.
-* Create purchase order.
-* Check material availability.
-* Create production schedule.
-* Create shipping schedule.
-* See inventory from planning perspective.
+## Screens
 
-**PPIC should not see everything Warehouse sees.**
+* Warehouse Dashboard
+* Raw Material Receiving
+* Batch Label / Batch Detail
+* Storage Assignment
+* Warehouse Map
+* Raw Material Putaway
+* Material Issue to Production
+* Finished Product Putaway
+* Warehouse Alerts
 
-PPIC needs availability, shortage risk, reserved quantity, production readiness, and shipping readiness. PPIC does not need detailed rack/bin operational tasks unless relevant to schedule risk.
+## Warehouse Dashboard Widgets
 
----
+* Raw materials waiting to receive
+* Batches in quarantine / QC Pending
+* Approved batches waiting for putaway
+* Material issue tasks
+* Finished product putaway tasks
+* Warehouse alerts
+* Storage utilization
 
-## 5.4 Warehouse Operator
+## Warehouse-Specific Data View
 
-**Objective:** Execute physical movement of goods.
+Warehouse sees:
 
-**Needs:**
+* Batch ID
+* Material name
+* Physical quantity
+* Unit
+* Status
+* Exact location
+* Storage recommendation
+* Putaway task
+* Issue task
+* Alert status
 
-* Receive raw materials.
+Warehouse does not need to see:
+
+* Detailed QC parameter values
+* Full CV model result details
+* Admin configuration internals
+* Manager-only performance analytics
+
+## Warehouse Actions
+
+* Receive raw material.
 * Generate batch ID.
-* Confirm putaway.
-* View warehouse map.
-* Handle warehouse alerts.
-* Issue raw materials to production.
-* Store finished goods.
-* Dispatch shipments.
+* Print or view batch label.
+* Confirm raw material putaway.
+* Move batch location.
+* Issue raw material to production.
+* Put away approved finished product.
+* Acknowledge and resolve warehouse-related alerts.
 
-**Warehouse should not approve QC.**
+## Acceptance Criteria
 
-Warehouse may read QC status, but cannot edit QC results or release batches.
+* Warehouse can create raw material batch.
+* Newly created batch appears in QC queue.
+* Warehouse cannot approve QC.
+* Warehouse can put away only approved batches.
+* Warehouse can issue only available approved raw material.
+* Warehouse can put away only approved finished product.
 
 ---
 
-## 5.5 QC Staff
+## 13.3 Phase 3 — QC Staff Role
 
-**Objective:** Inspect and release or block materials and finished goods.
+## Goal
 
-**Needs:**
+Enable raw material QC and finished product QC.
 
-* View QC queue.
+## Screens
+
+* QC Dashboard
+* Raw Material QC Queue
+* Raw Material QC Detail
+* Computer Vision Review
+* QC Decision Modal
+* Finished Product QC Queue
+* Finished Product QC Detail
+* QC Hold / Reject List
+
+## QC Dashboard Widgets
+
+* Raw material QC pending
+* Raw material under QC
+* AI/CV flagged inspections
+* Hold batches
+* Rejected batches
+* Finished product QC pending
+* Average QC cycle time
+
+## QC-Specific Data View
+
+QC sees:
+
+* Batch ID
+* Material name
+* Supplier lot if available
+* Sample ID
+* QC parameter values
+* CV result
+* Inspection image
+* Packaging condition
+* COA/document summary if available
+* Hold/reject reason
+* Decision history
+
+QC does not need to see:
+
+* Exact warehouse bin after release except summary location
+* Full user management
+* Sensor maintenance actions
+* Production stage editing buttons
+
+## QC Actions
+
+* Start QC inspection.
 * Create sample record.
-* Upload/review inspection image.
-* Review computer vision result.
-* Enter QC parameters.
-* Approve, reject, or hold batch.
-* Release finished goods.
+* Upload/select inspection image.
+* Review CV result.
+* Enter QC parameter values.
+* Approve raw material.
+* Hold raw material.
+* Reject raw material.
+* Approve finished product.
+* Hold finished product.
+* Reject finished product.
 
-**QC should not edit receiving quantity or warehouse location.**
+## Acceptance Criteria
 
----
-
-## 5.6 Production Staff
-
-**Objective:** Execute production orders.
-
-**Needs:**
-
-* View assigned production orders.
-* Confirm material received from warehouse.
-* Log production stages.
-* Record consumption.
-* Record output and yield.
-* Create finished goods batch.
-
-**Production should not release finished goods QC.**
+* QC can see QC Pending batches.
+* QC can record inspection results.
+* QC can approve/hold/reject raw material.
+* QC decision changes batch status.
+* QC can release finished product.
+* Hold/reject requires reason.
+* QC decisions are logged.
 
 ---
 
-## 5.7 Maintenance / IoT Technician
+## 13.4 Phase 4 — Production Staff Role
 
-**Objective:** Maintain sensor reliability.
+## Goal
 
-**Needs:**
+Enable production execution from approved raw material to finished product batch creation.
 
-* View sensor status.
-* View calibration due dates.
-* Resolve sensor offline alerts.
-* Record maintenance actions.
-* Validate or override faulty sensor readings with reason.
+## Screens
+
+* Production Dashboard
+* Production Order List
+* Production Order Detail
+* Material Received Confirmation
+* Production Stage Log
+* Consumption Entry
+* Yield and Output Entry
+* Finished Product Batch Summary
+
+## Production Dashboard Widgets
+
+* Production orders ready to start
+* Waiting for material issue
+* Orders in progress
+* Completed today
+* Yield variance
+* Finished product batches awaiting QC
+
+## Production-Specific Data View
+
+Production sees:
+
+* Production order ID
+* Product name
+* Required material summary
+* Issued raw material batch ID
+* Issued quantity
+* Process stage
+* Consumption quantity
+* Output quantity
+* Yield
+* FG batch ID
+
+Production does not need to see:
+
+* Detailed supplier information
+* Detailed QC parameter values
+* Warehouse full map controls
+* Admin settings
+* Sensor configuration
+
+## Production Actions
+
+* Confirm material received.
+* Start production.
+* Update production stage.
+* Record material consumption.
+* Record output quantity.
+* Complete production.
+* Generate finished product batch.
+
+## Acceptance Criteria
+
+* Production cannot start without issued material unless manager override exists.
+* Production can record consumption by raw material batch.
+* Completing production creates finished product batch.
+* Finished product batch status becomes FG QC Pending.
+* Production records are visible in batch genealogy.
 
 ---
 
-## 5.8 Auditor / Viewer
+## 13.5 Phase 5 — Maintenance / IoT Technician Role
 
-**Objective:** Review records without editing.
+## Goal
 
-**Needs:**
+Enable monitoring and handling of sensor-related issues.
 
-* Read-only batch traceability.
-* Read-only dashboards.
-* Audit log search.
-* Export reports if allowed.
+## Screens
+
+* IoT Maintenance Dashboard
+* Sensor List
+* Sensor Detail
+* Sensor Reading History
+* Sensor Alert Detail
+* Calibration / Maintenance Notes
+
+## Maintenance Dashboard Widgets
+
+* Active sensors
+* Offline sensors
+* Calibration due
+* Temperature anomalies
+* Humidity anomalies
+* Open sensor alerts
+* Average alert resolution time
+
+## Maintenance-Specific Data View
+
+Maintenance sees:
+
+* Sensor ID
+* Sensor type
+* Sensor location zone
+* Current reading
+* Last reading time
+* Calibration due date
+* Sensor status
+* Alert history
+
+Maintenance does not need to see:
+
+* QC parameter details
+* Production consumption details
+* Admin user management
+* Supplier information
+* Financial or sales data
+
+## Maintenance Actions
+
+* Acknowledge sensor alert.
+* Add maintenance note.
+* Mark sensor checked.
+* Update sensor status.
+* Record calibration action.
+
+## Acceptance Criteria
+
+* Maintenance can see sensor health.
+* Maintenance can resolve sensor-related alerts.
+* Sensor actions are logged.
+* Maintenance cannot change QC or warehouse movement status.
 
 ---
 
-# 6. Architecture Direction
+## 13.6 Phase 6 — Manager / Plant Head Role
 
-## 6.1 Recommended Architecture
+## Goal
 
-The product should use a **microservices-oriented modular monorepo**.
+Provide cross-functional visibility and exception management.
 
-For the hackathon MVP, implement one deployable web application with internal service modules. For the future roadmap, split service modules into independently deployable microservices.
+## Screens
 
-## 6.2 MVP Architecture
+* Manager Dashboard
+* Operations Overview
+* QC Performance
+* Warehouse Overview
+* Production Overview
+* Alert Overview
+* Batch Traceability
+* Exception Approval
+* Audit Summary
+
+## Manager Dashboard Widgets
+
+* Raw material batches by status
+* QC pending count
+* QC pass/hold/reject rate
+* Warehouse utilization
+* Open alerts by severity
+* Production orders by status
+* Finished product batches awaiting QC
+* Finished product stored today
+* Critical exceptions
+
+## Manager-Specific Data View
+
+Manager sees:
+
+* Summary and exception-focused views
+* Batch history
+* QC decision summary
+* Production progress
+* Alert severity
+* Warehouse utilization
+* Audit summaries
+
+Manager does not need default access to:
+
+* Routine data-entry forms
+* Admin user creation actions
+* Sensor calibration editing actions
+* Warehouse scan confirmation buttons
+
+## Manager Actions
+
+* View all operational records.
+* Approve controlled exceptions if enabled.
+* Review alerts.
+* Review audit trail.
+* View traceability.
+
+## Acceptance Criteria
+
+* Manager can see end-to-end status from receiving to FG putaway.
+* Manager can open any batch and see full traceability.
+* Manager can see critical alerts.
+* Manager does not accidentally perform operational tasks by default.
+
+---
+
+## 13.7 Phase 7 — Auditor / Viewer Role
+
+## Goal
+
+Provide read-only traceability and compliance review.
+
+## Screens
+
+* Auditor Dashboard
+* Batch Search
+* Batch Traceability Detail
+* QC Decision History
+* Movement History
+* Production Genealogy
+* Audit Log Search
+
+## Auditor Dashboard Widgets
+
+* Recent batch status changes
+* Recent QC decisions
+* Recent movement logs
+* Recent production completions
+* Recent FG QC releases
+* Audit log completeness
+
+## Auditor-Specific Data View
+
+Auditor sees:
+
+* All relevant records in read-only mode
+* Batch details
+* QC decisions
+* Movement history
+* Production genealogy
+* Alert history
+* Audit logs
+
+Auditor does not see:
+
+* Create/edit/delete buttons
+* Approval buttons
+* Operational task buttons
+* Admin configuration edit buttons
+
+## Auditor Actions
+
+* Search batch.
+* View traceability.
+* View audit log.
+* Filter records.
+* Export report if enabled.
+
+## Acceptance Criteria
+
+* Auditor cannot change operational data.
+* Auditor can trace finished product batch back to raw material batches.
+* Auditor can see who approved, moved, issued, produced, and stored each batch.
+
+---
+
+## 14. Website Screens
+
+| Screen                     | Primary Role                  | Purpose                             | Main Actions                            |
+| -------------------------- | ----------------------------- | ----------------------------------- | --------------------------------------- |
+| Login                      | All                           | Authenticate user                   | Login                                   |
+| Admin Dashboard            | Admin                         | System setup overview               | Navigate to settings                    |
+| User Management            | Admin                         | Manage users                        | Create, update, deactivate              |
+| Master Data                | Admin                         | Manage materials/products/locations | CRUD master records                     |
+| Warehouse Dashboard        | Warehouse                     | Daily warehouse tasks               | Open receiving, putaway, issue tasks    |
+| Raw Material Receiving     | Warehouse                     | Record incoming raw material        | Create receipt and batch                |
+| Batch Detail               | Multiple                      | View batch status and history       | Role-specific actions                   |
+| Storage Assignment         | Warehouse                     | Assign approved batch to location   | Confirm putaway                         |
+| Warehouse Map              | Warehouse/Manager/Auditor     | Visualize storage                   | View/confirm location depending on role |
+| QC Dashboard               | QC                            | QC workload view                    | Open QC tasks                           |
+| Raw Material QC Queue      | QC                            | Pending raw material inspections    | Start inspection                        |
+| Raw Material QC Detail     | QC                            | Record raw material inspection      | Enter result and decide                 |
+| CV Review                  | QC                            | Review AI inspection result         | Accept as support, continue QC          |
+| Finished Product QC Queue  | QC                            | Pending FG inspections              | Start FG QC                             |
+| Finished Product QC Detail | QC                            | Record FG QC decision               | Approve/hold/reject                     |
+| Production Dashboard       | Production                    | Production work overview            | Open production order                   |
+| Production Order Detail    | Production                    | Execute production                  | Start, update, complete                 |
+| Material Issue             | Warehouse/Production          | Transfer material to production     | Issue and confirm receipt               |
+| IoT Monitoring             | Maintenance/Manager/Warehouse | Monitor sensor readings             | View alerts/readings                    |
+| Sensor Detail              | Maintenance                   | Maintain sensor status              | Update status, note calibration         |
+| Alert Center               | Multiple                      | Manage exceptions                   | Acknowledge/resolve based on role       |
+| Manager Dashboard          | Manager                       | Factory control overview            | Review KPIs/exceptions                  |
+| Batch Traceability         | Manager/Auditor               | Trace batch genealogy               | View raw material → FG                  |
+| Audit Log                  | Admin/Manager/Auditor         | Review system actions               | Search/filter/export                    |
+
+---
+
+## 15. Data Model
+
+## 15.1 Core Entities
+
+| Entity                   | Key Fields                                                                                                            | Description                   |
+| ------------------------ | --------------------------------------------------------------------------------------------------------------------- | ----------------------------- |
+| users                    | user_id, name, email, password_hash, role_id, status                                                                  | System users                  |
+| roles                    | role_id, role_name, description                                                                                       | User roles                    |
+| permissions              | permission_id, role_id, module, action                                                                                | Role permissions              |
+| raw_materials            | material_id, name, category, hazard_class_id, temp_min, temp_max, shelf_life_days, unit                               | Raw material master           |
+| products                 | product_id, name, category, storage_requirement, unit                                                                 | Finished product master       |
+| warehouse_locations      | location_id, zone, rack, bin, location_type, temp_zone, capacity, status                                              | Storage locations             |
+| hazard_classes           | hazard_class_id, name, description                                                                                    | Hazard categories             |
+| storage_rules            | rule_id, material_id, hazard_class_id, temp_min, temp_max, allowed_location_type, incompatible_hazard_class           | Slotting rules                |
+| raw_material_receipts    | receipt_id, material_id, received_qty, unit, supplier_lot, received_by, received_at, packaging_condition, notes       | Receiving record              |
+| batches                  | batch_id, receipt_id, material_id, batch_type, qty, unit, expiry_date, status, current_location_id                    | Raw material batch            |
+| qc_inspections           | qc_id, batch_id, inspection_type, sample_id, status, inspector_id, started_at, completed_at                           | QC inspection header          |
+| qc_parameters            | parameter_id, material_id/product_id, name, min_limit, max_limit, method, required                                    | QC checklist master           |
+| qc_results               | result_id, qc_id, parameter_id, value, pass_fail, notes                                                               | QC parameter result           |
+| cv_results               | cv_id, qc_id, image_url, defect_type, confidence_score, recommendation, model_version                                 | CV decision-support output    |
+| inventory_lots           | inventory_id, batch_id, location_id, qty, unit, inventory_status                                                      | Inventory by location         |
+| inventory_movements      | movement_id, batch_id, from_location_id, to_location_id, qty, movement_type, moved_by, moved_at                       | Movement history              |
+| iot_sensors              | sensor_id, location_id, sensor_type, status, calibration_due_date                                                     | Sensor master                 |
+| sensor_readings          | reading_id, sensor_id, value, unit, reading_time, status                                                              | Sensor readings               |
+| alerts                   | alert_id, alert_type, severity, entity_type, entity_id, assigned_to, status, created_at, resolved_at, resolution_note | Operational alerts            |
+| production_orders        | production_order_id, product_id, planned_qty, status, created_by, created_at, started_at, completed_at                | Internal production order     |
+| material_issues          | issue_id, production_order_id, batch_id, qty_issued, issued_by, received_by, issued_at, received_at                   | Warehouse to production issue |
+| production_stage_logs    | stage_log_id, production_order_id, stage_name, status, started_at, completed_at, operator_id, notes                   | Production stage tracking     |
+| material_consumption     | consumption_id, production_order_id, batch_id, qty_used, recorded_by, recorded_at                                     | Actual consumption            |
+| finished_product_batches | fg_batch_id, production_order_id, product_id, qty, unit, status, current_location_id, created_at                      | Finished product batch        |
+| finished_goods_qc        | fg_qc_id, fg_batch_id, inspector_id, result, decision, reason, completed_at                                           | Finished product QC           |
+| audit_logs               | audit_id, user_id, role_id, action, entity, entity_id, old_value, new_value, reason, created_at                       | Immutable audit trail         |
+
+## 15.2 Key Relationships
 
 ```text
-Kiro Starter Project
-│
-├── Web App / UI
-│   ├── Role dashboards
-│   ├── Receiving screens
-│   ├── QC screens
-│   ├── Warehouse map
-│   ├── IoT monitoring
-│   ├── Alert center
-│   ├── Production screens
-│   ├── Shipping screens
-│   └── Admin screens
-│
-├── API Layer
-│   ├── Auth and RBAC API
-│   ├── Master Data API
-│   ├── Batch API
-│   ├── QC API
-│   ├── Warehouse API
-│   ├── IoT API
-│   ├── Alert API
-│   ├── Production API
-│   ├── Shipping API
-│   └── Audit API
-│
-├── Service Modules
-│   ├── auth-rbac-service
-│   ├── master-data-service
-│   ├── receiving-batch-service
-│   ├── qc-service
-│   ├── computer-vision-service
-│   ├── warehouse-inventory-service
-│   ├── iot-telemetry-service
-│   ├── alert-service
-│   ├── production-service
-│   ├── shipping-service
-│   ├── dashboard-reporting-service
-│   └── audit-log-service
-│
-└── Shared Database for MVP
-    ├── auth tables
-    ├── master data tables
-    ├── batch tables
-    ├── qc tables
-    ├── warehouse tables
-    ├── iot tables
-    ├── alert tables
-    ├── production tables
-    ├── shipping tables
-    └── audit tables
+raw_material_receipts 1 → many batches
+batches 1 → many qc_inspections
+qc_inspections 1 → many qc_results
+qc_inspections 1 → many cv_results
+batches 1 → many inventory_movements
+batches 1 → many material_issues
+production_orders 1 → many material_issues
+production_orders 1 → many material_consumption
+production_orders 1 → many finished_product_batches
+finished_product_batches 1 → many finished_goods_qc
+warehouse_locations 1 → many inventory_lots
+warehouse_locations 1 → many iot_sensors
+iot_sensors 1 → many sensor_readings
+alerts can relate to batch, location, sensor, QC inspection, or production order
+audit_logs can relate to any critical entity
 ```
 
-## 6.3 Future Production Architecture
+---
+
+## 16. Dashboard KPIs by Role
+
+## 16.1 Admin
+
+| KPI                    | Purpose                      |
+| ---------------------- | ---------------------------- |
+| Active users           | Monitor user setup           |
+| Roles configured       | Ensure access control setup  |
+| Master data completion | Ensure operational readiness |
+| Recent admin changes   | Configuration governance     |
+| Audit log count        | System activity visibility   |
+
+## 16.2 Warehouse Operator
+
+| KPI                              | Purpose                      |
+| -------------------------------- | ---------------------------- |
+| Raw materials received today     | Receiving workload           |
+| QC Pending batches in quarantine | Space and handoff visibility |
+| Approved batches waiting putaway | Putaway workload             |
+| Raw material storage utilization | Warehouse capacity           |
+| Material issue tasks             | Production support workload  |
+| Finished product putaway tasks   | FG warehouse workload        |
+| Warehouse alerts                 | Operational risk             |
+
+## 16.3 QC Staff
+
+| KPI                   | Purpose                           |
+| --------------------- | --------------------------------- |
+| RM QC pending         | Raw material QC workload          |
+| RM under QC           | Active inspections                |
+| AI/CV flagged lots    | Risk-prioritized QC               |
+| Hold lots             | Investigation workload            |
+| Rejected lots         | Quality control indicator         |
+| FG QC pending         | Finished product release workload |
+| Average QC cycle time | Bottleneck visibility             |
+
+## 16.4 Production Staff
+
+| KPI                     | Purpose               |
+| ----------------------- | --------------------- |
+| Production orders ready | Work queue            |
+| Waiting for material    | Dependency visibility |
+| Orders in progress      | Execution tracking    |
+| Completed orders today  | Output tracking       |
+| Yield variance          | Process performance   |
+| FG batches awaiting QC  | Handoff visibility    |
+
+## 16.5 Maintenance / IoT Technician
+
+| KPI                   | Purpose                      |
+| --------------------- | ---------------------------- |
+| Active sensors        | Monitoring coverage          |
+| Offline sensors       | Technical risk               |
+| Calibration due       | Prevent sensor unreliability |
+| Temperature anomalies | Storage condition risk       |
+| Open sensor alerts    | Maintenance workload         |
+| Resolution time       | Response performance         |
+
+## 16.6 Manager / Plant Head
+
+| KPI                            | Purpose                      |
+| ------------------------------ | ---------------------------- |
+| Raw material batches by status | End-to-end visibility        |
+| QC pending count               | Bottleneck tracking          |
+| QC pass/hold/reject rate       | Quality performance          |
+| Warehouse utilization          | Capacity control             |
+| Open critical alerts           | Risk management              |
+| Production progress            | Factory execution visibility |
+| FG QC pending                  | Release bottleneck           |
+| FG stored today                | Completed internal output    |
+| Traceability completeness      | Compliance readiness         |
+
+## 16.7 Auditor / Viewer
+
+| KPI                           | Purpose                |
+| ----------------------------- | ---------------------- |
+| Records reviewed              | Audit activity         |
+| Recent QC decisions           | Quality decision trace |
+| Recent material movements     | Movement trace         |
+| Recent production completions | Genealogy trace        |
+| Audit log completeness        | Compliance confidence  |
+
+---
+
+## 17. Acceptance Criteria
+
+## 17.1 End-to-End Demo Acceptance Criteria
+
+The MVP is successful if the team can demo this complete flow:
+
+1. Admin configures users, materials, products, warehouse locations, and rules.
+2. Warehouse logs in and receives raw material.
+3. System creates batch ID and sets status to QC Pending.
+4. QC logs in and sees the batch in QC queue.
+5. QC records sample and reviews CV result.
+6. QC approves the raw material batch.
+7. System recommends storage location.
+8. Warehouse confirms putaway.
+9. IoT monitoring shows warehouse readings.
+10. System generates a temperature alert.
+11. Maintenance resolves the sensor/storage alert.
+12. Warehouse issues approved raw material to production.
+13. Production logs material consumption and output.
+14. System creates finished product batch.
+15. QC releases finished product.
+16. Warehouse puts finished product into FG warehouse.
+17. Manager sees full flow on dashboard.
+18. Auditor sees traceability and audit log.
+
+## 17.2 Role-Based UI Acceptance Criteria
+
+* Each role lands on a different dashboard.
+* Each role sees different widgets.
+* Each role sees different table columns where appropriate.
+* Each role sees only relevant action buttons.
+* A role with read access does not automatically see every field.
+* Unauthorized users cannot perform hidden actions through direct URL/API access.
+
+## 17.3 Control Acceptance Criteria
+
+* Warehouse cannot approve QC.
+* QC cannot perform warehouse putaway.
+* Production cannot consume unissued material.
+* Held or rejected material cannot be issued to production.
+* Finished product cannot be stored as available until FG QC approval.
+* Critical actions appear in audit log.
+
+---
+
+## 18. Non-Functional Requirements
+
+| Category        | Requirement                                                                               |
+| --------------- | ----------------------------------------------------------------------------------------- |
+| Usability       | Role dashboards should make each role's next task obvious.                                |
+| Performance     | Demo data pages should load within 3 seconds.                                             |
+| Security        | Role and permission checks must exist on frontend and backend/API layer.                  |
+| Auditability    | Critical workflow actions must be logged.                                                 |
+| Data Integrity  | Batch status transitions must be controlled.                                              |
+| Reliability     | MVP must work with simulated IoT and CV data.                                             |
+| Maintainability | Code should be modular by domain: warehouse, QC, production, IoT, alerts, audit, admin.   |
+| Scalability     | Architecture should allow future sales, procurement, ERP, real IoT, and real CV services. |
+
+---
+
+## 19. Suggested Modular Architecture
+
+For MVP, build as a modular web application. The product can be microservices-oriented in design, but it should be implemented simply enough for the competition.
 
 ```text
-Frontend
-  ↓
-API Gateway / BFF
-  ↓
-Independent Services
-  ├── Auth & RBAC Service
-  ├── Master Data Service
-  ├── Receiving & Batch Service
-  ├── QC Service
-  ├── Computer Vision Service
-  ├── Warehouse & Inventory Service
-  ├── IoT Telemetry Service
-  ├── Alert Service
-  ├── Production Service
-  ├── Shipping Service
-  ├── Dashboard / Reporting Service
-  └── Audit Log Service
-
-Event Bus
-  ├── BatchCreated
-  ├── QCDecisionRecorded
-  ├── StorageAssigned
-  ├── InventoryMoved
-  ├── SensorAnomalyDetected
-  ├── AlertCreated
-  ├── ProductionCompleted
-  ├── FinishedGoodsReleased
-  └── ShipmentDispatched
+/apps/web
+/apps/api
+/modules/auth-rbac
+/modules/admin
+/modules/warehouse
+/modules/qc
+/modules/computer-vision
+/modules/iot
+/modules/alerts
+/modules/production
+/modules/finished-goods
+/modules/dashboard
+/modules/audit
 ```
 
----
+## 19.1 Future Microservices Mapping
 
-# 7. Service Boundaries
-
-| Service                       | Responsibility                                                    | MVP Implementation     |
-| ----------------------------- | ----------------------------------------------------------------- | ---------------------- |
-| Auth & RBAC Service           | Users, roles, permissions, login, page access, action access      | Internal module        |
-| Master Data Service           | Suppliers, customers, materials, products, hazards, storage rules | Internal module        |
-| Receiving & Batch Service     | PO receiving, receipt, batch ID, batch status                     | Internal module        |
-| QC Service                    | QC queue, sampling, parameter results, approval/reject/hold       | Internal module        |
-| Computer Vision Service       | Image upload, mock CV result, defect score, recommendation        | Mock module            |
-| Warehouse & Inventory Service | Storage assignment, putaway, inventory lots, warehouse map        | Internal module        |
-| IoT Telemetry Service         | Simulated sensor readings, sensor status, temperature range       | Mock/simulation module |
-| Alert Service                 | Create, assign, acknowledge, resolve alerts                       | Internal module        |
-| Production Service            | Production schedule, material issue, execution, consumption       | Internal module        |
-| Shipping Service              | Shipping schedule, dispatch, shipping readiness                   | Internal module        |
-| Dashboard Service             | KPI calculation and role-specific dashboard data                  | Internal module        |
-| Audit Log Service             | Immutable log for critical actions                                | Shared internal module |
+| Future Service          | Current MVP Module |
+| ----------------------- | ------------------ |
+| Auth & RBAC Service     | auth-rbac          |
+| Master Data Service     | admin/master data  |
+| Warehouse Service       | warehouse          |
+| QC Service              | qc                 |
+| Computer Vision Service | computer-vision    |
+| IoT Telemetry Service   | iot                |
+| Alert Service           | alerts             |
+| Production Service      | production         |
+| Finished Goods Service  | finished-goods     |
+| Dashboard Service       | dashboard          |
+| Audit Service           | audit              |
 
 ---
 
-# 8. Event Model
+## 20. MVP Build Priority
 
-The system should treat major status changes as events.
+## Sprint 1 — Setup and Admin
 
-| Event                          | Trigger                           | Produced By        | Consumed By                        |
-| ------------------------------ | --------------------------------- | ------------------ | ---------------------------------- |
-| `RawMaterialReceived`          | Warehouse receives PO             | Receiving Service  | Batch, Audit, Dashboard            |
-| `BatchCreated`                 | Batch ID generated                | Batch Service      | QC, Audit, Dashboard               |
-| `QCInspectionStarted`          | QC opens inspection               | QC Service         | Dashboard, Audit                   |
-| `CVResultGenerated`            | Image is uploaded or mock CV runs | CV Service         | QC, Audit                          |
-| `QCDecisionRecorded`           | QC approves/rejects/holds         | QC Service         | Warehouse, Alert, Dashboard, Audit |
-| `StorageRecommendationCreated` | Approved batch needs location     | Warehouse Service  | Warehouse, Dashboard, Audit        |
-| `PutawayConfirmed`             | Warehouse confirms storage        | Warehouse Service  | Inventory, Dashboard, Audit        |
-| `SensorReadingRecorded`        | IoT reading created               | IoT Service        | Alert, Dashboard                   |
-| `SensorAnomalyDetected`        | Reading outside range             | IoT Service        | Alert Service                      |
-| `AlertCreated`                 | Rule violation occurs             | Alert Service      | Dashboard, Audit                   |
-| `ProductionOrderCreated`       | PPIC creates schedule             | Production Service | Warehouse, Dashboard, Audit        |
-| `MaterialIssued`               | Warehouse issues material         | Warehouse Service  | Production, Audit                  |
-| `ProductionCompleted`          | Production records output         | Production Service | FG QC, Dashboard, Audit            |
-| `FinishedGoodsReleased`        | QC approves finished goods        | QC Service         | Shipping, Dashboard, Audit         |
-| `ShipmentDispatched`           | Warehouse dispatches goods        | Shipping Service   | Dashboard, Audit                   |
+* Database schema.
+* Seed master data.
+* Role-based login.
+* Admin screens.
+* Audit logging foundation.
 
----
+## Sprint 2 — Warehouse Receiving
 
-# 9. MVP Scope
+* Warehouse dashboard.
+* Raw material receiving form.
+* Batch ID generation.
+* Batch detail page.
+* QC Pending status.
 
-## 9.1 Must-Have MVP
+## Sprint 3 — QC Raw Material
 
-| Feature                      | Description                                                                              |
-| ---------------------------- | ---------------------------------------------------------------------------------------- |
-| Role-based login             | Users log in as Admin, Manager, PPIC, Warehouse, QC, Production, Maintenance, or Auditor |
-| Role-specific dashboard      | Each role sees different cards, tables, and actions                                      |
-| Raw material receiving       | Warehouse receives material against PO or mock PO                                        |
-| Batch ID generation          | System generates unique batch ID                                                         |
-| QC queue                     | QC sees batches pending inspection                                                       |
-| QC inspection detail         | QC enters sampling and inspection result                                                 |
-| Computer vision simulation   | Mock result shows defect type, confidence, recommendation                                |
-| QC decision                  | QC approves, rejects, or holds batch                                                     |
-| Smart storage recommendation | System recommends location based on temperature, hazard, FEFO, capacity                  |
-| Warehouse map                | Warehouse sees zones, locations, occupancy, and tasks                                    |
-| Simulated IoT monitoring     | Temperature/humidity readings by zone                                                    |
-| Alert center                 | Alerts for temperature anomaly, near expiry, hazard conflict, QC hold                    |
-| Production schedule          | PPIC creates production order                                                            |
-| Material issue               | Warehouse issues approved material to production                                         |
-| Production execution         | Production logs stages, consumption, output                                              |
-| Finished goods QC            | QC releases finished goods                                                               |
-| Shipping schedule            | PPIC schedules shipment for approved finished goods                                      |
-| Dispatch                     | Warehouse confirms outbound shipment                                                     |
-| Manager dashboard            | Cross-functional KPI dashboard                                                           |
-| Audit log                    | Critical events are logged                                                               |
+* QC dashboard.
+* QC queue.
+* QC detail.
+* CV mock result.
+* Approve/hold/reject workflow.
 
-## 9.2 Nice-to-Have
+## Sprint 4 — Storage and IoT
 
-| Feature               | Description                                                  |
-| --------------------- | ------------------------------------------------------------ |
-| QR/barcode scanning   | Simulated with batch ID input or browser camera              |
-| COA document upload   | Mock document upload                                         |
-| Batch genealogy graph | Visual raw material → production → finished goods → shipment |
-| Notification mock     | Email/WhatsApp/SMS mock in UI                                |
-| Sensor health page    | Offline, active, calibration due                             |
-| CSV forecast import   | Upload mock demand data                                      |
+* Storage recommendation.
+* Warehouse map.
+* Putaway workflow.
+* Sensor readings.
+* Alert center.
 
-## 9.3 Future Version
+## Sprint 5 — Production
 
-| Feature                    | Description                                      |
-| -------------------------- | ------------------------------------------------ |
-| Real IoT integration       | MQTT/gateway ingestion                           |
-| Real CV model              | Trained on Sigma Arome-specific inspection images |
-| ERP integration            | PO, inventory, finance, invoice sync             |
-| Mobile warehouse app       | Scanner-first warehouse workflow                 |
-| LIMS integration           | Full lab testing workflow                        |
-| Supplier quality analytics | Rejection trends, supplier scorecard             |
-| Advanced forecasting       | ML demand planning                               |
-| CAPA/deviation workflow    | Compliance improvement loop                      |
+* Production dashboard.
+* Material issue.
+* Production order execution.
+* Material consumption.
+* Finished product batch creation.
+
+## Sprint 6 — Finished Product QC and FG Putaway
+
+* FG QC queue.
+* FG QC decision.
+* FG storage assignment.
+* FG putaway.
+
+## Sprint 7 — Manager and Auditor
+
+* Manager dashboard.
+* Batch traceability.
+* Audit log viewer.
+* Auditor read-only interface.
 
 ---
 
-# 10. End-to-End Product Flow
+## 21. Future Roadmap
 
-## 10.1 Planning
+## Future Phase 1 — Before Raw Material Arrival
 
-1. PPIC enters or uploads demand forecast.
-2. System estimates raw material requirements using BOM.
-3. PPIC creates purchase order.
-4. Manager can view demand and shortage risk.
+* Demand forecast.
+* Purchase request.
+* Purchase order.
+* Supplier portal.
+* Supplier quality scorecard.
 
-## 10.2 Receiving
+## Future Phase 2 — After Finished Product Warehouse
 
-1. Warehouse receives raw material.
-2. Warehouse enters PO, supplier, material, quantity, delivery note, COA status, expiry date.
-3. System creates receipt.
-4. System generates batch ID.
-5. Batch status becomes `QC Pending`.
-6. Location becomes `Receiving / Quarantine`.
+* Sales order.
+* Shipping schedule.
+* Dispatch.
+* Delivery tracking.
+* Customer complaints.
+* Return handling.
 
-## 10.3 QC
+## Future Phase 3 — Advanced Technology
 
-1. QC sees batch in QC queue.
-2. QC creates sample record.
-3. QC uploads/selects inspection image.
-4. Computer Vision Service returns simulated defect score.
-5. QC enters manual QC parameters.
-6. QC decides: Approved, Rejected, or Hold.
-7. System logs decision.
-8. Approved batch moves to storage assignment.
-9. Rejected/Hold batch remains in quarantine and triggers alert.
-
-## 10.4 Warehouse Storage
-
-1. System recommends storage slot.
-2. Recommendation checks hazard, cold-chain, capacity, FEFO, and zone rules.
-3. Warehouse confirms putaway.
-4. Batch status becomes `Available`.
-5. Inventory lot is created.
-
-## 10.5 IoT and Alerts
-
-1. Simulated IoT readings are generated by zone.
-2. System compares readings to allowed temperature/humidity range.
-3. If out of range, alert is created.
-4. Assigned role acknowledges alert.
-5. Assigned role resolves alert with action note.
-6. Audit log records the alert lifecycle.
-
-## 10.6 Production
-
-1. PPIC creates production order.
-2. System checks approved material availability.
-3. Warehouse issues material to production.
-4. Production logs process stages.
-5. Production records consumption and output.
-6. System creates finished goods batch.
-
-## 10.7 Finished Goods and Shipping
-
-1. QC inspects finished goods.
-2. QC approves, rejects, or holds finished goods.
-3. PPIC schedules shipment only for approved finished goods.
-4. Warehouse dispatches shipment.
-5. Manager can see full traceability.
+* Real IoT sensor integration.
+* MQTT gateway.
+* Real computer vision model.
+* ERP integration.
+* Mobile barcode scanning.
+* Predictive quality analytics.
+* Digital twin warehouse map.
 
 ---
 
-# 11. Role-Based UI and Data Visibility
+## 22. Final Product Positioning
 
-This is a core requirement.
+This MVP should be positioned as:
 
-The system must not only control CRUD access. It must also control:
+> A role-based smart factory operations website that controls the internal flow from raw material receiving to finished product warehouse putaway, with QC release, smart storage, IoT monitoring, production traceability, and auditability.
 
-* Which dashboard widgets are visible.
-* Which records are shown.
-* Which columns are shown.
-* Which buttons are shown.
-* Which details are masked or summarized.
-* Which workflow actions are available.
-* Which alerts are assigned.
-* Which exports are allowed.
+The pitch should emphasize:
 
-## 11.1 Role-Based UI Rules
+* Practical manufacturing flow.
+* Clear scope boundary.
+* Role-specific UI and data visibility.
+* Human QC control.
+* IoT and computer vision as decision-support tools.
+* Batch genealogy from raw material to finished product.
+* Audit-ready operational records.
 
-| Rule ID  | Requirement                                                                                        |
-| -------- | -------------------------------------------------------------------------------------------------- |
-| RBUI-001 | The system shall render different dashboard cards for each role.                                   |
-| RBUI-002 | The system shall render different table columns for each role, even on shared data modules.        |
-| RBUI-003 | The system shall filter records based on operational relevance, not only database read permission. |
-| RBUI-004 | The system shall hide action buttons that the current role cannot perform.                         |
-| RBUI-005 | The system shall show workflow tasks based on the role’s operational responsibility.               |
-| RBUI-006 | The system shall show sensitive QC, supplier, and audit details only to authorized roles.          |
-| RBUI-007 | The system shall display read-only summary views for roles that need awareness but not detail.     |
-| RBUI-008 | The system shall prevent direct URL access to unauthorized screens.                                |
-| RBUI-009 | The system shall log attempted unauthorized actions.                                               |
-| RBUI-010 | The system shall apply both frontend visibility control and backend authorization.                 |
-
-## 11.2 PPIC vs Warehouse Example
-
-| Data Area          | PPIC Staff UI                                                              | Warehouse Operator UI                                        |
-| ------------------ | -------------------------------------------------------------------------- | ------------------------------------------------------------ |
-| Inventory          | Planning view: available stock, reserved stock, shortage risk              | Physical view: exact location, rack, bin, putaway status     |
-| Batch list         | Batch status, material availability, expiry risk                           | Batch movement tasks, receiving status, location scan        |
-| QC status          | Summary only: Pending, Approved, Hold, Rejected                            | Summary only: can move only if Approved                      |
-| QC parameters      | Hidden or summary                                                          | Hidden or summary                                            |
-| Supplier           | Supplier name and PO status                                                | Supplier name, delivery note, received quantity              |
-| Warehouse location | Zone-level availability                                                    | Exact rack/bin/slot                                          |
-| Production         | Material readiness and schedule impact                                     | Picking and issue task                                       |
-| Actions            | Create PO, create production schedule, reserve material, schedule shipment | Receive, putaway, issue, dispatch                            |
-| Alerts             | Material shortage, shipping blocked, near expiry                           | Temperature, misplaced batch, putaway, dispatch, near expiry |
-
-## 11.3 Role-Specific Dashboard Widgets
-
-| Widget                 |    Admin | Manager |     PPIC | Warehouse |       QC | Production | Maintenance | Auditor |
-| ---------------------- | -------: | ------: | -------: | --------: | -------: | ---------: | ----------: | ------: |
-| Open alerts            |        R |       R |        R |         R |        R |          R |           R |       R |
-| QC pending             |        R |       R |  Summary |   Summary | Detailed |          X |           X |       R |
-| Receiving tasks        |        X | Summary |  Summary |  Detailed |        X |          X |           X |       R |
-| Putaway tasks          |        X | Summary |        X |  Detailed |        X |          X |           X |       R |
-| Production schedule    |        X |       R | Detailed |   Summary |  Summary |   Detailed |           X |       R |
-| Material shortage risk |        X |       R | Detailed |   Summary |        X |    Summary |           X |       R |
-| Sensor status          |        R |       R |        X |   Summary |        X |          X |    Detailed |       R |
-| Audit log              |        R |       R |        X |         X |        X |          X |           X |       R |
-| User management        | Detailed |       X |        X |         X |        X |          X |           X |       X |
-
-## 11.4 Role-Specific Batch Detail Views
-
-| Field / Section      | Admin | Manager |      PPIC | Warehouse | QC | Production |        Maintenance | Auditor |
-| -------------------- | ----: | ------: | --------: | --------: | -: | ---------: | -----------------: | ------: |
-| Batch ID             |     R |       R |         R |         R |  R |          R |                  R |       R |
-| Material name        |     R |       R |         R |         R |  R |          R |                  R |       R |
-| Supplier             |     R |       R |         R |         R |  R |          X |                  X |       R |
-| Received quantity    |     R |       R |         R |         R |  R |          R |                  X |       R |
-| Exact warehouse slot |     R |       R | Zone only |         R |  R |          X | R if sensor-linked |       R |
-| QC summary status    |     R |       R |         R |         R |  R |          R |                  X |       R |
-| QC parameter details |     R |       R |   Summary |         X |  R |          X |                  X |       R |
-| CV result details    |     R |       R |   Summary |         X |  R |          X |                  X |       R |
-| Movement history     |     R |       R |         R |         R |  R |          R |                  X |       R |
-| Sensor history       |     R |       R |         X |         R |  X |          X |                  R |       R |
-| Audit history        |     R |       R |         X |         X |  X |          X |                  X |       R |
-
----
-
-# 12. RBAC Matrix
-
-Legend:
-
-* C = Create
-* R = Read
-* U = Update
-* D = Delete
-* A = Approve
-* X = No Access
-
-| Module                 |   Admin | Manager |    PPIC | Warehouse |      QC | Production | Maintenance | Auditor |
-| ---------------------- | ------: | ------: | ------: | --------: | ------: | ---------: | ----------: | ------: |
-| Demand Forecast        |       R |       R |   C/R/U |         X |       X |          R |           X |       R |
-| Purchase Order         |       R |       R |   C/R/U |         R |       R |          X |           X |       R |
-| Raw Material Arrival   |       R |       R |       R |     C/R/U |       R |          X |           X |       R |
-| Batch Master           |       R |       R |       R |     C/R/U |     R/U |          R |           X |       R |
-| QC Inspection          |       R |       R |       R |         R |   C/R/U |          X |           X |       R |
-| QC Decision            |       R |     R/A |       R |         R | C/R/U/A |          X |           X |       R |
-| Computer Vision Result |       R |       R | Summary |         X |   C/R/U |          X |           X |       R |
-| Warehouse Storage      |       R |       R |       R |     C/R/U |       R |          R |           X |       R |
-| Inventory Lots         |       R |       R |       R |     C/R/U |       R |          R |           X |       R |
-| IoT Monitoring         |       R |       R |       X |         R |       X |          X |       C/R/U |       R |
-| Alert Management       |       R |     R/A |       R |       R/U |   R/U/A |        R/U |       C/R/U |       R |
-| Production Schedule    |       R |     R/A |   C/R/U |         R |       R |          R |           X |       R |
-| Material Issue         |       R |       R |       R |     C/R/U |       X |        R/U |           X |       R |
-| Production Execution   |       R |       R |       R |         R |       R |      C/R/U |           X |       R |
-| Finished Goods QC      |       R |     R/A |       R |         R | C/R/U/A |          R |           X |       R |
-| Shipping Schedule      |       R |       R |   C/R/U |       R/U |       R |          X |           X |       R |
-| Dispatch               |       R |       R |       R |     C/R/U |       X |          X |           X |       R |
-| Dashboard / Analytics  |       R |       R |       R |         R |       R |          R |           R |       R |
-| Master Data            | C/R/U/D |       R |       R |         R |       R |          R |           R |       R |
-| User Management        | C/R/U/D |       X |       X |         X |       X |          X |           X |       X |
-| Audit Log              |       R |       R |       X |         X |       X |          X |           X |       R |
-
----
-
-# 13. Permission Restrictions
-
-| Risk                                      | Restriction                                                            |
-| ----------------------------------------- | ---------------------------------------------------------------------- |
-| Warehouse approving poor-quality material | Warehouse can view QC status but cannot approve QC                     |
-| QC editing received quantity              | QC cannot edit PO, receipt quantity, or warehouse movement             |
-| PPIC scheduling unreleased material       | Production schedule must check approved inventory                      |
-| Production using held material            | Material issue must block Hold/Rejected batches                        |
-| Shipping unreleased finished goods        | Dispatch must require Finished Goods QC Approved                       |
-| Admin bypassing operational controls      | Admin manages configuration but is not default operational approver    |
-| Fraudulent status changes                 | Critical status changes require audit log                              |
-| Silent override                           | Override requires reason, actor, timestamp, and permission             |
-| Deleted traceability records              | Use soft delete or inactive status; never hard delete critical history |
-
----
-
-# 14. Functional Requirements
-
-## 14.1 Authentication and RBAC
-
-| ID       | Requirement                                                              | Priority |
-| -------- | ------------------------------------------------------------------------ | -------- |
-| AUTH-001 | The system shall allow users to log in with role-based identity          | Must     |
-| AUTH-002 | The system shall redirect users to their role-specific dashboard         | Must     |
-| AUTH-003 | The system shall enforce backend permissions for every restricted action | Must     |
-| AUTH-004 | The system shall hide unauthorized buttons and screens in the UI         | Must     |
-| AUTH-005 | Admin shall be able to create, update, deactivate users                  | Must     |
-| AUTH-006 | Admin shall assign roles to users                                        | Must     |
-| AUTH-007 | Unauthorized access attempts shall be logged                             | Nice     |
-
-## 14.2 Role-Specific Dashboard
-
-| ID       | Requirement                                                                                     | Priority |
-| -------- | ----------------------------------------------------------------------------------------------- | -------- |
-| DASH-001 | Manager dashboard shall show cross-functional KPIs                                              | Must     |
-| DASH-002 | PPIC dashboard shall show planning, shortage risk, production readiness, and shipping readiness | Must     |
-| DASH-003 | Warehouse dashboard shall show receiving, putaway, movement, alert, and dispatch tasks          | Must     |
-| DASH-004 | QC dashboard shall show QC queue, AI-flagged lots, hold lots, and FG QC pending                 | Must     |
-| DASH-005 | Production dashboard shall show production orders, material readiness, WIP, and yield           | Must     |
-| DASH-006 | Maintenance dashboard shall show sensor status, anomalies, and calibration due                  | Must     |
-| DASH-007 | Auditor dashboard shall show read-only audit and traceability summary                           | Must     |
-
-## 14.3 Receiving and Batch
-
-| ID      | Requirement                                                                | Priority |
-| ------- | -------------------------------------------------------------------------- | -------- |
-| REC-001 | Warehouse shall create raw material receipt against PO or mock PO          | Must     |
-| REC-002 | System shall validate supplier, material, quantity, expiry, and COA status | Must     |
-| REC-003 | System shall generate unique batch ID                                      | Must     |
-| REC-004 | New batch status shall default to QC Pending                               | Must     |
-| REC-005 | New batch location shall default to Receiving / Quarantine                 | Must     |
-| REC-006 | System shall log receiving action in audit log                             | Must     |
-
-## 14.4 QC
-
-| ID     | Requirement                                                | Priority |
-| ------ | ---------------------------------------------------------- | -------- |
-| QC-001 | QC Staff shall see QC Pending batches in QC queue          | Must     |
-| QC-002 | QC Staff shall create sample record                        | Must     |
-| QC-003 | QC Staff shall enter QC parameter results                  | Must     |
-| QC-004 | QC Staff shall review CV result when image is available    | Must     |
-| QC-005 | QC Staff shall approve, reject, or hold batch              | Must     |
-| QC-006 | Reject/Hold decision shall require reason code and notes   | Must     |
-| QC-007 | System shall prevent non-QC roles from making QC decisions | Must     |
-
-## 14.5 Computer Vision
-
-| ID     | Requirement                                                            | Priority |
-| ------ | ---------------------------------------------------------------------- | -------- |
-| CV-001 | QC Staff shall upload or select sample inspection image                | Must     |
-| CV-002 | System shall display defect type, confidence score, and recommendation | Must     |
-| CV-003 | CV result shall be marked as decision support only                     | Must     |
-| CV-004 | CV result shall be stored with timestamp and model/rule version        | Nice     |
-| CV-005 | Future version shall support real model inference                      | Future   |
-
-## 14.6 Warehouse and Inventory
-
-| ID     | Requirement                                                           | Priority |
-| ------ | --------------------------------------------------------------------- | -------- |
-| WH-001 | System shall recommend storage location for approved batch            | Must     |
-| WH-002 | Recommendation shall consider temperature, hazard, FEFO, and capacity | Must     |
-| WH-003 | Warehouse shall confirm putaway                                       | Must     |
-| WH-004 | System shall block rejected batches from available storage            | Must     |
-| WH-005 | Override shall require permission and reason                          | Nice     |
-| WH-006 | Warehouse map shall show zones, slots, and occupancy                  | Must     |
-
-## 14.7 IoT Monitoring
-
-| ID      | Requirement                                                      | Priority |
-| ------- | ---------------------------------------------------------------- | -------- |
-| IOT-001 | System shall display simulated temperature and humidity readings | Must     |
-| IOT-002 | System shall compare readings against zone thresholds            | Must     |
-| IOT-003 | System shall create alert for temperature anomaly                | Must     |
-| IOT-004 | Maintenance shall see sensor status and calibration due          | Nice     |
-| IOT-005 | System shall support real IoT ingestion in future                | Future   |
-
-## 14.8 Alert Management
-
-| ID        | Requirement                                                                                                   | Priority |
-| --------- | ------------------------------------------------------------------------------------------------------------- | -------- |
-| ALERT-001 | System shall create alerts for temperature anomaly, near expiry, hazard conflict, QC hold, and shipping block | Must     |
-| ALERT-002 | Assigned users shall acknowledge alerts                                                                       | Must     |
-| ALERT-003 | Assigned users shall resolve alerts with action note                                                          | Must     |
-| ALERT-004 | Critical alerts shall remain visible until resolved                                                           | Must     |
-| ALERT-005 | Alert lifecycle shall be logged                                                                               | Must     |
-
-## 14.9 Production
-
-| ID       | Requirement                                             | Priority |
-| -------- | ------------------------------------------------------- | -------- |
-| PROD-001 | PPIC shall create production order                      | Must     |
-| PROD-002 | System shall check approved material availability       | Must     |
-| PROD-003 | Warehouse shall issue approved material to production   | Must     |
-| PROD-004 | Production shall log process stages                     | Must     |
-| PROD-005 | Production shall record material consumption and output | Must     |
-| PROD-006 | System shall create finished goods batch                | Must     |
-
-## 14.10 Finished Goods QC and Shipping
-
-| ID       | Requirement                                                    | Priority |
-| -------- | -------------------------------------------------------------- | -------- |
-| FGQC-001 | QC shall inspect finished goods batch                          | Must     |
-| FGQC-002 | QC shall approve, reject, or hold finished goods               | Must     |
-| SHIP-001 | PPIC shall create shipping schedule                            | Must     |
-| SHIP-002 | System shall block shipping unless FG QC is Approved           | Must     |
-| SHIP-003 | Warehouse shall confirm dispatch                               | Must     |
-| SHIP-004 | Dispatch shall record customer, batch, quantity, and timestamp | Must     |
-
-## 14.11 Audit Log
-
-| ID      | Requirement                                                                                          | Priority |
-| ------- | ---------------------------------------------------------------------------------------------------- | -------- |
-| AUD-001 | System shall log create, update, approve, reject, hold, override, issue, dispatch, and admin actions | Must     |
-| AUD-002 | Audit log shall include user, action, entity, entity ID, old value, new value, timestamp, and reason | Must     |
-| AUD-003 | Audit log shall be read-only                                                                         | Must     |
-| AUD-004 | Auditor shall filter audit logs by user, batch, module, date, and action                             | Nice     |
-
----
-
-# 15. EARS-Style Acceptance Requirements for Kiro
-
-## 15.1 Batch Receiving
-
-* **WHEN** a Warehouse Operator receives raw material, **THE SYSTEM SHALL** create a receipt record.
-* **WHEN** a receipt is created, **THE SYSTEM SHALL** generate a unique batch ID.
-* **WHEN** a batch is created, **THE SYSTEM SHALL** set status to `QC Pending`.
-* **WHEN** the receiving quantity exceeds PO tolerance, **THE SYSTEM SHALL** flag a warning or hold condition.
-
-## 15.2 QC Decision
-
-* **WHEN** QC Staff opens a QC Pending batch, **THE SYSTEM SHALL** show sample details, COA status, CV result, and QC input fields.
-* **WHEN** QC Staff selects Reject or Hold, **THE SYSTEM SHALL** require reason code and notes.
-* **IF** the user is not QC Staff or authorized Manager, **THE SYSTEM SHALL NOT** allow QC approval.
-* **WHEN** QC decision is saved, **THE SYSTEM SHALL** write an audit log.
-
-## 15.3 Storage Assignment
-
-* **WHEN** a batch is approved, **THE SYSTEM SHALL** recommend a storage location.
-* **WHEN** storage is recommended, **THE SYSTEM SHALL** check temperature compatibility, hazard compatibility, FEFO, and capacity.
-* **IF** no compatible location exists, **THE SYSTEM SHALL** create a storage exception alert.
-* **WHEN** Warehouse confirms putaway, **THE SYSTEM SHALL** update inventory location.
-
-## 15.4 IoT Alerts
-
-* **WHEN** a sensor reading exceeds threshold, **THE SYSTEM SHALL** create an alert.
-* **WHEN** an alert is created, **THE SYSTEM SHALL** assign it to the relevant role.
-* **WHEN** an alert is resolved, **THE SYSTEM SHALL** require resolution note.
-* **WHEN** an alert changes status, **THE SYSTEM SHALL** write an audit log.
-
-## 15.5 Production and Shipping
-
-* **WHEN** PPIC creates production order, **THE SYSTEM SHALL** check raw material availability.
-* **IF** required material is not Approved and Available, **THE SYSTEM SHALL** block production start or require manager override.
-* **WHEN** production is completed, **THE SYSTEM SHALL** create finished goods batch.
-* **IF** finished goods QC is not Approved, **THE SYSTEM SHALL** block shipping.
-* **WHEN** dispatch is confirmed, **THE SYSTEM SHALL** record customer, FG batch, quantity, and timestamp.
-
----
-
-# 16. Database Entities
-
-| Entity                 | Key Fields                                                                                | Relationships                 |
-| ---------------------- | ----------------------------------------------------------------------------------------- | ----------------------------- |
-| Users                  | user_id, name, email, role_id, status, last_login                                         | Belongs to Role               |
-| Roles                  | role_id, role_name, description                                                           | Has many Users                |
-| Permissions            | permission_id, role_id, module, action, data_scope                                        | Defines RBAC                  |
-| Suppliers              | supplier_id, name, approval_status, rating, contact                                       | Linked to POs and receipts    |
-| Customers              | customer_id, name, contact, address                                                       | Linked to shipping orders     |
-| Raw Materials          | material_id, name, category, hazard_class_id, temp_min, temp_max, shelf_life_days         | Used in PO, batch, BOM        |
-| Products               | product_id, name, category, storage_requirement                                           | Linked to BOM and FG batches  |
-| Bill of Materials      | bom_id, product_id, material_id, required_qty                                             | Used for planning             |
-| Purchase Orders        | po_id, supplier_id, material_id, ordered_qty, expected_date, status                       | Has receipts                  |
-| Raw Material Receipts  | receipt_id, po_id, received_qty, delivery_note, coa_status, received_by, received_at      | Generates batch               |
-| Batches                | batch_id, receipt_id, material_id, supplier_lot, expiry_date, status, current_location_id | Central traceability entity   |
-| QC Inspections         | qc_id, batch_id, sample_id, inspection_type, status, inspector_id                         | Has results and CV            |
-| QC Parameters          | parameter_id, material_id, name, min_limit, max_limit, method                             | Defines QC checklist          |
-| QC Results             | result_id, qc_id, parameter_id, value, pass_fail, notes                                   | Linked to QC inspection       |
-| CV Results             | cv_id, qc_id, image_url, defect_type, confidence_score, recommendation, model_version     | Supports QC decision          |
-| Warehouse Locations    | location_id, zone, rack, bin, temp_zone, capacity, status                                 | Holds inventory               |
-| Inventory Lots         | inventory_id, batch_id, location_id, quantity, reserved_qty, status                       | Tracks inventory              |
-| Storage Rules          | rule_id, hazard_class_id, temp_min, temp_max, compatible_zone, segregation_rule           | Used by slotting              |
-| Hazard Classes         | hazard_class_id, name, incompatible_with                                                  | Linked to materials           |
-| IoT Sensors            | sensor_id, location_id, sensor_type, status, calibration_due_date                         | Produces readings             |
-| Sensor Readings        | reading_id, sensor_id, value, unit, timestamp, status                                     | Triggers alerts               |
-| Alerts                 | alert_id, type, severity, entity_type, entity_id, assigned_to, status, resolved_at        | Linked to events              |
-| Production Orders      | production_order_id, product_id, planned_qty, planned_date, status                        | Consumes materials            |
-| Material Issues        | issue_id, production_order_id, batch_id, quantity_issued, issued_by                       | Links warehouse to production |
-| Material Consumption   | consumption_id, production_order_id, batch_id, quantity_used                              | Genealogy                     |
-| Finished Goods Batches | fg_batch_id, production_order_id, product_id, quantity, status                            | Linked to FG QC               |
-| Finished Goods QC      | fg_qc_id, fg_batch_id, result, inspector_id, release_status, notes                        | Controls shipping             |
-| Shipping Orders        | shipping_id, customer_id, fg_batch_id, quantity, schedule_date, dispatch_status           | Outbound traceability         |
-| Audit Logs             | audit_id, user_id, action, entity, entity_id, old_value, new_value, timestamp, reason     | Immutable audit trail         |
-
----
-
-# 17. Process Input / Output / Logging
-
-|  # | Process               | Actor         | Input                       | System Output    | Audit / Log        | Validation             | KPI                |
-| -: | --------------------- | ------------- | --------------------------- | ---------------- | ------------------ | ---------------------- | ------------------ |
-|  1 | Demand Forecast       | PPIC          | Product, period, demand qty | Forecast ID      | Forecast created   | Valid product/period   | Forecast demand    |
-|  2 | Raw Material Ordering | PPIC          | Supplier, material, qty     | PO number        | PO created         | Approved supplier      | Open PO            |
-|  3 | Raw Material Arrival  | Warehouse     | PO, qty, COA, delivery note | Receipt ID       | Receiving log      | PO match               | Incoming lots      |
-|  4 | Batch Creation        | System        | Receipt data                | Batch ID         | Batch creation log | Unique ID              | New batches        |
-|  5 | QC Sampling           | QC            | Batch, sample qty           | Sample ID        | Sampling log       | QC Pending only        | Samples pending    |
-|  6 | CV Inspection         | QC/System     | Image                       | CV score/result  | CV result log      | Image exists           | AI flagged lots    |
-|  7 | QC Validation         | QC            | QC parameter results        | QC result        | Inspection log     | Required params        | QC cycle time      |
-|  8 | QC Decision           | QC            | Decision, reason            | Batch status     | Decision log       | Reason for Hold/Reject | Pass rate          |
-|  9 | Storage Assignment    | System        | Batch, rules                | Recommended slot | Rule log           | Compatible slot        | Utilization        |
-| 10 | Putaway               | Warehouse     | Batch, slot                 | Inventory lot    | Movement log       | Approved only          | Putaway completion |
-| 11 | IoT Monitoring        | System        | Sensor reading              | Reading status   | Sensor log         | Range check            | Anomaly count      |
-| 12 | Alert Handling        | Assigned user | Action note                 | Alert status     | Alert lifecycle    | Closure note           | Open alerts        |
-| 13 | Production Scheduling | PPIC          | Product, qty, date          | Production order | Schedule log       | Material availability  | Schedule adherence |
-| 14 | Material Issue        | Warehouse     | Batch, qty                  | Issue record     | Issue log          | Approved only          | Issue accuracy     |
-| 15 | Production Execution  | Production    | Stage, consumption, output  | Production log   | Execution log      | Material issued        | Yield              |
-| 16 | Finished Goods QC     | QC            | FG test results             | Release status   | FG QC log          | Params complete        | FG release rate    |
-| 17 | FG Storage            | Warehouse     | FG batch, location          | FG inventory     | Putaway log        | FG approved            | FG inventory       |
-| 18 | Shipping Schedule     | PPIC          | Customer, FG batch, date    | Shipping order   | Schedule log       | FG approved            | Shipping readiness |
-| 19 | Dispatch              | Warehouse     | Shipment, qty               | Dispatch record  | Dispatch log       | Batch matches schedule | On-time dispatch   |
-| 20 | Dashboard Reporting   | System        | Operational data            | KPI views        | Report access log  | Role scope             | KPI summary        |
-| 21 | Admin Control         | Admin         | Users/rules/master data     | Config update    | Admin log          | Admin only             | Config changes     |
-| 22 | Audit Logging         | System        | Critical action             | Audit record     | Immutable log      | Required fields        | Audit completeness |
-
----
-
-# 18. Website Screens
-
-| Screen               | Purpose                | Roles                           | Key Actions            | Key Data                  |
-| -------------------- | ---------------------- | ------------------------------- | ---------------------- | ------------------------- |
-| Login                | User authentication    | All                             | Login                  | Email, role               |
-| Role Dashboard       | Role-specific overview | All                             | Open tasks             | KPIs, alerts, tasks       |
-| Demand Forecast      | Plan demand            | PPIC, Manager                   | Create/upload forecast | Product, period, demand   |
-| Purchase Orders      | Manage orders          | PPIC, Manager                   | Create/edit PO         | Supplier, material, qty   |
-| Receiving            | Receive raw material   | Warehouse                       | Create receipt         | PO, COA, qty              |
-| Batch Detail         | Trace one batch        | Relevant roles                  | View status/history    | QC, inventory, movement   |
-| QC Queue             | Manage QC workload     | QC                              | Start inspection       | QC Pending batches        |
-| QC Detail            | Record QC              | QC                              | Enter parameters       | Sample, COA, results      |
-| CV Review            | Review AI result       | QC, Manager                     | Review recommendation  | Image, defect, confidence |
-| QC Decision          | Release/block batch    | QC                              | Approve/reject/hold    | Result, reason            |
-| Storage Assignment   | Assign location        | Warehouse                       | Confirm slot           | Suggested location        |
-| Warehouse Map        | Visual warehouse       | Warehouse, Manager              | View occupancy         | Zone, rack, bin           |
-| IoT Monitoring       | Monitor environment    | Warehouse, Maintenance, Manager | View readings          | Temp, humidity, sensor    |
-| Alert Center         | Resolve exceptions     | Assigned roles                  | Acknowledge/resolve    | Severity, owner, status   |
-| Production Schedule  | Plan production        | PPIC, Production, Manager       | Create order           | Product, qty, date        |
-| Material Issue       | Issue material         | Warehouse, Production           | Issue batch            | Batch, qty, FEFO          |
-| Production Execution | Track production       | Production                      | Log stages/output      | Status, yield             |
-| Finished Goods QC    | Release FG             | QC                              | Approve/reject/hold    | FG batch, QC result       |
-| Shipping Schedule    | Plan shipment          | PPIC, Warehouse                 | Schedule shipment      | Customer, FG batch        |
-| Dispatch             | Ship goods             | Warehouse                       | Confirm dispatch       | Batch, qty, customer      |
-| Reports              | Analyze operations     | Manager, Auditor                | Filter/export          | KPIs, traceability        |
-| Admin Settings       | Configure system       | Admin                           | Manage users/rules     | Users, roles, master data |
-| Audit Log            | Review actions         | Admin, Manager, Auditor         | Search/filter          | User, action, timestamp   |
-
----
-
-# 19. Dashboard KPIs
-
-## Manager
-
-* Open alerts by severity.
-* QC pending count.
-* QC pass/reject rate.
-* Quarantine lots.
-* Rejected lots by supplier.
-* Cold-chain anomaly count.
-* Production schedule adherence.
-* Raw material shortage risk.
-* Finished goods readiness.
-* Shipping readiness.
-
-## PPIC
-
-* Forecast vs available stock.
-* Material shortage risk.
-* Open purchase orders.
-* Production orders by status.
-* Material reservation status.
-* Finished goods available.
-* Shipping schedule readiness.
-
-## Warehouse
-
-* Receiving tasks pending.
-* Putaway tasks pending.
-* Warehouse utilization.
-* Near-expiry lots.
-* Misplaced batch alerts.
-* Material issue tasks.
-* Dispatch tasks today.
-
-## QC
-
-* QC pending lots.
-* QC cycle time.
-* AI-flagged lots.
-* Hold lots awaiting decision.
-* Rejected lots.
-* Finished goods QC pending.
-
-## Production
-
-* Production orders today.
-* Material readiness.
-* Work in progress.
-* Yield variance.
-* Delayed production orders.
-
-## Maintenance
-
-* Offline sensors.
-* Calibration due sensors.
-* Temperature anomaly by zone.
-* Sensor alert resolution time.
-
-## Admin
-
-* Active users.
-* Role changes.
-* Failed login attempts.
-* Master data changes.
-* Audit log activity.
-
-## Auditor
-
-* Audit events by module.
-* Batch traceability completeness.
-* Exception approvals.
-* Rejected/held batch history.
-* Dispatch compliance.
-
----
-
-# 20. Alert Types
-
-| Alert Type          | Trigger                                         | Severity   | Owner                   |
-| ------------------- | ----------------------------------------------- | ---------- | ----------------------- |
-| Temperature Anomaly | Reading outside allowed range                   | High       | Warehouse / Maintenance |
-| Humidity Anomaly    | Humidity outside range                          | Medium     | Warehouse / Maintenance |
-| Sensor Offline      | No reading for expected interval                | Medium     | Maintenance             |
-| Calibration Due     | Calibration date approaching                    | Low/Medium | Maintenance             |
-| Near Expiry         | Batch near expiry threshold                     | Medium     | Warehouse / PPIC        |
-| Hazard Conflict     | Incompatible materials assigned near each other | High       | Warehouse / Manager     |
-| QC Hold             | Batch placed on hold                            | Medium     | QC / Manager            |
-| Material Shortage   | Production order lacks approved stock           | High       | PPIC                    |
-| Shipping Blocked    | Shipment uses unreleased FG                     | High       | PPIC / Warehouse        |
-
----
-
-# 21. Non-Functional Requirements
-
-| Category             | Requirement                                                          |
-| -------------------- | -------------------------------------------------------------------- |
-| Usability            | Common role tasks should be reachable within 3 clicks from dashboard |
-| Security             | Backend must enforce role permissions, not only frontend hiding      |
-| Performance          | MVP dashboards should load within 3 seconds using demo data          |
-| Reliability          | Demo must work without real IoT hardware                             |
-| Data Integrity       | Critical records should be soft-deleted or status-locked             |
-| Auditability         | Critical actions must always generate audit log                      |
-| Maintainability      | Code should be separated by service/module boundary                  |
-| Scalability          | Service boundaries should allow future extraction into microservices |
-| Compliance Readiness | Support QC release, quarantine, rejection, traceability, and audit   |
-| Demo Reliability     | Seed data must support a complete end-to-end scenario                |
-
----
-
-# 22. Kiro / Starter Template Implementation Guidance
-
-## 22.1 Recommended Kiro Spec Structure
-
-```text
-.kiro/
-  specs/
-    sima-arome-smart-operations/
-      requirements.md
-      design.md
-      tasks.md
-  steering/
-    product.md
-    tech.md
-    structure.md
-docs/
-  PRD.md
-```
-
-## 22.2 Recommended Project Modules
-
-```text
-src/
-  app/
-    dashboard/
-    receiving/
-    qc/
-    warehouse/
-    iot/
-    alerts/
-    production/
-    shipping/
-    admin/
-    audit/
-  services/
-    auth-rbac/
-    master-data/
-    receiving-batch/
-    qc/
-    computer-vision/
-    warehouse-inventory/
-    iot-telemetry/
-    alerts/
-    production/
-    shipping/
-    dashboard-reporting/
-    audit-log/
-  components/
-    role/
-    dashboard/
-    tables/
-    forms/
-    workflow/
-    warehouse-map/
-    alerts/
-  data/
-    seed/
-    mock-iot/
-    mock-cv/
-```
-
-## 22.3 Implementation Rules for Kiro
-
-* Build role-based UI first.
-* Seed realistic demo users for every role.
-* Use mock data for IoT and CV.
-* Enforce backend authorization for every mutation.
-* Build vertical slice before adding extra features.
-* Use service modules even if deployed as one app.
-* Keep audit log implementation simple but consistent.
-* Avoid hardcoding UI permissions only in components; use central permission config.
-* Do not include `.env.local` or secrets in competition submission.
-
----
-
-# 23. MVP Demo Scenario
-
-## Scenario: Raw Material to Shipment with Cold-Chain Alert
-
-1. Warehouse logs in.
-2. Warehouse receives raw material from supplier.
-3. System generates batch ID `RM-2026-001`.
-4. Batch status becomes `QC Pending`.
-5. QC logs in.
-6. QC opens QC queue.
-7. QC reviews CV result showing “Packaging dent detected, confidence 82%.”
-8. QC enters manual results and approves batch with note.
-9. Warehouse sees storage recommendation: Cold Zone A, Rack C1.
-10. Warehouse confirms putaway.
-11. IoT dashboard shows Cold Zone A temperature rising above limit.
-12. System creates high-severity temperature alert.
-13. Maintenance acknowledges and resolves alert.
-14. PPIC creates production order.
-15. Warehouse issues approved material to production.
-16. Production logs consumption and output.
-17. System creates finished goods batch.
-18. QC approves finished goods.
-19. PPIC creates shipping schedule.
-20. Warehouse dispatches shipment.
-21. Manager opens dashboard and sees full traceability and audit trail.
-
----
-
-# 24. Acceptance Criteria
-
-The MVP is accepted if it can demonstrate:
-
-| Acceptance Area    | Criteria                                                          |
-| ------------------ | ----------------------------------------------------------------- |
-| Role-specific UI   | Each role sees different dashboard, columns, filters, and actions |
-| Batch creation     | Receiving creates batch ID and QC Pending status                  |
-| QC workflow        | QC can approve/reject/hold with reason                            |
-| CV support         | CV result appears as recommendation only                          |
-| Warehouse slotting | Approved batch gets storage recommendation                        |
-| IoT alert          | Simulated anomaly creates alert                                   |
-| Alert handling     | User can acknowledge and resolve alert                            |
-| Production         | Approved material can be issued and consumed                      |
-| FG QC              | Finished goods must be approved before shipping                   |
-| Shipping block     | Unreleased FG cannot be dispatched                                |
-| Audit log          | Critical actions appear in audit log                              |
-| Traceability       | Batch page shows receiving → QC → storage → production → shipping |
-
----
-
-# 25. Risks and Mitigations
-
-| Risk                          | Impact                  | Mitigation                                   |
-| ----------------------------- | ----------------------- | -------------------------------------------- |
-| Scope too large               | Team may not finish     | Build vertical slice first                   |
-| Microservices overengineering | Slower delivery         | Implement modular monorepo MVP               |
-| CV model weak                 | Demo may fail           | Use controlled mock CV results               |
-| No hardware sensors           | Demo dependency risk    | Use simulated IoT feed                       |
-| UI too generic                | Role separation unclear | Build role-specific dashboards and columns   |
-| Missing audit log             | Compliance story weak   | Log from first workflow                      |
-| Warehouse rules too simple    | Less realistic          | Include hazard, temp, FEFO, and capacity     |
-| Judges challenge realism      | Pitch risk              | Emphasize human QC approval and auditability |
-
----
-
-# 26. Build Priority
-
-## Phase 1: Foundation
-
-1. Seed users and roles.
-2. Create permission config.
-3. Create role dashboard layout.
-4. Create master data seed.
-5. Create audit log helper.
-
-## Phase 2: Core Vertical Slice
-
-1. Receiving form.
-2. Batch ID generation.
-3. QC queue.
-4. QC detail.
-5. CV mock result.
-6. QC decision.
-
-## Phase 3: Warehouse and IoT
-
-1. Storage recommendation.
-2. Warehouse map.
-3. Inventory lot update.
-4. Simulated IoT readings.
-5. Alert center.
-
-## Phase 4: Production and Shipping
-
-1. Production schedule.
-2. Material issue.
-3. Production execution.
-4. Finished goods QC.
-5. Shipping schedule.
-6. Dispatch.
-
-## Phase 5: Pitch Polish
-
-1. Manager dashboard.
-2. Batch traceability page.
-3. Audit log page.
-4. Demo data.
-5. Final UI polish.
-
----
-
-# 27. Final Product Positioning
-
-The product should be pitched as:
-
-> **A Smart Operations Control Tower for Natural Extract Manufacturing.**
-
-Recommended pitch line:
-
-> “Sigma Arome does not need a fantasy fully automated factory. It needs a practical, auditable operations platform that connects QC, warehouse, IoT monitoring, production, and shipping into one role-based system. Our MVP uses simulated IoT and computer vision to demonstrate how batch traceability, cold-chain visibility, and QC release control can work in a real manufacturing environment.”
-
-This PRD is designed so Kiro can turn it into requirements, design, tasks, workflows, collections, RBAC, and API routes while still keeping the hackathon MVP buildable.
+The product should not be pitched as a complete ERP or sales platform yet. It is the internal operations foundation that future procurement, sales, shipping, and ERP modules can connect to later.

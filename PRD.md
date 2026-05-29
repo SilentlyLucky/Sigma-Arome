@@ -359,7 +359,7 @@ Examples:
 
 | Field / Action                   | Admin | Manager                | PPIC              | Warehouse Operation   | QC                | Logistic               | Production               |
 | -------------------------------- | ----- | ---------------------- | ----------------- | --------------------- | ----------------- | ---------------------- | ------------------------ |
-| Raw Material Order No.           | Show  | Show                   | Show              | Show receiving view   | Summary           | Show coordination view | Hide                     |
+| Raw Material Order No.           | Show  | Show                   | Show              | Show    | Summary           | Show coordination view | Hide                     |
 | Batch ID                         | Show  | Show                   | Show              | Show                  | Show              | Show                   | Show if issued/needed    |
 | Material Name                    | Show  | Show                   | Show              | Show                  | Show              | Show                   | Show                     |
 | Supplier Lot                     | Show  | Show                   | Summary           | Show                  | Show              | Summary                | Hide by default          |
@@ -626,9 +626,8 @@ Examples:
 | QC-006 | CV result must be marked as decision support only.                          | Must Have |
 | QC-007 | MVP may simulate CV result using mock data.                                 | Must Have |
 | QC-008 | QC must approve, reject, or hold raw material batch.                        | Must Have |
-| QC-009 | QC must approve, reject, or hold finished product batch.                    | Must Have |
-| QC-010 | Hold and reject decisions must require reason code.                         | Must Have |
-| QC-011 | System must block non-QC role from making QC decision.                      | Must Have |
+| QC-009 | Hold and reject decisions must require reason code.                         | Must Have |
+| QC-010 | System must block non-QC role from making QC decision.                      | Must Have |
 
 ## 11.6 Logistic Coordination
 
@@ -821,24 +820,24 @@ Legend: C = Create, R = Read, U = Update, D = Delete, A = Approve, X = No Access
 | User Management                | C/R/U/D |         X |              X |                      X |                    X |                   X |                     X |
 | Master Data                    | C/R/U/D |         R |              R |                      R |                    R |                   R |                     R |
 | Supplier Master                | C/R/U/D |         R |              R |              R summary |            R summary |                   R |                     X |
-| Raw Material Order             |       R |         R |          C/R/U |       R receiving view |            R summary | R coordination view |                     X |
-| Raw Material Receiving         |       R |         R |              R |                  C/R/U |                    R |            R status |                     X |
-| Batch Master                   |       R |         R |     R planning |         C/R/U location |          R/U quality |          R movement |             R limited |
-| Raw Material QC                |       R |         R |      R summary |              R summary |              C/R/U/A |           R summary |                     X |
-| CV Review                      |       R | R summary |              X |                      X |                C/R/U |                   X |                     X |
-| Storage Assignment             |       R |         R |      R summary |                  C/R/U |                    R |      R coordination |             R limited |
-| Warehouse Map                  |       R |         R | R zone summary |                  C/R/U |            R limited |         R read-only |             R limited |
-| IoT Monitoring                 |       R |         R |      R summary |     R/U alert handling |            R summary |      R coordination |             R limited |
-| Alert Center                   |       R |       R/A |              R |   R/U warehouse alerts | R/U/A quality alerts | R/U logistic alerts | R/U production alerts |
-| PPIC Production Planning       |       R |       R/A |          C/R/U |                      R |                    R |      R coordination |                     R |
-| Material Request               |       R |         R |          C/R/U |            R task view |                    R |      R/U coordinate |                     R |
-| Internal Movement Coordination |       R |         R |              R |     R/U task execution |                    X |               C/R/U |              R status |
-| Material Issue                 |       R |         R |              R |   C/R/U physical issue |                    R |      R/U coordinate |           R/U confirm |
-| Production Execution           |       R |         R |              R |                      R |                    R |            R status |                 C/R/U |
-| Finished Product QC            |       R |         R |      R summary |                      R |              C/R/U/A |      R coordination |                     R |
-| Finished Product Putaway       |       R |         R |      R summary | C/R/U physical putaway |                    R |      R/U coordinate |                     R |
-| Dashboard                      |       R |         R |              R |                      R |                    R |                   R |                     R |
-| Audit Log                      |       R |         R |              X |                      X |                    X |                   X |                     X |
+| Raw Material Order             | C/R/U/D |         R |        C/R/U/D |                     R  |            R summary | R coordination view |                     X |
+| Raw Material Receiving         | C/R/U/D |         R |              R |                  C/R/U |                    R |            R status |                     X |
+| Batch Master                   | C/R/U/D |         R |     R planning |         C/R/U location |          R/U quality |          R movement |             R limited |
+| Raw Material QC                | C/R/U/D |         R |      R summary |              R summary |              C/R/U/A |           R summary |                     X |
+| CV Review                      | C/R/U/D | R summary |              X |                      X |                C/R/U |                   X |                     X |
+| Storage Assignment             | C/R/U/D |         R |      R summary |                  C/R/U |                    R |      R coordination |             R limited |
+| Warehouse Map                  | C/R/U/D |         R | R zone summary |                  C/R/U |            R limited |         R read-only |             R limited |
+| IoT Monitoring                 | C/R/U/D |         R |      R summary |     R/U alert handling |            R summary |      R coordination |             R limited |
+| Alert Center                   | C/R/U/D |       R/A |              R |   R/U warehouse alerts | R/U/A quality alerts | R/U logistic alerts | R/U production alerts |
+| PPIC Production Planning       | C/R/U/D |       R/A |        C/R/U/D |                      R |                    R |      R coordination |                     R |
+| Material Request               | C/R/U/D |         R |        C/R/U/D |            R task view |                    R |      R/U coordinate |                     R |
+| Internal Movement Coordination | C/R/U/D |         R |              R |     R/U task execution |                    X |               C/R/U |              R status |
+| Material Issue                 | C/R/U/D |         R |              R |   C/R/U physical issue |                    R |      R/U coordinate |           R/U confirm |
+| Production Execution           | C/R/U/D |         R |              R |                      R |                    R |            R status |                 C/R/U |
+| Finished Product QC            | C/R/U/D |         R |      R summary |                      R |              C/R/U/A |      R coordination |                     R |
+| Finished Product Putaway       | C/R/U/D |         R |      R summary | C/R/U physical putaway |                    R |      R/U coordinate |                     R |
+| Dashboard                      | C/R/U/D |         R |              R |                      R |                    R |                   R |                     R |
+| Audit Log                      | C/R/U/D |         R |              X |                      X |                    X |                   X |                     X |
 
 ---
 
@@ -1162,7 +1161,7 @@ Provide cross-functional visibility and exception management.
 | Material Request              | PPIC                                     | Request material from Logistic                                          | Create/track request                    |
 | Warehouse Operation Dashboard | Warehouse Operation                      | Physical warehouse task overview                                        | Open receiving, putaway, issue tasks    |
 | Raw Material Receiving        | Warehouse Operation                      | Record incoming raw material                                            | Create receipt and batch                |
-| Batch Detail                  | Multiple                                 | View batch status and history                                           | Role-specific actions                   |
+| Batch Detail                  | All                                 | View batch status and history                                           | Role-specific actions                   |
 | Storage Assignment            | Warehouse Operation                      | Assign approved batch to location                                       | Confirm putaway                         |
 | Warehouse Map                 | Warehouse Operation / Manager / Logistic | Visualize storage                                                       | View/confirm location depending on role |
 | Material Issue                | Warehouse Operation / Production         | Transfer material to production                                         | Issue and confirm receipt               |
@@ -1428,20 +1427,23 @@ For MVP, build as a modular web application. The product can be microservices-or
 ```text
 /apps/web
 /apps/api
+
 /modules/auth-rbac
 /modules/admin
+/modules/master-data
 /modules/manager
 /modules/ppic
 /modules/warehouse-operation
 /modules/qc
 /modules/logistic
-/modules/computer-vision
-/modules/iot
-/modules/alerts
 /modules/production
+/modules/inventory
+/modules/computer-vision
+/modules/iot-monitoring
+/modules/alerts
 /modules/finished-goods
-/modules/dashboard
-/modules/audit
+/modules/dashboard-reporting
+/modules/audit-log
 ```
 
 ## 20.1 Future Microservices Mapping

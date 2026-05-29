@@ -1,0 +1,42 @@
+'use client';
+
+import { Stack, Title, Text, Divider } from '@mantine/core';
+import { CollectionForm } from '@/components/ui/collection-form';
+import { CollectionList } from '@/components/ui/collection-list';
+import { useRouter, useParams } from 'next/navigation';
+
+export default function BOMDetailPage() {
+  const router = useRouter();
+  const params = useParams();
+  const id = params.id as string;
+
+  return (
+    <Stack gap="md">
+      <div>
+        <Title order={2}>BOM / Formula Detail</Title>
+        <Text c="dimmed" size="sm">Edit BOM header and manage line items (materials + quantities per unit).</Text>
+      </div>
+
+      <CollectionForm
+        collection="boms"
+        mode="edit"
+        id={id}
+        onSuccess={() => router.push('/ppic/bom')}
+        onCancel={() => router.push('/ppic/bom')}
+      />
+
+      <Divider label="BOM Items — Materials Required" labelPosition="left" />
+
+      <CollectionList
+        collection="bom_items"
+        enableCreate
+        enableDelete
+        enableSort
+        filter={{ bom_id: { _eq: id } }}
+        fields={['material_id', 'qty_per_unit', 'unit', 'scrap_percentage']}
+        onCreate={() => router.push(`/ppic/bom/${id}/items/create`)}
+        onItemClick={(item) => router.push(`/ppic/bom/${id}/items/${item.id}`)}
+      />
+    </Stack>
+  );
+}

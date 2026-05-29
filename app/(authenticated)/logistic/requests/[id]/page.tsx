@@ -6,6 +6,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { notifications } from '@mantine/notifications';
 import { IconCheck, IconInfoCircle } from '@tabler/icons-react';
+import { useNameLookup } from '@/lib/hooks/useNameLookup';
 
 const STATUS_COLORS: Record<string, string> = { draft: 'gray', submitted: 'blue', approved: 'green', partially_issued: 'yellow', issued: 'teal', cancelled: 'red' };
 
@@ -15,6 +16,7 @@ export default function LogisticRequestDetailPage() {
   const requestId = id as string;
   const [status, setStatus] = useState<string | null>(null);
   const [approving, setApproving] = useState(false);
+  const materialNames = useNameLookup('raw_materials');
 
   useEffect(() => {
     fetch(`/api/items/material_requests/${requestId}?fields[]=status`)
@@ -71,6 +73,13 @@ export default function LogisticRequestDetailPage() {
         enableSort
         filter={{ material_request_id: { _eq: requestId } }}
         fields={['material_id', 'requested_qty', 'approved_qty', 'issued_qty', 'unit', 'shortage_qty']}
+        renderCell={(item, header) => {
+          if (header.value === 'material_id') {
+            const name = materialNames.get(String(item.material_id ?? ''));
+            return name ? <span style={{ fontSize: 'var(--mantine-font-size-sm)' }}>{name}</span> : null;
+          }
+          return null;
+        }}
       />
 
       <Button variant="subtle" onClick={() => router.push('/logistic/requests')}>← Back to Queue</Button>

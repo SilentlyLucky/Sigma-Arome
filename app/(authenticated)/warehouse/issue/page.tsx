@@ -3,8 +3,11 @@
 import { Stack, Title, Text, Alert } from '@mantine/core';
 import { CollectionList } from '@/components/ui/collection-list';
 import { IconInfoCircle } from '@tabler/icons-react';
+import { useNameLookup } from '@/lib/hooks/useNameLookup';
 
 export default function MaterialIssuePage() {
+  const materialNames = useNameLookup('raw_materials');
+
   return (
     <Stack gap="md">
       <div>
@@ -21,6 +24,13 @@ export default function MaterialIssuePage() {
         enableSort
         filter={{ status: { _eq: 'stored_available' } }}
         fields={['batch_number', 'material_id', 'qty', 'unit', 'current_location_id', 'expiry_date']}
+        renderCell={(item, header) => {
+          if (header.value === 'material_id') {
+            const name = materialNames.get(String(item.material_id ?? ''));
+            return name ? <span style={{ fontSize: 'var(--mantine-font-size-sm)' }}>{name}</span> : null;
+          }
+          return null;
+        }}
       />
     </Stack>
   );

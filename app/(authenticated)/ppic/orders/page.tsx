@@ -3,9 +3,13 @@
 import { Stack, Title, Text } from '@mantine/core';
 import { CollectionList } from '@/components/ui/collection-list';
 import { useRouter } from 'next/navigation';
+import { useNameLookup } from '@/lib/hooks/useNameLookup';
 
 export default function RawMaterialOrdersPage() {
   const router = useRouter();
+  const materialNames = useNameLookup('raw_materials');
+  const supplierNames = useNameLookup('suppliers', 'supplier_name');
+
   return (
     <Stack gap="md">
       <div>
@@ -25,6 +29,17 @@ export default function RawMaterialOrdersPage() {
         fields={['order_number', 'material_id', 'supplier_id', 'ordered_qty', 'unit', 'expected_arrival_date', 'priority', 'status']}
         onCreate={() => router.push('/ppic/orders/create')}
         onItemClick={(item) => router.push(`/ppic/orders/${item.id}`)}
+        renderCell={(item, header) => {
+          if (header.value === 'material_id') {
+            const name = materialNames.get(String(item.material_id ?? ''));
+            return name ? <span style={{ fontSize: 'var(--mantine-font-size-sm)' }}>{name}</span> : null;
+          }
+          if (header.value === 'supplier_id') {
+            const name = supplierNames.get(String(item.supplier_id ?? ''));
+            return name ? <span style={{ fontSize: 'var(--mantine-font-size-sm)' }}>{name}</span> : null;
+          }
+          return null;
+        }}
       />
     </Stack>
   );

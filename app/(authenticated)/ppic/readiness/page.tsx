@@ -3,17 +3,11 @@
 import { Stack, Title, Text, Alert } from '@mantine/core';
 import { CollectionList } from '@/components/ui/collection-list';
 import { IconInfoCircle } from '@tabler/icons-react';
+import { useNameLookup } from '@/lib/hooks/useNameLookup';
 
-/**
- * Material Readiness View
- *
- * Shows approved raw material availability for production planning.
- * PPIC uses this to check if enough material is available before creating
- * production orders and material requests.
- *
- * Per PRD PPIC-006: PPIC must see approved raw material availability summary.
- */
 export default function MaterialReadinessPage() {
+  const materialNames = useNameLookup('raw_materials');
+
   return (
     <Stack gap="md">
       <div>
@@ -36,6 +30,13 @@ export default function MaterialReadinessPage() {
         enableResize
         enableHeaderMenu
         fields={['order_number', 'material_id', 'ordered_qty', 'unit', 'status', 'expected_arrival_date']}
+        renderCell={(item, header) => {
+          if (header.value === 'material_id') {
+            const name = materialNames.get(String(item.material_id ?? ''));
+            return name ? <span style={{ fontSize: 'var(--mantine-font-size-sm)' }}>{name}</span> : null;
+          }
+          return null;
+        }}
       />
     </Stack>
   );

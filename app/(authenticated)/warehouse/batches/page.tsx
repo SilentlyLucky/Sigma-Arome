@@ -3,9 +3,12 @@
 import { Stack, Title, Text } from '@mantine/core';
 import { CollectionList } from '@/components/ui/collection-list';
 import { useRouter } from 'next/navigation';
+import { useNameLookup } from '@/lib/hooks/useNameLookup';
 
 export default function BatchesPage() {
   const router = useRouter();
+  const materialNames = useNameLookup('raw_materials');
+
   return (
     <Stack gap="md">
       <div>
@@ -21,6 +24,13 @@ export default function BatchesPage() {
         enableResize
         fields={['batch_number', 'material_id', 'batch_type', 'qty', 'unit', 'status', 'current_location_id', 'expiry_date']}
         onItemClick={(item) => router.push(`/warehouse/batches/${item.id}`)}
+        renderCell={(item, header) => {
+          if (header.value === 'material_id') {
+            const name = materialNames.get(String(item.material_id ?? ''));
+            return name ? <span style={{ fontSize: 'var(--mantine-font-size-sm)' }}>{name}</span> : null;
+          }
+          return null;
+        }}
       />
     </Stack>
   );

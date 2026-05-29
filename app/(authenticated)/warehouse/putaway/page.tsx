@@ -4,9 +4,12 @@ import { Stack, Title, Text, Alert } from '@mantine/core';
 import { CollectionList } from '@/components/ui/collection-list';
 import { IconInfoCircle } from '@tabler/icons-react';
 import { useRouter } from 'next/navigation';
+import { useNameLookup } from '@/lib/hooks/useNameLookup';
 
 export default function PutawayPage() {
   const router = useRouter();
+  const materialNames = useNameLookup('raw_materials');
+
   return (
     <Stack gap="md">
       <div>
@@ -23,6 +26,13 @@ export default function PutawayPage() {
         filter={{ status: { _in: ['approved', 'storage_assigned'] } }}
         fields={['batch_number', 'material_id', 'qty', 'unit', 'status', 'current_location_id']}
         onItemClick={(item) => router.push(`/warehouse/batches/${item.id}`)}
+        renderCell={(item, header) => {
+          if (header.value === 'material_id') {
+            const name = materialNames.get(String(item.material_id ?? ''));
+            return name ? <span style={{ fontSize: 'var(--mantine-font-size-sm)' }}>{name}</span> : null;
+          }
+          return null;
+        }}
       />
     </Stack>
   );

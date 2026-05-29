@@ -23,7 +23,7 @@ export default function BOMListPage() {
         enableSort
         enableHeaderMenu
         enableResize
-        fields={['name', 'product_id', 'version', 'is_active']}
+        fields={['name', 'version', 'is_active']}
         onCreate={() => router.push('/ppic/bom/create')}
         onItemClick={(item) => router.push(`/ppic/bom/${item.id}`)}
       />

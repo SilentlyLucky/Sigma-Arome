@@ -7,6 +7,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { notifications } from '@mantine/notifications';
 import { IconInfoCircle } from '@tabler/icons-react';
+import { useNameLookup } from '@/lib/hooks/useNameLookup';
 
 const STATUS_COLORS: Record<string, string> = {
   draft: 'gray', submitted: 'blue', approved: 'green',
@@ -23,6 +24,7 @@ export default function MaterialRequestDetailPage() {
   const id = params.id as string;
   const [status, setStatus] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const materialNames = useNameLookup('raw_materials');
 
   useEffect(() => {
     fetch(`/api/items/material_requests/${id}?fields[]=status`)
@@ -97,6 +99,13 @@ export default function MaterialRequestDetailPage() {
         fields={['material_id', 'requested_qty', 'unit', 'approved_qty', 'issued_qty', 'shortage_qty']}
         onCreate={() => router.push(`/ppic/requests/${id}/items/create`)}
         onItemClick={(item) => router.push(`/ppic/requests/${id}/items/${item.id}`)}
+        renderCell={(item, header) => {
+          if (header.value === 'material_id') {
+            const name = materialNames.get(String(item.material_id ?? ''));
+            return name ? <span style={{ fontSize: 'var(--mantine-font-size-sm)' }}>{name}</span> : null;
+          }
+          return null;
+        }}
       />
     </Stack>
   );

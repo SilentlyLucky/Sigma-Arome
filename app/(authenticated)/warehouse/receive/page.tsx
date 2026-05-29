@@ -4,7 +4,7 @@ import { Stack, Title, Text, Alert, Paper, Group, Button, Badge, Tabs } from '@m
 import { CollectionList } from '@/components/ui/collection-list';
 import { IconInfoCircle, IconAlertTriangle } from '@tabler/icons-react';
 import { useRouter } from 'next/navigation';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { notifications } from '@mantine/notifications';
 import { Input } from '@/components/ui/input';
 import { SelectDropdown } from '@/components/ui/select-dropdown';
@@ -20,6 +20,11 @@ export default function ReceiveMaterialPage() {
   const [materials, setMaterials] = useState<Material[]>([]);
   const [saving, setSaving] = useState(false);
   const [loadingData, setLoadingData] = useState(true);
+  const materialNameMap = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const m of materials) map.set(m.id, m.name);
+    return map;
+  }, [materials]);
 
   const [form, setForm] = useState({
     order_id: '',
@@ -255,6 +260,13 @@ export default function ReceiveMaterialPage() {
             enableResize
             fields={['receipt_number', 'order_id', 'material_id', 'received_qty', 'unit', 'packaging_condition', 'is_unplanned', 'date_created']}
             onItemClick={(item) => router.push(`/warehouse/receive/${item.id}`)}
+            renderCell={(item, header) => {
+              if (header.value === 'material_id') {
+                const name = materialNameMap.get(String(item.material_id ?? ''));
+                return name ? <span style={{ fontSize: 'var(--mantine-font-size-sm)' }}>{name}</span> : null;
+              }
+              return null;
+            }}
           />
         </Tabs.Panel>
       </Tabs>

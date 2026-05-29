@@ -4,11 +4,13 @@ import { Stack, Title, Text, Divider } from '@mantine/core';
 import { CollectionForm } from '@/components/ui/collection-form';
 import { CollectionList } from '@/components/ui/collection-list';
 import { useRouter, useParams } from 'next/navigation';
+import { useNameLookup } from '@/lib/hooks/useNameLookup';
 
 export default function BOMDetailPage() {
   const router = useRouter();
   const params = useParams();
   const id = params.id as string;
+  const materialNames = useNameLookup('raw_materials');
 
   return (
     <Stack gap="md">
@@ -37,6 +39,13 @@ export default function BOMDetailPage() {
         fields={['material_id', 'qty_per_unit', 'unit']}
         onCreate={() => router.push(`/ppic/bom/${id}/items/create`)}
         onItemClick={(item) => router.push(`/ppic/bom/${id}/items/${item.id}`)}
+        renderCell={(item, header) => {
+          if (header.value === 'material_id') {
+            const name = materialNames.get(String(item.material_id ?? ''));
+            return name ? <span style={{ fontSize: 'var(--mantine-font-size-sm)' }}>{name}</span> : null;
+          }
+          return null;
+        }}
       />
     </Stack>
   );

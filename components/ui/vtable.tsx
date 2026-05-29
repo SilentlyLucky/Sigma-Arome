@@ -284,7 +284,7 @@ export const VTable: React.FC<VTableProps> = ({
   // Uses minmax(120px, max-content) for auto-fit to content width (complaint #3).
   const columnStyle = useMemo(() => {
     let cols = internalHeaders
-      .map((header) => (header.width ? `${header.width}px` : "minmax(120px, max-content)"))
+      .map((header) => (header.width ? `${header.width}px` : "minmax(120px, 1fr)"))
       .join(" ");
 
     if (showSelect !== "none") cols = "36px " + cols;

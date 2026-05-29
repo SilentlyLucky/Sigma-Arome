@@ -1,24 +1,15 @@
 'use client';
 
-import { Stack, Title, Text, Group, Button, Alert, Paper } from '@mantine/core';
+import { Stack, Title, Text, Group, Button, Alert, Paper, Divider } from '@mantine/core';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect, useMemo } from 'react';
 import { notifications } from '@mantine/notifications';
-import { IconInfoCircle } from '@tabler/icons-react';
+import { IconInfoCircle, IconArrowRight } from '@tabler/icons-react';
 import { Input } from '@/components/ui/input';
 import { SelectDropdown } from '@/components/ui/select-dropdown';
 import { DateTime } from '@/components/ui/datetime';
 import { Textarea } from '@/components/ui/textarea';
 import dayjs from 'dayjs';
-
-/**
- * Custom Production Order create form.
- * - Product selection auto-resolves the matching active BOM (1 product = 1 formula).
- * - Unit is auto-populated from the product's metadata.
- * - All fields except Notes are required.
- * - Date pickers are date-only (no time), cannot be in the past.
- * - End date cannot be earlier than start date.
- */
 
 interface Product { id: string; name: string; code: string; unit: string }
 interface BOM { id: string; name: string; product_id: string; version: string; is_active: boolean }
@@ -40,10 +31,8 @@ export default function CreateProductionOrderPage() {
     notes: '',
   });
 
-  // Today's date as minimum for date pickers (no past dates)
   const todayStr = useMemo(() => dayjs().format('YYYY-MM-DD'), []);
 
-  // Fetch products and BOMs on mount
   const [loadingData, setLoadingData] = useState(true);
   useEffect(() => {
     Promise.all([
@@ -56,7 +45,6 @@ export default function CreateProductionOrderPage() {
     ]).finally(() => setLoadingData(false));
   }, []);
 
-  // Auto-resolve BOM when product changes (1 product = 1 active formula)
   const handleProductChange = (v: string | number | boolean | null) => {
     const productId = String(v ?? '');
     const selectedProduct = products.find((p) => p.id === productId);
@@ -71,37 +59,57 @@ export default function CreateProductionOrderPage() {
 
   const productChoices = products.map((p) => ({ text: `${p.name} (${p.code})`, value: p.id }));
 
-  // Resolved BOM name for display
-  const resolvedBomName = useMemo(() => {
-    if (!form.bom_id) return '';
-    const bom = allBoms.find((b) => b.id === form.bom_id);
-    return bom ? `${bom.name} (v${bom.version})` : '';
-  }, [form.bom_id, allBoms]);
-
-  // End date minimum = start date (if set), otherwise today
+  // Date minimums: Start ≥ today, End ≥ Start, Due ≥ End
   const endDateMin = useMemo(() => {
-    if (form.planned_start_date) {
-      return dayjs(form.planned_start_date).format('YYYY-MM-DD');
-    }
-    return todayStr;
+    return form.planned_start_date ? dayjs(form.planned_start_date).format('YYYY-MM-DD') : todayStr;
   }, [form.planned_start_date, todayStr]);
 
+  const dueDateMin = useMemo(() => {
+    return form.planned_end_date ? dayjs(form.planned_end_date).format('YYYY-MM-DD') : (form.planned_start_date ?? todayStr);
+  }, [form.planned_end_date, form.planned_start_date, todayStr]);
+
+  const handleStartDateChange = (v: string | null) => {
+    setForm((f) => {
+      const updated = { ...f, planned_start_date: v };
+      // Clear end date if it's now before start
+      if (v && f.planned_end_date && dayjs(f.planned_end_date).isBefore(dayjs(v))) {
+        updated.planned_end_date = null;
+        updated.due_date = null;
+      }
+      return updated;
+    });
+  };
+
+  const handleEndDateChange = (v: string | null) => {
+    setForm((f) => {
+      const updated = { ...f, planned_end_date: v };
+      // Clear due date if it's now before end
+      if (v && f.due_date && dayjs(f.due_date).isBefore(dayjs(v))) {
+        updated.due_date = null;
+      }
+      return updated;
+    });
+  };
+
   const handleSave = async () => {
-    // Validate all required fields (everything except notes)
     const errors: string[] = [];
     if (!form.product_id) errors.push('Product is required');
     const qty = typeof form.planned_qty === 'number' ? form.planned_qty : parseFloat(String(form.planned_qty));
     if (!qty || isNaN(qty) || qty <= 0) errors.push('Planned quantity must be a positive number');
     if (!form.unit) errors.push('Unit is required (select a product first)');
     if (!form.priority) errors.push('Priority is required');
-    if (!form.due_date) errors.push('Due date is required');
     if (!form.planned_start_date) errors.push('Planned start date is required');
     if (!form.planned_end_date) errors.push('Planned end date is required');
+    if (!form.due_date) errors.push('Due date is required');
 
-    // Validate end date >= start date
     if (form.planned_start_date && form.planned_end_date) {
       if (dayjs(form.planned_end_date).isBefore(dayjs(form.planned_start_date))) {
-        errors.push('Planned end date cannot be earlier than start date');
+        errors.push('End date must be on or after start date');
+      }
+    }
+    if (form.planned_end_date && form.due_date) {
+      if (dayjs(form.due_date).isBefore(dayjs(form.planned_end_date))) {
+        errors.push('Due date must be on or after end date');
       }
     }
 
@@ -156,12 +164,13 @@ export default function CreateProductionOrderPage() {
 
       <Paper p="md" radius="md" withBorder>
         <Stack gap="sm">
+          {/* Product + Quantity */}
           <Group grow align="flex-start">
             {loadingData ? (
-              <Input label="Product (Formula) *" placeholder="Loading products..." disabled onChange={() => {}} />
+              <Input label="Product *" placeholder="Loading products..." disabled onChange={() => {}} />
             ) : productChoices.length > 0 ? (
               <SelectDropdown
-                label="Product (Formula) *"
+                label="Product *"
                 placeholder="Select product to produce..."
                 choices={productChoices}
                 value={form.product_id || null}
@@ -169,18 +178,8 @@ export default function CreateProductionOrderPage() {
                 required
               />
             ) : (
-              <Input label="Product (Formula) *" value="" placeholder="No active products available" disabled onChange={() => {}} />
+              <Input label="Product *" value="" placeholder="No active products available" disabled onChange={() => {}} />
             )}
-            <Input
-              label="Resolved Formula"
-              value={resolvedBomName}
-              placeholder={form.product_id ? 'No active formula for this product' : 'Select a product first'}
-              disabled
-              onChange={() => {}}
-            />
-          </Group>
-
-          <Group grow align="flex-start">
             <Input
               label="Planned Quantity *"
               placeholder="e.g. 100.5"
@@ -192,7 +191,7 @@ export default function CreateProductionOrderPage() {
               step={0.01}
             />
             <Input
-              label="Unit *"
+              label="Unit"
               value={form.unit || ''}
               placeholder="Auto-filled from product"
               disabled
@@ -200,57 +199,56 @@ export default function CreateProductionOrderPage() {
             />
           </Group>
 
-          <Group grow align="flex-start">
-            <SelectDropdown
-              label="Priority *"
-              placeholder="Select priority level..."
-              choices={[
-                { text: 'Low', value: 'low' },
-                { text: 'Normal', value: 'normal' },
-                { text: 'High', value: 'high' },
-                { text: 'Urgent', value: 'urgent' },
-              ]}
-              value={form.priority}
-              onChange={(v) => setForm((f) => ({ ...f, priority: String(v ?? 'normal') }))}
-              required
-            />
-            <DateTime
-              label="Due Date *"
-              placeholder="Select due date"
-              type="date"
-              value={form.due_date}
-              onChange={(v) => setForm((f) => ({ ...f, due_date: v }))}
-              minDate={todayStr}
-              required
-            />
-          </Group>
+          <SelectDropdown
+            label="Priority *"
+            placeholder="Select priority level..."
+            choices={[
+              { text: 'Low', value: 'low' },
+              { text: 'Normal', value: 'normal' },
+              { text: 'High', value: 'high' },
+              { text: 'Urgent', value: 'urgent' },
+            ]}
+            value={form.priority}
+            onChange={(v) => setForm((f) => ({ ...f, priority: String(v ?? 'normal') }))}
+            required
+          />
 
+          {/* Date section */}
+          <Divider label="Schedule" labelPosition="left" mt="xs" />
+          <Text size="xs" c="dimmed">
+            Dates must follow this order:
+            <strong> Start Date</strong>
+            <IconArrowRight size={12} style={{ verticalAlign: 'middle', margin: '0 4px' }} />
+            <strong>End Date</strong>
+            <IconArrowRight size={12} style={{ verticalAlign: 'middle', margin: '0 4px' }} />
+            <strong>Due Date</strong>
+          </Text>
           <Group grow align="flex-start">
             <DateTime
               label="Planned Start *"
-              placeholder="Select start date"
+              placeholder="When production begins"
               type="date"
               value={form.planned_start_date}
-              onChange={(v) => {
-                setForm((f) => {
-                  const updated = { ...f, planned_start_date: v };
-                  // If end date is now before start date, clear it
-                  if (v && f.planned_end_date && dayjs(f.planned_end_date).isBefore(dayjs(v))) {
-                    updated.planned_end_date = null;
-                  }
-                  return updated;
-                });
-              }}
+              onChange={handleStartDateChange}
               minDate={todayStr}
               required
             />
             <DateTime
               label="Planned End *"
-              placeholder="Select end date"
+              placeholder="When production finishes"
               type="date"
               value={form.planned_end_date}
-              onChange={(v) => setForm((f) => ({ ...f, planned_end_date: v }))}
+              onChange={handleEndDateChange}
               minDate={endDateMin}
+              required
+            />
+            <DateTime
+              label="Due Date *"
+              placeholder="Delivery deadline"
+              type="date"
+              value={form.due_date}
+              onChange={(v) => setForm((f) => ({ ...f, due_date: v }))}
+              minDate={dueDateMin}
               required
             />
           </Group>

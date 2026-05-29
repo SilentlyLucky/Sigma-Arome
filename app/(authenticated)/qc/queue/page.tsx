@@ -4,9 +4,12 @@ import { Stack, Title, Text, Alert } from '@mantine/core';
 import { CollectionList } from '@/components/ui/collection-list';
 import { IconInfoCircle } from '@tabler/icons-react';
 import { useRouter } from 'next/navigation';
+import { useNameLookup } from '@/lib/hooks/useNameLookup';
 
 export default function QCQueuePage() {
   const router = useRouter();
+  const materialNames = useNameLookup('raw_materials');
+
   return (
     <Stack gap="md">
       <div>
@@ -26,6 +29,13 @@ export default function QCQueuePage() {
         filter={{ status: { _in: ['qc_pending', 'under_qc', 'hold'] } }}
         fields={['batch_number', 'material_id', 'batch_type', 'qty', 'unit', 'status', 'expiry_date']}
         onItemClick={(item) => router.push(`/qc/inspect/${item.id}`)}
+        renderCell={(item, header) => {
+          if (header.value === 'material_id') {
+            const name = materialNames.get(String(item.material_id ?? ''));
+            return name ? <span style={{ fontSize: 'var(--mantine-font-size-sm)' }}>{name}</span> : null;
+          }
+          return null;
+        }}
       />
     </Stack>
   );

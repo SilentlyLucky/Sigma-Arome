@@ -85,10 +85,30 @@ export async function middleware(request: NextRequest) {
 
   // Step 4: Get user's role from cookie cache or DaaS
   // Read the access token from the Supabase auth cookie (already refreshed by updateSession)
-  const cookieName = request.cookies.getAll().find(c => c.name.includes('-auth-token'))?.name;
-  if (!cookieName) return response;
+  // Supabase SSR may split cookies into chunks: sb-xxx-auth-token.0, .1, .2, etc.
+  const allCookies = request.cookies.getAll();
+  const authCookieBase = allCookies.find(c => c.name.includes('-auth-token') && !c.name.includes('.'))?.name
+    ?? allCookies.find(c => c.name.includes('-auth-token'))?.name;
+  
+  if (!authCookieBase) return response;
 
-  const cookieValue = request.cookies.get(cookieName)?.value;
+  // Reassemble chunked cookie if needed
+  let cookieValue: string;
+  const baseWithoutChunk = authCookieBase.replace(/\.\d+$/, '');
+  const chunks = allCookies
+    .filter(c => c.name === baseWithoutChunk || c.name.startsWith(baseWithoutChunk + '.'))
+    .sort((a, b) => {
+      const aNum = parseInt(a.name.split('.').pop() ?? '0', 10) || 0;
+      const bNum = parseInt(b.name.split('.').pop() ?? '0', 10) || 0;
+      return aNum - bNum;
+    });
+  
+  if (chunks.length > 1) {
+    cookieValue = chunks.map(c => c.value).join('');
+  } else {
+    cookieValue = chunks[0]?.value ?? '';
+  }
+
   if (!cookieValue) return response;
 
   // Parse the Supabase auth cookie to extract access_token and user id

@@ -14,18 +14,19 @@ export default function BOMDetailPage() {
     <Stack gap="md">
       <div>
         <Title order={2}>BOM / Formula Detail</Title>
-        <Text c="dimmed" size="sm">Edit BOM header and manage line items (materials + quantities per unit).</Text>
+        <Text c="dimmed" size="sm">Edit formula header and manage line items (materials + quantities per unit).</Text>
       </div>
 
       <CollectionForm
         collection="boms"
         mode="edit"
         id={id}
+        excludeFields={['name']}
         onSuccess={() => router.push('/ppic/bom')}
         onCancel={() => router.push('/ppic/bom')}
       />
 
-      <Divider label="BOM Items — Materials Required" labelPosition="left" />
+      <Divider label="Formula Items — Materials Required" labelPosition="left" />
 
       <CollectionList
         collection="bom_items"
@@ -33,7 +34,7 @@ export default function BOMDetailPage() {
         enableDelete
         enableSort
         filter={{ bom_id: { _eq: id } }}
-        fields={['material_id', 'qty_per_unit', 'unit', 'scrap_percentage']}
+        fields={['material_id', 'qty_per_unit', 'unit']}
         onCreate={() => router.push(`/ppic/bom/${id}/items/create`)}
         onItemClick={(item) => router.push(`/ppic/bom/${id}/items/${item.id}`)}
       />

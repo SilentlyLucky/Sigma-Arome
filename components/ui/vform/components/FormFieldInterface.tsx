@@ -261,6 +261,51 @@ export const FormFieldInterface: React.FC<FormFieldInterfaceProps> = ({
     return value;
   }, [value, field, interfaceConfig.type]);
 
+  // Generate a sensible default placeholder from field metadata when none is
+  // explicitly configured. This ensures every input has contextual helper text.
+  const defaultPlaceholder = useMemo(() => {
+    // If meta.options already has a placeholder, use it
+    const optionsPlaceholder = (interfaceConfig.props as any)?.placeholder;
+    if (optionsPlaceholder) return optionsPlaceholder;
+
+    // Derive from field name and type
+    const fieldLabel = accessibleName || field.name || field.field
+      .split('_')
+      .map((w: string) => w.charAt(0).toUpperCase() + w.slice(1))
+      .join(' ');
+
+    const interfaceType = interfaceConfig.type;
+
+    // Relational / dropdown fields
+    if (interfaceType === 'select-dropdown-m2o' || interfaceType === 'list-m2o') {
+      return `Select ${fieldLabel.toLowerCase()}...`;
+    }
+    if (interfaceType === 'select-dropdown') {
+      return `Select ${fieldLabel.toLowerCase()}...`;
+    }
+    if (interfaceType === 'select-multiple-dropdown' || interfaceType === 'select-multiple-checkbox') {
+      return `Select one or more...`;
+    }
+    // DateTime fields
+    if (interfaceType === 'datetime') {
+      return undefined; // DateTime component has its own placeholder logic
+    }
+    // Textarea / multiline
+    if (interfaceType === 'input-multiline' || interfaceType === 'textarea') {
+      return `Enter ${fieldLabel.toLowerCase()}...`;
+    }
+    // Numeric fields
+    const fieldType = (interfaceConfig.props as any)?.type;
+    if (fieldType === 'integer' || fieldType === 'bigInteger' || fieldType === 'float' || fieldType === 'decimal') {
+      return `Enter ${fieldLabel.toLowerCase()} (number)`;
+    }
+    // Default text input
+    if (interfaceType === 'input') {
+      return `Enter ${fieldLabel.toLowerCase()}...`;
+    }
+    return undefined;
+  }, [interfaceConfig, accessibleName, field]);
+
   const interfaceProps: any = {
     value: effectiveValue,
     onChange: nonEditable ? undefined : onChange,
@@ -287,6 +332,9 @@ export const FormFieldInterface: React.FC<FormFieldInterfaceProps> = ({
     
     // Spread interface-specific props from InterfaceConfig (includes meta.options)
     ...interfaceConfig.props,
+
+    // Apply default placeholder (won't override explicit placeholder from meta.options)
+    placeholder: (interfaceConfig.props as any)?.placeholder || defaultPlaceholder,
   };
 
   // Note: File interfaces (File, FileImage, Files) now use @buildpad/hooks useFiles

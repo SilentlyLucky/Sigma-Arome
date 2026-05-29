@@ -242,6 +242,24 @@ export const DateTime: React.FC<DateTimeProps> = ({
   // Note: We extract timePickerProps separately to avoid passing it to DOM elements
   const { timePickerProps: existingTimePickerProps, ...restPickerProps } = pickerProps as DateTimePickerProps & { timePickerProps?: Record<string, unknown> };
   
+  // Resolve minDate: support "NOW" keyword to enforce no-past-date selection (complaint #5)
+  const resolvedMinDate = React.useMemo(() => {
+    if (!minDate) return undefined;
+    if (minDate === 'NOW' || minDate === 'now' || minDate === 'today') {
+      return dayjs().format('YYYY-MM-DD');
+    }
+    return minDate;
+  }, [minDate]);
+
+  // Resolve maxDate similarly
+  const resolvedMaxDate = React.useMemo(() => {
+    if (!maxDate) return undefined;
+    if (maxDate === 'NOW' || maxDate === 'now' || maxDate === 'today') {
+      return dayjs().format('YYYY-MM-DD');
+    }
+    return maxDate;
+  }, [maxDate]);
+
   const dateTimePickerProps: DateTimePickerProps = {
     ...restPickerProps,
     value: dateValue,
@@ -255,8 +273,8 @@ export const DateTime: React.FC<DateTimeProps> = ({
     valueFormat: getDisplayFormat(),
     clearable: clearable && !readOnly,
     withSeconds: includeSeconds,
-    minDate,
-    maxDate,
+    minDate: resolvedMinDate,
+    maxDate: resolvedMaxDate,
   };
 
   // For date-only type, use DatePickerInput instead of DateTimePicker
@@ -275,8 +293,8 @@ export const DateTime: React.FC<DateTimeProps> = ({
       placeholder: getPlaceholder(),
       valueFormat: getDisplayFormat(),
       clearable: clearable && !readOnly,
-      minDate,
-      maxDate,
+      minDate: resolvedMinDate,
+      maxDate: resolvedMaxDate,
     };
 
     return <DatePickerInput {...datePickerProps} />;

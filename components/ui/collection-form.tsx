@@ -552,6 +552,17 @@ export const CollectionForm: React.FC<CollectionFormProps> = ({
         }
       });
 
+      // Convert empty strings to null for nullable fields (complaint #11)
+      // DaaS rejects empty strings for UUID, timestamp, numeric fields — null is correct.
+      for (const [key, val] of Object.entries(dataToSave)) {
+        if (val === '' || val === undefined) {
+          const fieldDef = fields.find((f) => f.field === key);
+          if (fieldDef?.schema?.is_nullable !== false) {
+            dataToSave[key] = null;
+          }
+        }
+      }
+
       const itemsService = new ItemsService(collection);
 
       // Helper: split dataToSave into scalar fields and M2M changes.

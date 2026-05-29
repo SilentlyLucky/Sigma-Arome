@@ -178,7 +178,7 @@ export const TableRow = forwardRef<HTMLTableRowElement, TableRowProps>(({
             {content !== null ? (
               content
             ) : value !== null && value !== undefined ? (
-              <Text size="sm" truncate="end">
+              <Text size="sm" style={{ wordBreak: 'break-word', whiteSpace: 'normal' }}>
                 {formatValue(value)}
               </Text>
             ) : (

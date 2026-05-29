@@ -77,14 +77,14 @@ export const theme = createTheme({
       "var(--ds-danger-950, #450a0a)"
     ],
     gray: [
-      "var(--ds-gray-100, #f7f5ef)",
-      "var(--ds-gray-200, #f7f1e6)",
-      "var(--ds-gray-300, #efe7d8)",
-      "var(--ds-gray-400, #d9cfbe)",
-      "var(--ds-gray-500, #6f6558)",
-      "var(--ds-gray-600, #524a3f)",
-      "var(--ds-gray-700, #3a342c)",
-      "var(--ds-gray-800, #252118)",
+      "var(--ds-gray-100, #f8f9fa)",
+      "var(--ds-gray-200, #f1f3f5)",
+      "var(--ds-gray-300, #e9ecef)",
+      "var(--ds-gray-400, #ced4da)",
+      "var(--ds-gray-500, #6c757d)",
+      "var(--ds-gray-600, #495057)",
+      "var(--ds-gray-700, #343a40)",
+      "var(--ds-gray-800, #212529)",
       "var(--ds-gray-900, #191612)",
       "var(--ds-gray-950, #0d0b08)"
     ]
@@ -149,7 +149,7 @@ export const theme = createTheme({
       styles: {
         input: {
           borderRadius: "10px",
-          borderColor: "var(--ds-gray-400, #d9cfbe)",
+          borderColor: "var(--ds-gray-400, #ced4da)",
           fontSize: "var(--mantine-font-size-sm)",
           transition: "border-color var(--ds-transition-fast, 150ms ease), box-shadow var(--ds-transition-fast, 150ms ease)"
         }
@@ -162,7 +162,7 @@ export const theme = createTheme({
       },
       styles: {
         root: {
-          borderColor: "var(--ds-gray-400, #d9cfbe)",
+          borderColor: "var(--ds-gray-400, #ced4da)",
         }
       }
     },
@@ -176,7 +176,7 @@ export const theme = createTheme({
     Modal: {
       styles: {
         header: {
-          borderBottom: "1px solid var(--ds-gray-400, #d9cfbe)",
+          borderBottom: "1px solid var(--ds-gray-400, #ced4da)",
           padding: "var(--ds-spacing-4) var(--ds-spacing-6)",
           marginBottom: 0
         },
@@ -192,7 +192,7 @@ export const theme = createTheme({
           boxShadow: "var(--ds-shadow-xl)"
         },
         close: {
-          color: "var(--ds-gray-500, #6f6558)"
+          color: "var(--ds-gray-600, #495057)"
         }
       }
     },
@@ -201,7 +201,7 @@ export const theme = createTheme({
         dropdown: {
           borderRadius: "var(--ds-radius-md, 12px)",
           boxShadow: "var(--mantine-shadow-lg)",
-          border: "1px solid var(--ds-gray-400, #d9cfbe)"
+          border: "1px solid var(--ds-gray-400, #ced4da)"
         }
       }
     },
@@ -220,7 +220,7 @@ export const theme = createTheme({
         label: {
           fontSize: "var(--mantine-font-size-sm)",
           fontWeight: "600",
-          color: "var(--ds-gray-900, #191612)",
+          color: "var(--ds-gray-800, #212529)",
           marginBottom: "4px"
         },
         input: {
@@ -233,7 +233,7 @@ export const theme = createTheme({
         label: {
           fontSize: "var(--mantine-font-size-sm)",
           fontWeight: "600",
-          color: "var(--ds-gray-900, #191612)",
+          color: "var(--ds-gray-800, #212529)",
           marginBottom: "4px"
         }
       }
@@ -243,7 +243,7 @@ export const theme = createTheme({
         label: {
           fontSize: "var(--mantine-font-size-sm)",
           fontWeight: "600",
-          color: "var(--ds-gray-900, #191612)",
+          color: "var(--ds-gray-800, #212529)",
           marginBottom: "4px"
         }
       }
@@ -256,7 +256,7 @@ export const theme = createTheme({
         th: {
           fontWeight: "600",
           fontSize: "var(--ds-font-size-xs)",
-          color: "var(--ds-gray-500, #6f6558)"
+          color: "var(--ds-gray-600, #495057)"
         }
       }
     },

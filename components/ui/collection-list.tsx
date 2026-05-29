@@ -37,7 +37,6 @@ import {
   Menu,
   Stack,
   Text,
-  Tooltip,
 } from "@mantine/core";
 import {
   FieldsService,
@@ -822,15 +821,13 @@ export const CollectionList: React.FC<CollectionListProps> = ({
         );
       }
 
-      // ---------- UUID (truncate) ----------
+      // ---------- UUID (show full value, wrap if needed) ----------
       if (fieldType === "uuid") {
         const str = String(value);
         return (
-          <Tooltip label={str} openDelay={300}>
-            <Text size="sm" truncate="end" style={{ maxWidth: 120 }}>
-              {str.substring(0, 8)}…
-            </Text>
-          </Tooltip>
+          <Text size="sm" style={{ wordBreak: 'break-all', lineHeight: 1.4 }}>
+            {str}
+          </Text>
         );
       }
 

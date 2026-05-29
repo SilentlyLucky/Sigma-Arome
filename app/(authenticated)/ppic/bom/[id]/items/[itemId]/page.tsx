@@ -14,12 +14,13 @@ export default function EditBOMItemPage() {
     <Stack gap="md">
       <div>
         <Title order={2}>Edit BOM Item</Title>
-        <Text c="dimmed" size="sm">Update material quantity or scrap percentage.</Text>
+        <Text c="dimmed" size="sm">Update material quantity for this formula line.</Text>
       </div>
       <CollectionForm
         collection="bom_items"
         mode="edit"
         id={itemId}
+        excludeFields={['scrap_percentage']}
         onSuccess={() => router.push(`/ppic/bom/${bomId}`)}
         onCancel={() => router.push(`/ppic/bom/${bomId}`)}
       />

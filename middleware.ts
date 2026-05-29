@@ -19,13 +19,13 @@ const ROLE_ROUTES: Record<string, string[]> = {
   '/production': ['production'],
 };
 
-// In-memory cache: userId → { route, roleKey, expiresAt }
-const roleCache = new Map<string, { route: string; roleKey: string; expiresAt: number }>();
+// In-memory cache: userId → { route, expiresAt }
+const roleCache = new Map<string, { route: string; expiresAt: number }>();
 const CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes
 
-async function getUserAccess(accessToken: string, userId: string): Promise<{ route: string; roleKey: string } | null> {
+async function getUserRoute(accessToken: string, userId: string): Promise<string | null> {
   const cached = roleCache.get(userId);
-  if (cached && Date.now() < cached.expiresAt) return cached;
+  if (cached && Date.now() < cached.expiresAt) return cached.route;
 
   try {
     const daasUrl = process.env.NEXT_PUBLIC_BUILDPAD_DAAS_URL;
@@ -35,7 +35,7 @@ async function getUserAccess(accessToken: string, userId: string): Promise<{ rou
     const timeout = setTimeout(() => controller.abort(), 2000);
 
     const res = await fetch(
-      `${daasUrl}/api/items/app_user_access?fields[]=route&fields[]=role_key&sort[]=priority&limit=1`,
+      `${daasUrl}/api/items/app_user_access?fields[]=route&sort[]=priority&limit=1`,
       {
         headers: { 'Authorization': `Bearer ${accessToken}` },
         signal: controller.signal,
@@ -45,15 +45,9 @@ async function getUserAccess(accessToken: string, userId: string): Promise<{ rou
 
     if (!res.ok) return null;
     const data = await res.json();
-    const record = data?.data?.[0];
-    const route = record?.route ?? null;
-    const roleKey = record?.role_key ?? null;
-    if (route && roleKey) {
-      const access = { route, roleKey, expiresAt: Date.now() + CACHE_TTL_MS };
-      roleCache.set(userId, access);
-      return access;
-    }
-    return null;
+    const route = data?.data?.[0]?.route ?? null;
+    if (route) roleCache.set(userId, { route, expiresAt: Date.now() + CACHE_TTL_MS });
+    return route;
   } catch {
     return null;
   }
@@ -134,15 +128,16 @@ export async function middleware(request: NextRequest) {
 
   if (!accessToken || !userId) return response;
 
-  // Step 5: Get user's assigned route and role key
-  const userAccess = await getUserAccess(accessToken, userId);
-  if (!userAccess) return response; // Can't determine — allow through
+  // Step 5: Get user's assigned route
+  const userRoute = await getUserRoute(accessToken, userId);
+  if (!userRoute) return response; // Can't determine — allow through
 
   // Step 6: Enforce — redirect if user is on wrong role's route
-  if (!requiredRoles.includes(userAccess.roleKey)) {
+  const userRoleKey = userRoute.replace('/', '');
+  if (!requiredRoles.includes(userRoleKey)) {
     // Prevent infinite redirect
-    if (userAccess.route !== pathname) {
-      return NextResponse.redirect(new URL(userAccess.route, request.url));
+    if (userRoute !== pathname) {
+      return NextResponse.redirect(new URL(userRoute, request.url));
     }
   }
 

@@ -132,12 +132,21 @@ export async function middleware(request: NextRequest) {
   const userRoute = await getUserRoute(accessToken, userId);
   if (!userRoute) return response; // Can't determine — allow through
 
-  // Step 6: Enforce — redirect if user is on wrong role's route
-  const userRoleKey = userRoute.replace('/', '');
-  if (!requiredRoles.includes(userRoleKey)) {
-    // Prevent infinite redirect
-    if (userRoute !== pathname) {
-      return NextResponse.redirect(new URL(userRoute, request.url));
+  // Step 6: Enforce — user can only access pages under their assigned route prefix.
+  // e.g. if userRoute is '/admin', they can access '/admin', '/admin/users', '/admin/products', etc.
+  // If they try to access '/warehouse/...' they get redirected back to '/admin'.
+  const currentRoutePrefix = Object.keys(ROLE_ROUTES).find(
+    (prefix) => pathname === prefix || pathname.startsWith(prefix + '/')
+  );
+
+  if (currentRoutePrefix) {
+    // Check if the user's assigned route matches the prefix they're trying to access
+    const isAllowed = userRoute === currentRoutePrefix || userRoute.startsWith(currentRoutePrefix + '/');
+    if (!isAllowed) {
+      // User is trying to access a different role's section — redirect to their own
+      if (userRoute !== pathname) {
+        return NextResponse.redirect(new URL(userRoute, request.url));
+      }
     }
   }
 

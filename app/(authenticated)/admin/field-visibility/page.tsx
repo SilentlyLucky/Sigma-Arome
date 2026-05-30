@@ -60,7 +60,6 @@ const COLLECTION_FIELDS: Record<string, string[]> = {
   products: ['id', 'name', 'code', 'category', 'unit', 'storage_temp_min', 'storage_temp_max', 'status', 'notes'],
   warehouse_locations: ['id', 'zone', 'rack', 'bin', 'location_code', 'location_type', 'temp_zone', 'capacity', 'current_occupancy', 'status'],
   hazard_classes: ['id', 'name', 'code', 'description', 'color'],
-  storage_rules: ['id', 'material_id', 'hazard_class_id', 'temp_min', 'temp_max', 'allowed_location_type', 'incompatible_hazard_class_id', 'notes'],
   qc_templates: ['id', 'name', 'target_type', 'material_id', 'product_id', 'parameters', 'status'],
   iot_sensors: ['id', 'sensor_name', 'sensor_code', 'location_id', 'sensor_type', 'temp_threshold_min', 'temp_threshold_max', 'humidity_threshold_min', 'humidity_threshold_max', 'status', 'calibration_due_date', 'is_simulated'],
   inventory: ['id', 'status', 'qty', 'unit'],

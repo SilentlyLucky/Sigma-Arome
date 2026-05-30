@@ -53,7 +53,7 @@ interface Permission {
 
 const COLLECTIONS = [
   'suppliers', 'raw_materials', 'products', 'warehouse_locations',
-  'hazard_classes', 'storage_rules', 'qc_templates', 'iot_sensors', 'inventory',
+  'hazard_classes', 'qc_templates', 'iot_sensors', 'inventory',
 ];
 const ACTIONS = ['create', 'read', 'update', 'delete'];
 const OPERATIONAL_ROLES = ['Administrator', 'Manager', 'PPIC', 'Warehouse Operation', 'QC', 'Logistic', 'Production'];

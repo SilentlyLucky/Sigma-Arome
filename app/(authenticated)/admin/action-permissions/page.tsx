@@ -52,7 +52,7 @@ interface AccessEntry { id: string; role: string | null; policy: string }
 
 const COLLECTIONS = [
   'suppliers', 'raw_materials', 'products', 'warehouse_locations',
-  'hazard_classes', 'storage_rules', 'qc_templates', 'iot_sensors', 'inventory',
+  'hazard_classes', 'qc_templates', 'iot_sensors', 'inventory',
 ];
 const WRITE_ACTIONS = ['create', 'update', 'delete'] as const;
 const OPERATIONAL_ROLES = ['Administrator', 'Manager', 'PPIC', 'Warehouse Operation', 'QC', 'Logistic', 'Production'];

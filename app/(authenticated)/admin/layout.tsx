@@ -21,7 +21,6 @@ import {
   IconPackage,
   IconMapPin,
   IconAlertTriangle,
-  IconRuler,
   IconChecklist,
   IconDeviceDesktopAnalytics,
   IconFileText,
@@ -60,7 +59,6 @@ const NAV_ITEMS: NavItem[] = [
   { label: 'Products', href: '/admin/products', icon: IconPackage, section: 'Master Data' },
   { label: 'Warehouse Locations', href: '/admin/warehouse-locations', icon: IconMapPin, section: 'Master Data' },
   { label: 'Hazard Classes', href: '/admin/hazard-classes', icon: IconAlertTriangle, section: 'Master Data' },
-  { label: 'Storage Rules', href: '/admin/storage-rules', icon: IconRuler, section: 'Master Data' },
   { label: 'QC Templates', href: '/admin/qc-templates', icon: IconChecklist, section: 'Master Data' },
   { label: 'IoT Sensors', href: '/admin/iot-sensors', icon: IconDeviceDesktopAnalytics, section: 'Master Data' },
 

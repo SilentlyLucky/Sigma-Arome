@@ -2,9 +2,19 @@
  * GET /api/warehouse/smart-slots?batch_id=...
  *
  * Returns three sections of storage locations for a given batch:
- *   1. compatible   — empty or same-material locations that meet all requirements
+ *   1. compatible        — empty or same-material locations that meet all requirements
  *   2. different_material — compatible by all rules but holds a DIFFERENT material (hard block)
- *   3. incompatible — wrong zone, wrong temp, wrong hazard, or full
+ *   3. incompatible      — wrong zone, wrong temp, hazard not allowed, hazard conflict, or full
+ *
+ * Hazard system (single source of truth: `hazard_classes` collection):
+ *   - Every raw_material has a `hazard_class_id` FK → hazard_classes
+ *   - Every warehouse_location has `allowed_hazard_classes` (array of hazard_class IDs)
+ *   - Every hazard_class has `unsuitable_with` (array of hazard_class IDs that cannot be co-located)
+ *
+ * Hazard checks performed:
+ *   A) Allowed list — batch hazard must be in location.allowed_hazard_classes
+ *   B) Co-location — if location holds another material, that material's hazard must NOT be
+ *      in batch hazard's unsuitable_with list (and vice versa)
  *
  * Zone routing:
  *   - packaging category → packaging_components zones only (capacity in pcs)
@@ -21,8 +31,6 @@ interface Location {
   location_code: string;
   zone: string;
   temperature_class: string | null;
-  temperature_min_c: number | null;
-  temperature_max_c: number | null;
   allowed_hazard_classes: string[] | null;
   capacity_kg: number | null;
   current_occupancy_kg: number;
@@ -39,7 +47,6 @@ interface Batch {
   batch_number: string;
   material_id: string | null;
   required_temperature_class: string | null;
-  hazard_class: string | null;
   weight_kg: number | null;
   qty: number | null;
   unit: string | null;
@@ -48,8 +55,17 @@ interface Batch {
 
 interface Material {
   id: string;
+  name: string;
   category: string | null;
   unit: string | null;
+  hazard_class_id: string | null;
+}
+
+interface HazardClass {
+  id: string;
+  name: string;
+  code: string | null;
+  unsuitable_with: string[] | null;
 }
 
 /** Determine if a material category is packaging (uses pcs, packaging_components zone) */
@@ -92,18 +108,19 @@ export async function GET(request: NextRequest) {
     const batchRes = await fetch(
       `${daasUrl}/api/items/batches/${batchId}` +
       `?fields[]=id&fields[]=batch_number&fields[]=material_id` +
-      `&fields[]=required_temperature_class&fields[]=hazard_class` +
+      `&fields[]=required_temperature_class` +
       `&fields[]=weight_kg&fields[]=qty&fields[]=unit&fields[]=status`,
       { headers, cache: 'no-store' }
     );
     if (!batchRes.ok) return NextResponse.json({ error: 'Batch not found' }, { status: 404 });
     const batch: Batch = (await batchRes.json()).data;
 
-    // Fetch material to determine category
+    // Fetch material to determine category + hazard
     let material: Material | null = null;
     if (batch.material_id) {
       const matRes = await fetch(
-        `${daasUrl}/api/items/raw_materials/${batch.material_id}?fields[]=id&fields[]=category&fields[]=unit`,
+        `${daasUrl}/api/items/raw_materials/${batch.material_id}` +
+        `?fields[]=id&fields[]=name&fields[]=category&fields[]=unit&fields[]=hazard_class_id`,
         { headers, cache: 'no-store' }
       );
       if (matRes.ok) material = (await matRes.json()).data;
@@ -112,13 +129,24 @@ export async function GET(request: NextRequest) {
     const matCategory = material?.category ?? null;
     const isPackaging = isPackagingCategory(matCategory);
     const validZones = validZonesForCategory(matCategory);
+    const batchHazardId = material?.hazard_class_id ?? null;
+
+    // Fetch hazard classes (single source of truth) to resolve names + unsuitable_with rules
+    const hazRes = await fetch(
+      `${daasUrl}/api/items/hazard_classes` +
+      `?fields[]=id&fields[]=name&fields[]=code&fields[]=unsuitable_with&limit=200`,
+      { headers, cache: 'no-store' }
+    );
+    const hazards: HazardClass[] = hazRes.ok ? ((await hazRes.json()).data ?? []) : [];
+    const hazardById = new Map(hazards.map((h) => [h.id, h]));
+    const batchHazard = batchHazardId ? hazardById.get(batchHazardId) ?? null : null;
 
     // Fetch all active locations
     const locRes = await fetch(
       `${daasUrl}/api/items/warehouse_locations` +
       `?filter[is_active][_eq]=true` +
       `&fields[]=id&fields[]=location_code&fields[]=zone` +
-      `&fields[]=temperature_class&fields[]=temperature_min_c&fields[]=temperature_max_c` +
+      `&fields[]=temperature_class` +
       `&fields[]=allowed_hazard_classes&fields[]=capacity_kg&fields[]=current_occupancy_kg` +
       `&fields[]=capacity_pcs&fields[]=current_occupancy_pcs` +
       `&fields[]=current_material_id&fields[]=current_material_name` +
@@ -128,9 +156,31 @@ export async function GET(request: NextRequest) {
     if (!locRes.ok) return NextResponse.json({ error: 'Failed to fetch locations' }, { status: 500 });
     const locations: Location[] = (await locRes.json()).data ?? [];
 
+    // For co-location hazard checks we need the hazard of any material currently occupying a location.
+    // Collect those material IDs and resolve their hazard_class_id in one batch fetch.
+    const occupyingMaterialIds = Array.from(
+      new Set(
+        locations
+          .map((l) => l.current_material_id)
+          .filter((id): id is string => !!id && id !== batch.material_id)
+      )
+    );
+    const occupyingMaterialHazard = new Map<string, string | null>();
+    if (occupyingMaterialIds.length > 0) {
+      const ids = occupyingMaterialIds.map(encodeURIComponent).join(',');
+      const omRes = await fetch(
+        `${daasUrl}/api/items/raw_materials?filter[id][_in]=${ids}` +
+        `&fields[]=id&fields[]=hazard_class_id&limit=200`,
+        { headers, cache: 'no-store' }
+      );
+      if (omRes.ok) {
+        const list: Array<{ id: string; hazard_class_id: string | null }> = (await omRes.json()).data ?? [];
+        for (const m of list) occupyingMaterialHazard.set(m.id, m.hazard_class_id);
+      }
+    }
+
     const batchWeight = batch.weight_kg ?? 0;
     const batchQty = batch.qty ?? 0;
-    const batchHazard = batch.hazard_class ?? 'general';
     const batchTemp = batch.required_temperature_class ?? 'ambient';
     const batchMaterialId = batch.material_id ?? null;
 
@@ -169,13 +219,39 @@ export async function GET(request: NextRequest) {
         }
       }
 
-      // ── Hazard class check (not applicable to packaging zones) ──────────────
-      if (!isPackaging) {
+      // ── Hazard check A: allowed list (UUID-based) ───────────────────────────
+      if (!isPackaging && batchHazardId) {
         const allowedHazards: string[] = Array.isArray(loc.allowed_hazard_classes)
           ? loc.allowed_hazard_classes
           : [];
-        if (allowedHazards.length > 0 && !allowedHazards.includes(batchHazard)) {
-          hardReasons.push(`Material not permitted in this zone (${batchHazard.replace(/_/g, ' ')} not in allowed list)`);
+        if (allowedHazards.length > 0 && !allowedHazards.includes(batchHazardId)) {
+          const hazardName = batchHazard?.name ?? 'this hazard class';
+          hardReasons.push(`${hazardName} is not in the allowed hazards for this location`);
+        }
+      }
+
+      // ── Hazard check B: co-location with existing material (unsuitable_with) ─
+      // Only fires when location currently holds a DIFFERENT material AND we have hazard data for both.
+      const occupyingMatId = loc.current_material_id;
+      if (
+        !isPackaging &&
+        occupyingMatId &&
+        batchMaterialId &&
+        occupyingMatId !== batchMaterialId &&
+        batchHazard &&
+        batchHazardId
+      ) {
+        const otherHazardId = occupyingMaterialHazard.get(occupyingMatId) ?? null;
+        if (otherHazardId) {
+          const otherHazard = hazardById.get(otherHazardId);
+          const batchUnsuitable = Array.isArray(batchHazard.unsuitable_with) ? batchHazard.unsuitable_with : [];
+          const otherUnsuitable = otherHazard && Array.isArray(otherHazard.unsuitable_with)
+            ? otherHazard.unsuitable_with
+            : [];
+          if (batchUnsuitable.includes(otherHazardId) || otherUnsuitable.includes(batchHazardId)) {
+            const otherName = otherHazard?.name ?? 'another hazardous material';
+            hardReasons.push(`Cannot be co-located with ${otherName} (hazard incompatibility)`);
+          }
         }
       }
 

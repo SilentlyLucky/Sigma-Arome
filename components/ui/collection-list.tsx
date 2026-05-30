@@ -146,6 +146,8 @@ export interface CollectionListProps {
   onFieldsChange?: (fields: string[]) => void;
   /** Callback when sort changes */
   onSortChange?: (sort: Sort | null) => void;
+  /** Default sort applied on initial load */
+  defaultSort?: Sort;
   /** Callback when filter changes from the integrated FilterPanel */
   onFilterChange?: (filter: Record<string, unknown> | null) => void;
   /** Callback fired once permissions are resolved for the collection */
@@ -211,6 +213,7 @@ export const CollectionList: React.FC<CollectionListProps> = ({
   onPermissionsLoaded,
   renderCell: consumerRenderCell,
   renderRowAppend,
+  defaultSort,
 }) => {
   // ----- Data state -----
   const [allFields, setAllFields] = useState<Field[]>([]);
@@ -228,9 +231,9 @@ export const CollectionList: React.FC<CollectionListProps> = ({
   const [search, setSearch] = useState("");
 
   // ----- Sort state -----
-  const [sort, setSort] = useState<Sort>({ by: null, desc: false });
-  // sortApiField: the actual field sent to DaaS (may be dot-notation for M2O, e.g. "material_id.name")
-  const [sortApiField, setSortApiField] = useState<string | null>(null);
+  const [sort, setSort] = useState<Sort>(defaultSort ?? { by: null, desc: false });
+  // sortApiField: the actual field sent to DaaS
+  const [sortApiField, setSortApiField] = useState<string | null>(defaultSort?.by ?? null);
 
   // ----- Archive filter state -----
   const [archiveFilterMode, setArchiveFilterMode] = useState<ArchiveFilter>("all");

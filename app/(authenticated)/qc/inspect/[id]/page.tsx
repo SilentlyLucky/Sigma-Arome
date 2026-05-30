@@ -25,8 +25,24 @@ export default function QCInspectPage() {
   const [reason, setReason] = useState('');
   const [deciding, setDeciding] = useState(false);
   const [starting, setStarting] = useState(false);
+  const [cvLoading, setCvLoading] = useState(false);
   // QC templates keyed by target_type
   const [templates, setTemplates] = useState<Record<string, string>>({}); // target_type → id
+
+  // Poll for the CV result until it appears (action hook creates it async, ~1s)
+  const pollCvResult = async (inspectionId: string, maxAttempts = 10): Promise<CVResult | null> => {
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+      try {
+        const cv = await fetch(`/api/items/cv_results?filter[qc_id][_eq]=${inspectionId}&limit=1`)
+          .then(r => r.json());
+        const result: CVResult | null = cv?.data?.[0] ?? null;
+        if (result) return result;
+      } catch { /* keep polling */ }
+      // Wait 600ms between attempts
+      await new Promise(resolve => setTimeout(resolve, 600));
+    }
+    return null;
+  };
 
   useEffect(() => {
     fetch(`/api/items/batches/${batchId}`)
@@ -83,20 +99,30 @@ export default function QCInspectPage() {
       const newInspection = data?.data ?? null;
       setInspection(newInspection);
       setBatch(b => b ? { ...b, status: 'under_qc' } : b);
+
       // Update batch status to under_qc
       await fetch(`/api/items/batches/${batchId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: 'under_qc' }),
       }).catch(() => {});
-      // Fetch CV result after a moment (action hook runs async)
-      setTimeout(async () => {
-        if (newInspection?.id) {
-          const cv = await fetch(`/api/items/cv_results?filter[qc_id][_eq]=${newInspection.id}&limit=1`).then(r => r.json()).catch(() => null);
-          setCvResult(cv?.data?.[0] ?? null);
+
+      notifications.show({ title: 'Inspection Started', message: 'Running CV analysis...', color: 'blue' });
+
+      // Poll for the CV result inline — it appears in the same view automatically
+      if (newInspection?.id) {
+        setCvLoading(true);
+        const result = await pollCvResult(newInspection.id);
+        setCvResult(result);
+        setCvLoading(false);
+        if (result) {
+          notifications.show({
+            title: 'CV Analysis Complete',
+            message: `Defect: ${result.defect_type === 'none' ? 'none detected' : result.defect_type.replace(/_/g, ' ')} · Recommendation: ${result.recommendation}`,
+            color: result.recommendation === 'approve' ? 'green' : result.recommendation === 'reject' ? 'red' : 'orange',
+          });
         }
-      }, 1500);
-      notifications.show({ title: 'Inspection Started', message: 'CV analysis is running...', color: 'blue' });
+      }
     } catch (err) {
       notifications.show({ title: 'Error', message: err instanceof Error ? err.message : 'Failed', color: 'red' });
     } finally {
@@ -169,8 +195,10 @@ export default function QCInspectPage() {
         </Button>
       )}
 
-      {inspection && !cvResult && !canDecide && !isCompleted && (
-        <Alert color="blue" variant="light">Inspection started — CV analysis is running. Refresh in a moment to see results.</Alert>
+      {cvLoading && (
+        <Alert color="blue" variant="light" icon={<IconEye size={16} />}>
+          Running computer vision analysis… results will appear here in a moment.
+        </Alert>
       )}
 
       {cvResult && (

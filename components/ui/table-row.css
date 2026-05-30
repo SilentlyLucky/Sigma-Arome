@@ -24,9 +24,8 @@
   min-height: 40px;
 }
 
-.table-row .cell:last-child {
-  padding: 0 12px;
-}
+/* Remove the last-child override — it was zeroing padding on the spacer cell
+   which caused the last visible column to misalign with its header */
 
 .table-row .cell.select {
   display: flex;

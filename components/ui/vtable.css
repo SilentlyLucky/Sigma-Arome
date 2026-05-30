@@ -24,42 +24,33 @@
   position: relative;
   height: auto;
   overflow-y: auto;
+  overflow-x: auto;
 }
 
+/* ── Single shared grid for the whole table ──────────────────────────────────
+   The table itself is the grid. thead, tbody, and every tr use display:contents
+   so that ALL th/td cells across header and body rows participate in ONE grid.
+   This guarantees every column header lines up perfectly with the cells below it,
+   regardless of content width (auto-sized columns share track widths across rows). */
 .v-table table {
+  display: grid;
+  grid-template-columns: var(--grid-columns-rows);
   min-width: 100%;
-  border-collapse: collapse;
   border-spacing: 0;
 }
 
+.v-table table thead,
 .v-table table tbody {
   display: contents !important;
 }
 
-.v-table table thead {
+.v-table table tr {
   display: contents !important;
-}
-
-.v-table table tbody tr {
-  --grid-columns: var(--grid-columns-rows);
-  display: grid !important;
-  grid-template-columns: var(--grid-columns);
-}
-
-.v-table table thead tr {
-  --grid-columns: var(--grid-columns-header);
-  display: grid !important;
-  grid-template-columns: var(--grid-columns);
 }
 
 .v-table table td,
 .v-table table th {
   color: var(--v-table-color, var(--mantine-color-text));
-}
-
-.v-table table tr {
-  display: grid;
-  grid-template-columns: var(--grid-columns);
 }
 
 /* Alignment */
@@ -176,7 +167,15 @@
   background-color: var(--mantine-color-dark-5);
 }
 
-/* Full column span for loading/empty states */
+/* Full column span for loading/empty states — spans every grid column */
 .v-table table .full-colspan {
   grid-column: 1 / -1;
+}
+
+/* Sticky header: with tr using display:contents, the th cells themselves
+   must be sticky (not the tr). */
+.v-table table thead tr.fixed .cell {
+  position: sticky;
+  top: var(--v-table-sticky-offset-top, 0);
+  z-index: 10;
 }

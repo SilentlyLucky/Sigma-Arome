@@ -34,7 +34,8 @@
 .table-header .cell {
   display: flex;
   align-items: center;
-  padding: 8px 20px 8px 12px;
+  /* Match data cell padding exactly: 8px top/bottom, 12px left/right */
+  padding: 8px 12px;
   font-weight: 600;
   color: var(--mantine-color-text);
   background-color: var(--mantine-color-gray-0);
@@ -44,7 +45,6 @@
   position: relative;
   min-width: 0;
   overflow: hidden;
-  /* Match data cell vertical padding so header text aligns with cell text */
   min-height: 40px;
 }
 

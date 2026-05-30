@@ -74,6 +74,8 @@ interface SortableHeaderCellProps {
   onResizeStart: (header: Header, event: React.PointerEvent) => void;
   getSortIcon: (header: Header) => React.ReactNode;
   getHeaderClasses: (header: Header) => string;
+  /** Ref set by DndContext onDragStart — any truthy value blocks the next click from sorting */
+  dragHappenedRef: React.MutableRefObject<boolean>;
 }
 
 const SortableHeaderCell: React.FC<SortableHeaderCellProps> = ({
@@ -88,6 +90,7 @@ const SortableHeaderCell: React.FC<SortableHeaderCellProps> = ({
   onResizeStart,
   getSortIcon,
   getHeaderClasses,
+  dragHappenedRef,
 }) => {
   const {
     attributes,
@@ -126,7 +129,9 @@ const SortableHeaderCell: React.FC<SortableHeaderCellProps> = ({
         if (dx > 4 || dy > 4) wasDragGesture.current = true;
       }}
       onClick={() => {
+        // Suppress sort if local pointer tracking OR dnd-kit drag detected
         if (wasDragGesture.current) { wasDragGesture.current = false; return; }
+        if (dragHappenedRef.current) { dragHappenedRef.current = false; return; }
         onSort(header);
       }}
       onContextMenu={(e) => onContextMenu(header, e)}
@@ -390,6 +395,7 @@ export const TableHeader: React.FC<TableHeaderProps> = ({
       onResizeStart={handleResizeStart}
       getSortIcon={getSortIcon}
       getHeaderClasses={getHeaderClasses}
+      dragHappenedRef={dragHappenedRef}
     />
   ));
 

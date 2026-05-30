@@ -31,7 +31,7 @@ export default function ProductionOrdersPage() {
         renderCell={(item, header) => {
           if (header.value === 'product_id') {
             const name = productNames.get(String(item.product_id ?? ''));
-            return name ? <span style={{ fontSize: 'var(--mantine-font-size-sm)' }}>{name}</span> : null;
+            return name ? <span style={{ fontSize: 'var(--mantine-font-size-sm)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0, maxWidth: '100%', display: 'block' }}>{name}</span> : null;
           }
           return null;
         }}

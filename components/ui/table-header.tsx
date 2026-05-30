@@ -200,6 +200,8 @@ export const TableHeader: React.FC<TableHeaderProps> = ({
     startX: number;
     startWidth: number;
   } | null>(null);
+  // Tracks whether a column reorder drag just happened so the subsequent click doesn't trigger sort
+  const dragHappenedRef = useRef(false);
 
   // DnD sensors — require 5px movement before drag starts (prevents accidental drags on click)
   const sensors = useSensors(
@@ -251,6 +253,10 @@ export const TableHeader: React.FC<TableHeaderProps> = ({
   const handleSort = useCallback(
     (header: Header) => {
       if (!header.sortable || resizing) return;
+      if (dragHappenedRef.current) {
+        dragHappenedRef.current = false;
+        return;
+      }
       if (header.value === sort.by) {
         if (mustSort) {
           onSortChange?.({ by: sort.by, desc: !sort.desc });
@@ -326,6 +332,7 @@ export const TableHeader: React.FC<TableHeaderProps> = ({
   );
 
   const handleDragStart = useCallback(() => {
+    dragHappenedRef.current = true;
     onReorderingChange?.(true);
   }, [onReorderingChange]);
 

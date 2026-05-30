@@ -116,10 +116,10 @@ export default function CreateBOMItemPage() {
         <Stack gap="sm">
           {/* BOM field — pre-filled but changeable */}
           {loading ? (
-            <Input label="BOM / Formula *" placeholder="Loading..." disabled onChange={() => {}} />
+            <Input label="BOM / Formula" placeholder="Loading..." disabled onChange={() => {}} />
           ) : bomChoices.length > 0 ? (
             <SelectDropdown
-              label="BOM / Formula *"
+              label="BOM / Formula"
               placeholder="Select BOM..."
               choices={bomChoices}
               value={form.bom_id || null}
@@ -127,15 +127,15 @@ export default function CreateBOMItemPage() {
               required
             />
           ) : (
-            <Input label="BOM / Formula *" value="" placeholder="No BOMs available" disabled onChange={() => {}} />
+            <Input label="BOM / Formula" value="" placeholder="No BOMs available" disabled onChange={() => {}} />
           )}
 
           {/* Material selection — auto-fills unit */}
           {loading ? (
-            <Input label="Material *" placeholder="Loading materials..." disabled onChange={() => {}} />
+            <Input label="Material" placeholder="Loading materials..." disabled onChange={() => {}} />
           ) : materialChoices.length > 0 ? (
             <SelectDropdown
-              label="Material *"
+              label="Material"
               placeholder="Select raw material..."
               choices={materialChoices}
               value={form.material_id || null}
@@ -143,12 +143,12 @@ export default function CreateBOMItemPage() {
               required
             />
           ) : (
-            <Input label="Material *" value="" placeholder="No active materials available" disabled onChange={() => {}} />
+            <Input label="Material" value="" placeholder="No active materials available" disabled onChange={() => {}} />
           )}
 
           <Group grow align="flex-start">
             <Input
-              label="Qty per Unit *"
+              label="Qty per Unit"
               placeholder="e.g. 0.5"
               type="float"
               value={form.qty_per_unit || null}
@@ -159,7 +159,7 @@ export default function CreateBOMItemPage() {
             />
             {/* Unit auto-filled from material, but editable if needed */}
             <Input
-              label="Unit *"
+              label="Unit"
               value={form.unit}
               placeholder="Auto-filled from material"
               disabled

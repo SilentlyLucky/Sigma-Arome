@@ -29,7 +29,7 @@ export default function PutawayPage() {
         renderCell={(item, header) => {
           if (header.value === 'material_id') {
             const name = materialNames.get(String(item.material_id ?? ''));
-            return name ? <span style={{ fontSize: 'var(--mantine-font-size-sm)' }}>{name}</span> : null;
+            return name ? <span style={{ fontSize: 'var(--mantine-font-size-sm)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0, maxWidth: '100%', display: 'block' }}>{name}</span> : null;
           }
           return null;
         }}

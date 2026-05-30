@@ -1,17 +1,18 @@
 'use client';
 
-import { Stack, Title, Text, Group, Badge, Button, Paper, Alert, Divider, Table, Code } from '@mantine/core';
+import { Stack, Title, Text, Group, Badge, Button, Paper, Alert, Divider, Table } from '@mantine/core';
 import { useRouter, useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { notifications } from '@mantine/notifications';
 import { IconAlertCircle, IconCheck, IconX, IconHandStop, IconEye } from '@tabler/icons-react';
 import { Textarea } from '@/components/ui/textarea';
 
-interface Batch { id: string; batch_number: string; material_id: string; qty: number; unit: string; status: string; expiry_date: string | null }
-interface Inspection { id: string; inspection_number: string; status: string; decision: string; decision_reason: string | null }
+interface Batch { id: string; batch_number: string; material_id: string; batch_type: string; qty: number; unit: string; status: string; expiry_date: string | null }
+interface Inspection { id: string; inspection_number: string; status: string; decision: string | null; decision_reason: string | null }
 interface CVResult { defect_type: string; confidence_score: number; recommendation: string; is_simulated: boolean }
 
 const STATUS_COLORS: Record<string, string> = { qc_pending: 'orange', under_qc: 'blue', approved: 'green', hold: 'yellow', rejected: 'red' };
+const INSPECTABLE_STATUSES = ['qc_pending', 'under_qc', 'hold'];
 
 export default function QCInspectPage() {
   const router = useRouter();
@@ -26,15 +27,13 @@ export default function QCInspectPage() {
   const [starting, setStarting] = useState(false);
 
   useEffect(() => {
-    // Fetch batch
-    fetch(`/api/items/batches/${batchId}`).then(r => r.json()).then(d => setBatch(d?.data ?? null)).catch(() => {});
-    // Fetch existing inspection for this batch
+    fetch(`/api/items/batches/${batchId}`)
+      .then(r => r.json()).then(d => setBatch(d?.data ?? null)).catch(() => {});
     fetch(`/api/items/qc_inspections?filter[batch_id][_eq]=${batchId}&sort[]=-started_at&limit=1`)
       .then(r => r.json()).then(d => {
-        const insp = d?.data?.[0] ?? null;
+        const insp: Inspection | null = d?.data?.[0] ?? null;
         setInspection(insp);
-        if (insp) {
-          // Fetch CV result
+        if (insp?.id) {
           fetch(`/api/items/cv_results?filter[inspection_id][_eq]=${insp.id}&limit=1`)
             .then(r => r.json()).then(cv => setCvResult(cv?.data?.[0] ?? null)).catch(() => {});
         }
@@ -44,24 +43,28 @@ export default function QCInspectPage() {
   const startInspection = async () => {
     setStarting(true);
     try {
+      const inspectionType = batch?.batch_type === 'finished_product' ? 'finished_product' : 'raw_material';
       const res = await fetch('/api/items/qc_inspections', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ batch_id: batchId, inspection_type: batch?.status === 'qc_pending' ? 'raw_material' : 'raw_material' }),
+        body: JSON.stringify({ batch_id: batchId, inspection_type: inspectionType }),
       });
-      if (!res.ok) throw new Error((await res.json())?.errors?.[0]?.message ?? 'Failed');
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err?.errors?.[0]?.message ?? 'Failed to start inspection');
+      }
       const data = await res.json();
-      setInspection(data?.data ?? null);
-      // Refresh CV result after a moment (action hook runs async)
+      const newInspection = data?.data ?? null;
+      setInspection(newInspection);
+      setBatch(b => b ? { ...b, status: 'under_qc' } : b);
+      // Fetch CV result after a moment (action hook runs async)
       setTimeout(async () => {
-        const insp = data?.data;
-        if (insp?.id) {
-          const cv = await fetch(`/api/items/cv_results?filter[inspection_id][_eq]=${insp.id}&limit=1`).then(r => r.json());
+        if (newInspection?.id) {
+          const cv = await fetch(`/api/items/cv_results?filter[inspection_id][_eq]=${newInspection.id}&limit=1`).then(r => r.json()).catch(() => null);
           setCvResult(cv?.data?.[0] ?? null);
         }
-        setBatch(b => b ? { ...b, status: 'under_qc' } : b);
       }, 1500);
-      notifications.show({ title: 'Inspection Started', message: 'CV analysis running...', color: 'blue' });
+      notifications.show({ title: 'Inspection Started', message: 'CV analysis is running...', color: 'blue' });
     } catch (err) {
       notifications.show({ title: 'Error', message: err instanceof Error ? err.message : 'Failed', color: 'red' });
     } finally {
@@ -77,13 +80,11 @@ export default function QCInspectPage() {
     if (!inspection) return;
     setDeciding(true);
     try {
-      // Update inspection
       await fetch(`/api/items/qc_inspections/${inspection.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ decision, status: `${decision === 'approved' ? 'approved' : decision}`, decision_reason: reason || null, completed_at: new Date().toISOString() }),
+        body: JSON.stringify({ decision, status: decision, decision_reason: reason || null, completed_at: new Date().toISOString() }),
       });
-      // Update batch status
       await fetch(`/api/items/batches/${batchId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -91,7 +92,11 @@ export default function QCInspectPage() {
       });
       setBatch(b => b ? { ...b, status: decision } : b);
       setInspection(i => i ? { ...i, decision } : i);
-      notifications.show({ title: 'Decision Recorded', message: `Batch ${decision}`, color: decision === 'approved' ? 'green' : decision === 'hold' ? 'yellow' : 'red' });
+      notifications.show({
+        title: 'Decision Recorded',
+        message: `Batch marked as ${decision}`,
+        color: decision === 'approved' ? 'green' : decision === 'hold' ? 'yellow' : 'red',
+      });
     } catch (err) {
       notifications.show({ title: 'Error', message: err instanceof Error ? err.message : 'Failed', color: 'red' });
     } finally {
@@ -101,8 +106,10 @@ export default function QCInspectPage() {
 
   if (!batch) return <Text>Loading...</Text>;
 
-  const canDecide = inspection && inspection.decision === 'pending';
-  const isCompleted = inspection && inspection.decision !== 'pending';
+  // Decision pending = inspection exists but no final decision yet
+  const canDecide = !!inspection && (!inspection.decision || inspection.decision === 'pending');
+  const isCompleted = !!inspection && !!inspection.decision && inspection.decision !== 'pending';
+  const canStartInspection = !inspection && INSPECTABLE_STATUSES.includes(batch.status);
 
   return (
     <Stack gap="md">
@@ -111,26 +118,29 @@ export default function QCInspectPage() {
           <Title order={2}>QC Inspection</Title>
           <Text c="dimmed" size="sm">Batch: <strong>{batch.batch_number}</strong></Text>
         </div>
-        <Badge size="lg" color={STATUS_COLORS[batch.status] ?? 'gray'} variant="light">{batch.status.replace(/_/g, ' ')}</Badge>
+        <Badge size="lg" color={STATUS_COLORS[batch.status] ?? 'gray'} variant="light">
+          {batch.status.replace(/_/g, ' ')}
+        </Badge>
       </Group>
 
-      {/* Batch Info */}
       <Paper p="md" radius="md" withBorder>
         <Group gap="xl">
           <Text size="sm"><strong>Quantity:</strong> {batch.qty} {batch.unit}</Text>
+          <Text size="sm"><strong>Type:</strong> {batch.batch_type?.replace(/_/g, ' ') ?? 'N/A'}</Text>
           <Text size="sm"><strong>Expiry:</strong> {batch.expiry_date ? new Date(batch.expiry_date).toLocaleDateString() : 'N/A'}</Text>
-          <Text size="sm"><strong>Status:</strong> {batch.status}</Text>
         </Group>
       </Paper>
 
-      {/* Start Inspection */}
-      {!inspection && batch.status === 'qc_pending' && (
+      {canStartInspection && (
         <Button leftSection={<IconEye size={16} />} color="blue" loading={starting} onClick={startInspection}>
           Start QC Inspection
         </Button>
       )}
 
-      {/* CV Result */}
+      {inspection && !cvResult && !canDecide && !isCompleted && (
+        <Alert color="blue" variant="light">Inspection started — CV analysis is running. Refresh in a moment to see results.</Alert>
+      )}
+
       {cvResult && (
         <>
           <Divider label="Computer Vision Analysis (Decision Support)" labelPosition="left" />
@@ -141,16 +151,32 @@ export default function QCInspectPage() {
             </Alert>
             <Table withTableBorder>
               <Table.Tbody>
-                <Table.Tr><Table.Td fw={500}>Defect Type</Table.Td><Table.Td><Badge color={cvResult.defect_type === 'none' ? 'green' : 'red'} variant="light">{cvResult.defect_type === 'none' ? 'No Defect Detected' : cvResult.defect_type.replace(/_/g, ' ')}</Badge></Table.Td></Table.Tr>
-                <Table.Tr><Table.Td fw={500}>Confidence</Table.Td><Table.Td>{(cvResult.confidence_score * 100).toFixed(1)}%</Table.Td></Table.Tr>
-                <Table.Tr><Table.Td fw={500}>AI Recommendation</Table.Td><Table.Td><Badge color={cvResult.recommendation === 'approve' ? 'green' : cvResult.recommendation === 'reject' ? 'red' : 'orange'} variant="light">{cvResult.recommendation}</Badge></Table.Td></Table.Tr>
+                <Table.Tr>
+                  <Table.Td fw={500}>Defect Type</Table.Td>
+                  <Table.Td>
+                    <Badge color={cvResult.defect_type === 'none' ? 'green' : 'red'} variant="light">
+                      {cvResult.defect_type === 'none' ? 'No Defect Detected' : cvResult.defect_type.replace(/_/g, ' ')}
+                    </Badge>
+                  </Table.Td>
+                </Table.Tr>
+                <Table.Tr>
+                  <Table.Td fw={500}>Confidence</Table.Td>
+                  <Table.Td>{(cvResult.confidence_score * 100).toFixed(1)}%</Table.Td>
+                </Table.Tr>
+                <Table.Tr>
+                  <Table.Td fw={500}>AI Recommendation</Table.Td>
+                  <Table.Td>
+                    <Badge color={cvResult.recommendation === 'approve' ? 'green' : cvResult.recommendation === 'reject' ? 'red' : 'orange'} variant="light">
+                      {cvResult.recommendation}
+                    </Badge>
+                  </Table.Td>
+                </Table.Tr>
               </Table.Tbody>
             </Table>
           </Paper>
         </>
       )}
 
-      {/* QC Decision */}
       {canDecide && (
         <>
           <Divider label="QC Decision" labelPosition="left" />
@@ -158,7 +184,7 @@ export default function QCInspectPage() {
             <Stack gap="sm">
               <Textarea
                 label="Decision Reason"
-                placeholder={`Required for Hold/Reject. Optional for Approve.`}
+                placeholder="Required for Hold/Reject. Optional for Approve."
                 value={reason}
                 onChange={(v) => setReason(String(v ?? ''))}
               />
@@ -173,9 +199,9 @@ export default function QCInspectPage() {
       )}
 
       {isCompleted && (
-        <Alert color={inspection.decision === 'approved' ? 'green' : inspection.decision === 'hold' ? 'yellow' : 'red'} variant="light">
-          <Text fw={500}>Decision: {inspection.decision?.toUpperCase()}</Text>
-          {inspection.decision_reason && <Text size="sm" mt={4}>{inspection.decision_reason}</Text>}
+        <Alert color={inspection!.decision === 'approved' ? 'green' : inspection!.decision === 'hold' ? 'yellow' : 'red'} variant="light">
+          <Text fw={500}>Decision: {inspection!.decision?.toUpperCase()}</Text>
+          {inspection!.decision_reason && <Text size="sm" mt={4}>{inspection!.decision_reason}</Text>}
         </Alert>
       )}
 

@@ -167,10 +167,10 @@ export default function CreateProductionOrderPage() {
           {/* Product + Quantity */}
           <Group grow align="flex-start">
             {loadingData ? (
-              <Input label="Product *" placeholder="Loading products..." disabled onChange={() => {}} />
+              <Input label="Product" placeholder="Loading products..." disabled onChange={() => {}} />
             ) : productChoices.length > 0 ? (
               <SelectDropdown
-                label="Product *"
+                label="Product"
                 placeholder="Select product to produce..."
                 choices={productChoices}
                 value={form.product_id || null}
@@ -178,10 +178,10 @@ export default function CreateProductionOrderPage() {
                 required
               />
             ) : (
-              <Input label="Product *" value="" placeholder="No active products available" disabled onChange={() => {}} />
+              <Input label="Product" value="" placeholder="No active products available" disabled onChange={() => {}} />
             )}
             <Input
-              label="Planned Quantity *"
+              label="Planned Quantity"
               placeholder="e.g. 100.5"
               type="float"
               value={form.planned_qty || null}
@@ -200,7 +200,7 @@ export default function CreateProductionOrderPage() {
           </Group>
 
           <SelectDropdown
-            label="Priority *"
+            label="Priority"
             placeholder="Select priority level..."
             choices={[
               { text: 'Low', value: 'low' },
@@ -225,7 +225,7 @@ export default function CreateProductionOrderPage() {
           </Text>
           <Group grow align="flex-start">
             <DateTime
-              label="Planned Start *"
+              label="Planned Start"
               placeholder="When production begins"
               type="date"
               value={form.planned_start_date}
@@ -234,7 +234,7 @@ export default function CreateProductionOrderPage() {
               required
             />
             <DateTime
-              label="Planned End *"
+              label="Planned End"
               placeholder="When production finishes"
               type="date"
               value={form.planned_end_date}
@@ -243,7 +243,7 @@ export default function CreateProductionOrderPage() {
               required
             />
             <DateTime
-              label="Due Date *"
+              label="Due Date"
               placeholder="Delivery deadline"
               type="date"
               value={form.due_date}

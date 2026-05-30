@@ -44,6 +44,9 @@
   display: contents !important;
 }
 
+/* All tr elements use display:contents so their cells are direct grid children.
+   Exception: the context-menu-row is a layout-only row that must NOT participate
+   in the grid — it renders a fixed-position popup and must be hidden from layout. */
 .v-table table tr {
   display: contents !important;
 }

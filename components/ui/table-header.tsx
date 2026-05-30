@@ -8,6 +8,7 @@
  */
 
 import { Checkbox, Text, Tooltip } from "@mantine/core";
+import { createPortal } from "react-dom";
 import {
   IconArrowDown,
   IconArrowsSort,
@@ -470,23 +471,23 @@ export const TableHeader: React.FC<TableHeaderProps> = ({
               <th className="cell spacer" aria-hidden="true" />
             ) : null}
           </tr>
-
-          {/* Context Menu Popup */}
-          {contextMenu && renderHeaderContextMenu && (
-            <tr className="context-menu-row">
-              <td colSpan={999} className="context-menu-cell">
-                <div
-                  ref={contextMenuRef}
-                  className="header-context-menu"
-                  onClick={() => setContextMenu(null)}
-                >
-                  {renderHeaderContextMenu(contextMenu.header)}
-                </div>
-              </td>
-            </tr>
-          )}
         </thead>
       </SortableContext>
+
+      {/* Context Menu Popup — rendered via portal at document.body so it is
+          completely outside the table grid. Previously it was inside a <tr>
+          which, with display:contents on <tr>, injected an extra grid cell
+          that shifted all data row columns by one position. */}
+      {contextMenu && renderHeaderContextMenu && typeof document !== 'undefined' && createPortal(
+        <div
+          ref={contextMenuRef}
+          className="header-context-menu"
+          onClick={() => setContextMenu(null)}
+        >
+          {renderHeaderContextMenu(contextMenu.header)}
+        </div>,
+        document.body
+      )}
     </DndContext>
   );
 };

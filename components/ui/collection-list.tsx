@@ -229,6 +229,8 @@ export const CollectionList: React.FC<CollectionListProps> = ({
 
   // ----- Sort state -----
   const [sort, setSort] = useState<Sort>({ by: null, desc: false });
+  // sortApiField: the actual field sent to DaaS (may be dot-notation for M2O, e.g. "material_id.name")
+  const [sortApiField, setSortApiField] = useState<string | null>(null);
 
   // ----- Archive filter state -----
   const [archiveFilterMode, setArchiveFilterMode] = useState<ArchiveFilter>("all");
@@ -242,6 +244,94 @@ export const CollectionList: React.FC<CollectionListProps> = ({
   const [deletingIds, setDeletingIds] = useState<(string | number)[]>([]);
   const [deleteLoading, setDeleteLoading] = useState(false);
 
+  // ----- Relation name cache: fieldKey → Map<uuid, displayName> -----
+  const [relationNames, setRelationNames] = useState<Record<string, Map<string, string>>>({});
+
+  // =========================================================================
+  // Resolve relation display names for M2O fields
+  // For each M2O field in visibleFieldKeys, fetch the related collection's
+  // name/display field and cache it. This powers:
+  //   - Cell display: show name instead of UUID
+  //   - Column header: show "Material" instead of "Material Id"
+  //   - Sort: sort by the name field (dot-notation) instead of the UUID field
+  // =========================================================================
+  useEffect(() => {
+    if (items.length === 0 || allFields.length === 0) return;
+
+    const m2oFields = visibleFieldKeys
+      .map((key) => allFields.find((f) => f.field === key))
+      .filter((f): f is Field => {
+        if (!f) return false;
+        const special = f.meta?.special ?? [];
+        return Array.isArray(special) && special.includes('m2o');
+      });
+
+    if (m2oFields.length === 0) return;
+
+    // For each M2O field, collect the unique IDs present in current items
+    // and fetch their display names from the related collection.
+    const fetchNames = async () => {
+      const updates: Record<string, Map<string, string>> = {};
+
+      await Promise.all(m2oFields.map(async (field) => {
+        // Determine related collection from field options or schema
+        const relatedCollection: string | undefined =
+          field.meta?.options?.related_collection as string | undefined ||
+          (field.schema as Record<string, unknown> | undefined)?.foreign_key_table as string | undefined;
+
+        if (!relatedCollection) return;
+
+        // Collect unique non-null IDs from current page
+        const ids = [...new Set(
+          items
+            .map((item) => item[field.field])
+            .filter((v): v is string => typeof v === 'string' && v.length > 0)
+        )];
+        if (ids.length === 0) return;
+
+        // Determine the display field — prefer 'name', fallback to 'supplier_name', then first string field
+        const displayFields = ['name', 'supplier_name', 'location_code', 'batch_number', 'order_number', 'request_number', 'inspection_number', 'receipt_number'];
+
+        try {
+          const filterParam = JSON.stringify({ id: { _in: ids } });
+          const res = await fetch(
+            `/api/items/${relatedCollection}?fields[]=id&fields[]=name&fields[]=supplier_name&fields[]=location_code&fields[]=batch_number&fields[]=order_number&fields[]=request_number&fields[]=code&limit=200&filter=${encodeURIComponent(filterParam)}`
+          );
+          if (!res.ok) return;
+          const data = await res.json();
+          const rows: Record<string, unknown>[] = data?.data ?? [];
+
+          const nameMap = new Map<string, string>();
+          for (const row of rows) {
+            const id = String(row.id ?? '');
+            if (!id) continue;
+            // Find first non-empty display field
+            let displayName = '';
+            for (const df of displayFields) {
+              if (row[df] && typeof row[df] === 'string') {
+                displayName = row[df] as string;
+                break;
+              }
+            }
+            // Fallback: use code if available
+            if (!displayName && row.code) displayName = String(row.code);
+            if (displayName) nameMap.set(id, displayName);
+          }
+          updates[field.field] = nameMap;
+        } catch {
+          // Non-fatal — fall back to UUID display
+        }
+      }));
+
+      if (Object.keys(updates).length > 0) {
+        setRelationNames((prev) => ({ ...prev, ...updates }));
+      }
+    };
+
+    fetchNames();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [items, visibleFieldKeys, allFields]);
+
   // ----- Header state (for resize/reorder persistence) -----
   const [headerOverrides, setHeaderOverrides] = useState<
     Record<string, Partial<HeaderRaw>>
@@ -249,8 +339,6 @@ export const CollectionList: React.FC<CollectionListProps> = ({
 
   // ----- Computed row height -----
   const rowHeight = rowHeightProp ?? SPACING_HEIGHT[tableSpacing] ?? 48;
-
-  // ----- Permission state (mirrors DaaS useCollectionPermissions) -----
   // Fetched from GET /permissions/me via PermissionsService.getMyCollectionAccess().
   // Empty access map (admin or failed fetch) = assume full access.
   const [readableFields, setReadableFields] = useState<string[] | null>(null);
@@ -463,9 +551,9 @@ export const CollectionList: React.FC<CollectionListProps> = ({
         query.search = search;
       }
 
-      // Sort
-      if (sort.by) {
-        query.sort = sort.desc ? `-${sort.by}` : sort.by;
+      // Sort — use dot-notation field for M2O relations (sorts by name, not UUID)
+      if (sortApiField) {
+        query.sort = sort.desc ? `-${sortApiField}` : sortApiField;
       }
 
       const queryString = new URLSearchParams(
@@ -508,6 +596,7 @@ export const CollectionList: React.FC<CollectionListProps> = ({
     page,
     search,
     sort,
+    sortApiField,
     primaryKeyField,
     archiveField,
     archiveFilterMode,
@@ -555,25 +644,60 @@ export const CollectionList: React.FC<CollectionListProps> = ({
 
   // =========================================================================
   // Build VTable headers from field metadata
+  // For M2O relation fields: use the human label (e.g. "Material" not "Material Id"),
+  // and set sortKey to the dot-notation name field (e.g. "material_id.name")
+  // so sorting works by name, not UUID.
   // =========================================================================
   const headers = useMemo<HeaderRaw[]>(() => {
     return visibleFieldKeys.map((key) => {
       const fieldMeta = permittedFields.find((f) => f.field === key);
       const overrides = headerOverrides[key] || {};
-      // Use field.meta?.field (display name) or humanize the key.
-      // DaaS uses field `name` for display; DaaS uses meta.note as a tooltip.
-      // The header text should be the humanized field name, not the note.
-      const label =
+
+      // Determine if this is an M2O relation field
+      const special = fieldMeta?.meta?.special ?? [];
+      const isM2O = Array.isArray(special) && special.includes('m2o');
+
+      // Column label: use translation, then strip trailing " Id" from M2O fields
+      let rawLabel =
+        (fieldMeta?.meta?.translations?.[0]?.translation as string | undefined) ||
         (fieldMeta as Record<string, unknown> | undefined)?.name as string ||
         key.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
 
+      // Strip trailing " Id" suffix from relation field labels (e.g. "Material Id" → "Material")
+      if (isM2O) {
+        rawLabel = rawLabel.replace(/\s+Id$/i, '').replace(/\s+ID$/i, '');
+      }
+
+      // Sort key: for M2O fields, sort by the related name field via dot-notation
+      // so clicking the column header sorts by name, not UUID.
+      let sortKey = key;
+      if (isM2O) {
+        const relatedCollection: string | undefined =
+          fieldMeta?.meta?.options?.related_collection as string | undefined;
+        // Map known related collections to their display field
+        const displayFieldMap: Record<string, string> = {
+          raw_materials: 'name',
+          products: 'name',
+          suppliers: 'supplier_name',
+          warehouse_locations: 'location_code',
+          batches: 'batch_number',
+          raw_material_orders: 'order_number',
+          material_requests: 'request_number',
+          production_orders: 'order_number',
+          boms: 'name',
+          daas_users: 'first_name',
+        };
+        const displayField = relatedCollection ? (displayFieldMap[relatedCollection] ?? 'name') : 'name';
+        sortKey = `${key}.${displayField}`;
+      }
+
       return {
-        text: label,
+        text: rawLabel,
         value: key,
         sortable: enableSort,
+        sortKey,
         align: (overrides.align as Alignment) || "left",
         width: overrides.width ?? null,
-        // Attach field metadata for consumers and renderCell
         description: fieldMeta?.meta?.note || undefined,
         field: fieldMeta,
         ...overrides,
@@ -636,11 +760,20 @@ export const CollectionList: React.FC<CollectionListProps> = ({
 
   const handleSortChange = useCallback(
     (newSort: Sort | null) => {
-      const s = newSort ?? { by: null, desc: false };
-      setSort(s);
-      onSortChangeProp?.(s);
+      if (!newSort || !newSort.by) {
+        setSort({ by: null, desc: false });
+        setSortApiField(null);
+        onSortChangeProp?.(null);
+        return;
+      }
+      // If the header has a sortKey (dot-notation for M2O), use that for the API sort param
+      const matchedHeader = headers.find((h) => h.value === newSort.by);
+      const apiSortField = (matchedHeader as (HeaderRaw & { sortKey?: string }) | undefined)?.sortKey ?? newSort.by;
+      setSort({ by: newSort.by, desc: newSort.desc }); // keep UI sort indicator on the column
+      setSortApiField(apiSortField);
+      onSortChangeProp?.({ by: apiSortField, desc: newSort.desc });
     },
-    [onSortChangeProp],
+    [headers, onSortChangeProp],
   );
 
   const handleHeadersChange = useCallback((newHeaders: HeaderRaw[]) => {
@@ -755,12 +888,25 @@ export const CollectionList: React.FC<CollectionListProps> = ({
         if (consumerResult !== null && consumerResult !== undefined) return consumerResult;
       }
       const fieldMeta = permittedFields.find((f) => f.field === header.value);
-      if (!fieldMeta) return null; // fall back to VTable default
+      if (!fieldMeta) return null;
 
       const value = item[header.value];
-      if (value === null || value === undefined) return null; // VTable shows "—"
+      if (value === null || value === undefined) return null;
 
       const fieldType = fieldMeta.type;
+
+      // ---------- M2O relation — show resolved name instead of UUID ----------
+      const special = fieldMeta.meta?.special ?? [];
+      if (Array.isArray(special) && special.includes('m2o')) {
+        const nameMap = relationNames[header.value];
+        const uuid = String(value);
+        const resolvedName = nameMap?.get(uuid);
+        if (resolvedName) {
+          return <Text size="sm" style={{ wordBreak: 'break-word', whiteSpace: 'normal' }}>{resolvedName}</Text>;
+        }
+        // Still loading or not found — show UUID wrapped
+        return <Text size="sm" style={{ wordBreak: 'break-all', lineHeight: 1.4, color: 'var(--mantine-color-dimmed)' }}>{uuid}</Text>;
+      }
 
       // ---------- Boolean ----------
       if (fieldType === "boolean") {
@@ -772,24 +918,13 @@ export const CollectionList: React.FC<CollectionListProps> = ({
       }
 
       // ---------- Datetime / Timestamp / Date ----------
-      if (
-        fieldType === "timestamp" ||
-        fieldType === "dateTime" ||
-        fieldType === "date"
-      ) {
+      if (fieldType === "timestamp" || fieldType === "dateTime" || fieldType === "date") {
         try {
           const dateObj = new Date(value as string);
           if (isNaN(dateObj.getTime())) return null;
-          if (fieldType === "date") {
-            return (
-              <Text size="sm" truncate="end">
-                {dateObj.toLocaleDateString()}
-              </Text>
-            );
-          }
           return (
-            <Text size="sm" truncate="end">
-              {dateObj.toLocaleString()}
+            <Text size="sm" style={{ whiteSpace: 'normal' }}>
+              {fieldType === "date" ? dateObj.toLocaleDateString() : dateObj.toLocaleString()}
             </Text>
           );
         } catch {
@@ -798,46 +933,31 @@ export const CollectionList: React.FC<CollectionListProps> = ({
       }
 
       // ---------- Integer / Float / Decimal / BigInteger ----------
-      if (
-        fieldType === "integer" ||
-        fieldType === "float" ||
-        fieldType === "decimal" ||
-        fieldType === "bigInteger"
-      ) {
+      if (fieldType === "integer" || fieldType === "float" || fieldType === "decimal" || fieldType === "bigInteger") {
         const num = Number(value);
         if (!isNaN(num)) {
-          return (
-            <Text size="sm" truncate="end">
-              {num.toLocaleString()}
-            </Text>
-          );
+          return <Text size="sm">{num.toLocaleString()}</Text>;
         }
         return null;
       }
 
-      // ---------- JSON (display as badge) ----------
+      // ---------- JSON ----------
       if (fieldType === "json") {
-        return (
-          <Badge variant="light" size="sm" color="gray">
-            JSON
-          </Badge>
-        );
+        return <Badge variant="light" size="sm" color="gray">JSON</Badge>;
       }
 
-      // ---------- UUID (show full value, wrap if needed) ----------
+      // ---------- UUID (non-relation) — show full value ----------
       if (fieldType === "uuid") {
-        const str = String(value);
         return (
           <Text size="sm" style={{ wordBreak: 'break-all', lineHeight: 1.4 }}>
-            {str}
+            {String(value)}
           </Text>
         );
       }
 
-      // ---------- Default: let VTable handle it ----------
       return null;
     },
-    [permittedFields],
+    [permittedFields, consumerRenderCell, relationNames],
   );
 
   const renderHeaderAppend = useCallback(() => {

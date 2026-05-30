@@ -288,17 +288,20 @@ export const TableHeader: React.FC<TableHeaderProps> = ({
   const handleSort = useCallback(
     (header: Header) => {
       if (!header.sortable || resizing) return;
+      // Use sortKey (dot-notation for M2O) if available, otherwise fall back to value
+      const sortField = (header as Header & { sortKey?: string }).sortKey ?? header.value;
       if (header.value === sort.by) {
         if (mustSort) {
-          onSortChange?.({ by: sort.by, desc: !sort.desc });
+          onSortChange?.({ by: header.value, desc: !sort.desc });
         } else if (!sort.desc) {
-          onSortChange?.({ by: sort.by, desc: true });
+          onSortChange?.({ by: header.value, desc: true });
         } else {
           onSortChange?.({ by: null, desc: false });
         }
       } else {
         onSortChange?.({ by: header.value, desc: false });
       }
+      void sortField; // sortKey is consumed by CollectionList's handleSortChange
     },
     [sort, mustSort, resizing, onSortChange],
   );

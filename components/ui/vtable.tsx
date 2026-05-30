@@ -277,14 +277,12 @@ export const VTable: React.FC<VTableProps> = ({
     return sortProp ?? { by: null, desc: false };
   }, [sortProp]);
 
-  // Calculate grid columns. Header and rows share an identical template so
-  // header cells visually align with their data column, and column-resize
-  // updates from the resize handle (which writes header.width) drive both
-  // the header and the row grids together.
-  // Uses minmax(120px, max-content) for auto-fit to content width (complaint #3).
+  // Calculate grid columns. Each column is either an explicit px width (when
+  // the user has resized it) or "auto" (fits content). Using "auto" instead of
+  // "1fr" means resizing one column does NOT redistribute space to others.
   const columnStyle = useMemo(() => {
     let cols = internalHeaders
-      .map((header) => (header.width ? `${header.width}px` : "minmax(120px, 1fr)"))
+      .map((header) => (header.width ? `${header.width}px` : "auto"))
       .join(" ");
 
     if (showSelect !== "none") cols = "36px " + cols;

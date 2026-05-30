@@ -39,6 +39,13 @@ export interface HeaderRaw {
   sortable?: boolean;
   /** Fixed column width in pixels */
   width?: number | null;
+  /**
+   * The actual field key sent to the API for sorting.
+   * For M2O relation fields this is dot-notation (e.g. "material_id.name")
+   * so the API sorts by the related record's name, not the UUID.
+   * Defaults to `value` when not set.
+   */
+  sortKey?: string;
   /** Any additional properties */
   [key: string]: unknown;
 }

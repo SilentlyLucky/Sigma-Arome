@@ -25,6 +25,8 @@ export default function QCInspectPage() {
   const [reason, setReason] = useState('');
   const [deciding, setDeciding] = useState(false);
   const [starting, setStarting] = useState(false);
+  // QC templates keyed by target_type
+  const [templates, setTemplates] = useState<Record<string, string>>({}); // target_type → id
 
   useEffect(() => {
     fetch(`/api/items/batches/${batchId}`)
@@ -38,21 +40,36 @@ export default function QCInspectPage() {
             .then(r => r.json()).then(cv => setCvResult(cv?.data?.[0] ?? null)).catch(() => {});
         }
       }).catch(() => {});
+    // Load active QC templates to auto-select by type
+    fetch('/api/items/qc_templates?filter[status][_eq]=active&fields[]=id&fields[]=target_type&limit=20')
+      .then(r => r.json()).then(d => {
+        const map: Record<string, string> = {};
+        for (const t of (d?.data ?? [])) {
+          if (!map[t.target_type]) map[t.target_type] = t.id; // first match wins
+        }
+        setTemplates(map);
+      }).catch(() => {});
   }, [batchId]);
 
   const startInspection = async () => {
     setStarting(true);
     try {
       const inspectionType = batch?.batch_type === 'finished_product' ? 'finished_product' : 'raw_material';
+      // Auto-select the matching QC template for this inspection type
+      const templateId = templates[inspectionType] ?? null;
+
+      const body: Record<string, unknown> = {
+        batch_id: batchId,
+        inspection_type: inspectionType,
+        // inspector_id is auto-filled by DaaS via user-created special — do NOT send it
+      };
+      // Only include qc_template_id if we found a matching template
+      if (templateId) body.qc_template_id = templateId;
+
       const res = await fetch('/api/items/qc_inspections', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          batch_id: batchId,
-          inspection_type: inspectionType,
-          status: 'in_progress',
-          started_at: new Date().toISOString(),
-        }),
+        body: JSON.stringify(body),
       });
       if (!res.ok) {
         let errMsg = 'Failed to start inspection';

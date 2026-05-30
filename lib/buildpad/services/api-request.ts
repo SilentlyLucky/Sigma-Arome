@@ -74,8 +74,24 @@ export async function apiRequest<T = unknown>(
       // Return a never-resolving promise to prevent further execution
       return new Promise<T>(() => {});
     }
-    const error = await response.text();
-    throw new Error(`API error: ${response.status} - ${error}`);
+
+    // Try to extract a human-readable message from the JSON error body.
+    // DaaS returns: { errors: [{ message: "..." }] } or { error: "..." }
+    const rawText = await response.text();
+    let humanMessage: string | null = null;
+    try {
+      const parsed = JSON.parse(rawText);
+      humanMessage =
+        parsed?.errors?.[0]?.message ||
+        parsed?.error ||
+        parsed?.message ||
+        null;
+    } catch {
+      // Not JSON — use raw text if short enough
+      if (rawText && rawText.length < 300) humanMessage = rawText;
+    }
+
+    throw new Error(humanMessage ?? `Request failed (${response.status}). Please try again.`);
   }
 
   // Handle 204 No Content (e.g. DELETE responses)

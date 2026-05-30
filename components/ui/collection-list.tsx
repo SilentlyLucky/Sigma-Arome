@@ -156,6 +156,8 @@ export interface CollectionListProps {
    * to the default field-type-aware renderer.
    */
   renderCell?: (item: AnyItem, header: Header) => React.ReactNode | null | undefined;
+  /** Custom append column rendered at the end of every row (e.g. action icons) */
+  renderRowAppend?: (item: AnyItem) => React.ReactNode;
 }
 
 // System fields to exclude from default display
@@ -208,6 +210,7 @@ export const CollectionList: React.FC<CollectionListProps> = ({
   onFilterChange,
   onPermissionsLoaded,
   renderCell: consumerRenderCell,
+  renderRowAppend,
 }) => {
   // ----- Data state -----
   const [allFields, setAllFields] = useState<Field[]>([]);
@@ -1049,6 +1052,7 @@ export const CollectionList: React.FC<CollectionListProps> = ({
         selectionUseKeys
         clickable={!!onItemClick}
         renderCell={fieldTypeRenderCell}
+        renderRowAppend={renderRowAppend}
         renderHeaderContextMenu={
           enableHeaderMenu ? renderHeaderContextMenu : undefined
         }

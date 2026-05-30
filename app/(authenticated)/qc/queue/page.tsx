@@ -1,8 +1,8 @@
 'use client';
 
-import { Stack, Title, Text, Alert } from '@mantine/core';
+import { Stack, Title, Text, Alert, ActionIcon, Tooltip } from '@mantine/core';
 import { CollectionList } from '@/components/ui/collection-list';
-import { IconInfoCircle } from '@tabler/icons-react';
+import { IconInfoCircle, IconMicroscope } from '@tabler/icons-react';
 import { useRouter } from 'next/navigation';
 import { useNameLookup } from '@/lib/hooks/useNameLookup';
 
@@ -36,6 +36,19 @@ export default function QCQueuePage() {
           }
           return null;
         }}
+        renderRowAppend={(item) => (
+          <Tooltip label="Inspect batch" position="left" withArrow>
+            <ActionIcon
+              variant="subtle"
+              color="blue"
+              size="sm"
+              onClick={(e) => { e.stopPropagation(); router.push(`/qc/inspect/${item.id}`); }}
+              aria-label="Inspect batch"
+            >
+              <IconMicroscope size={16} />
+            </ActionIcon>
+          </Tooltip>
+        )}
       />
     </Stack>
   );

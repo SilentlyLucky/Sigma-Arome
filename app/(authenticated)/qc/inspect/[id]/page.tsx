@@ -34,7 +34,7 @@ export default function QCInspectPage() {
         const insp: Inspection | null = d?.data?.[0] ?? null;
         setInspection(insp);
         if (insp?.id) {
-          fetch(`/api/items/cv_results?filter[inspection_id][_eq]=${insp.id}&limit=1`)
+          fetch(`/api/items/cv_results?filter[qc_id][_eq]=${insp.id}&limit=1`)
             .then(r => r.json()).then(cv => setCvResult(cv?.data?.[0] ?? null)).catch(() => {});
         }
       }).catch(() => {});
@@ -47,20 +47,35 @@ export default function QCInspectPage() {
       const res = await fetch('/api/items/qc_inspections', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ batch_id: batchId, inspection_type: inspectionType }),
+        body: JSON.stringify({
+          batch_id: batchId,
+          inspection_type: inspectionType,
+          status: 'in_progress',
+          started_at: new Date().toISOString(),
+        }),
       });
       if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err?.errors?.[0]?.message ?? 'Failed to start inspection');
+        let errMsg = 'Failed to start inspection';
+        try {
+          const err = await res.json();
+          errMsg = err?.errors?.[0]?.message || err?.message || JSON.stringify(err);
+        } catch { /* response wasn't JSON */ }
+        throw new Error(errMsg);
       }
       const data = await res.json();
       const newInspection = data?.data ?? null;
       setInspection(newInspection);
       setBatch(b => b ? { ...b, status: 'under_qc' } : b);
+      // Update batch status to under_qc
+      await fetch(`/api/items/batches/${batchId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'under_qc' }),
+      }).catch(() => {});
       // Fetch CV result after a moment (action hook runs async)
       setTimeout(async () => {
         if (newInspection?.id) {
-          const cv = await fetch(`/api/items/cv_results?filter[inspection_id][_eq]=${newInspection.id}&limit=1`).then(r => r.json()).catch(() => null);
+          const cv = await fetch(`/api/items/cv_results?filter[qc_id][_eq]=${newInspection.id}&limit=1`).then(r => r.json()).catch(() => null);
           setCvResult(cv?.data?.[0] ?? null);
         }
       }, 1500);

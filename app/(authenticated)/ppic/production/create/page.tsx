@@ -91,7 +91,7 @@ export default function CreateProductionOrderPage() {
     });
   };
 
-  const handleSave = async () => {
+  const handleSave = async (targetStatus: 'draft' | 'planned') => {
     const errors: string[] = [];
     if (!form.product_id) errors.push('Product is required');
     const qty = typeof form.planned_qty === 'number' ? form.planned_qty : parseFloat(String(form.planned_qty));
@@ -129,6 +129,8 @@ export default function CreateProductionOrderPage() {
         planned_end_date: form.planned_end_date,
         due_date: form.due_date,
         notes: form.notes || null,
+        // Passing status here overrides the backend default of 'draft'
+        status: targetStatus,
       };
       if (form.bom_id) body.bom_id = form.bom_id;
 
@@ -141,7 +143,20 @@ export default function CreateProductionOrderPage() {
         const err = await res.json();
         throw new Error(err?.errors?.[0]?.message ?? 'Save failed');
       }
-      notifications.show({ title: 'Created', message: 'Production order created', color: 'green' });
+
+      if (targetStatus === 'planned') {
+        notifications.show({
+          title: 'Order Submitted',
+          message: 'Production order submitted and is now in the planning pipeline.',
+          color: 'green',
+        });
+      } else {
+        notifications.show({
+          title: 'Draft Saved',
+          message: 'Production order saved as draft. Open it to submit when ready.',
+          color: 'blue',
+        });
+      }
       router.push('/ppic/production');
     } catch (err) {
       notifications.show({ title: 'Error', message: err instanceof Error ? err.message : 'Failed', color: 'red' });
@@ -158,7 +173,8 @@ export default function CreateProductionOrderPage() {
       </div>
 
       <Alert icon={<IconInfoCircle size={16} />} color="blue" variant="light">
-        Order number is auto-generated. Status starts as <strong>Draft</strong>.
+        Order number is auto-generated. Use <strong>Submit Order</strong> to send it directly into
+        the planning pipeline, or <strong>Save Draft</strong> to finish later.
         Each product has one active formula — it is auto-selected when you pick a product.
       </Alert>
 
@@ -263,8 +279,23 @@ export default function CreateProductionOrderPage() {
       </Paper>
 
       <Group justify="flex-end">
-        <Button variant="subtle" onClick={() => router.push('/ppic/production')}>Cancel</Button>
-        <Button onClick={handleSave} loading={saving}>Create Production Order</Button>
+        <Button variant="subtle" onClick={() => router.push('/ppic/production')}>
+          Cancel
+        </Button>
+        <Button
+          variant="default"
+          onClick={() => handleSave('draft')}
+          loading={saving}
+        >
+          Save Draft
+        </Button>
+        <Button
+          color="teal"
+          onClick={() => handleSave('planned')}
+          loading={saving}
+        >
+          Submit Order
+        </Button>
       </Group>
     </Stack>
   );

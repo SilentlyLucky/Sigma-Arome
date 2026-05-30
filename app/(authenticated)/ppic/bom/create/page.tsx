@@ -28,6 +28,26 @@ export default function CreateBOMPage() {
     notes: '',
   });
 
+  // Auto-suggest unit based on product code prefix
+  const suggestUnit = (code: string): string => {
+    const upper = code.toUpperCase();
+    if (upper.startsWith('FO') || upper.startsWith('EO') || upper.startsWith('CH')) return 'liter';
+    if (upper.startsWith('VP') || upper.startsWith('CA') || upper.startsWith('CP') ||
+        upper.startsWith('ZO') || upper.startsWith('TP') || upper.startsWith('PL') ||
+        upper.startsWith('SR')) return 'kg';
+    if (upper.startsWith('PK')) return 'pcs';
+    // Fragrance products (EDP, EDT, BM, EOB) are sold in pcs
+    if (upper.startsWith('EDP') || upper.startsWith('EDT') || upper.startsWith('BM') ||
+        upper.startsWith('EOB')) return 'pcs';
+    return 'pcs'; // default
+  };
+
+  const handleCodeChange = (v: string | number | null) => {
+    const code = String(v ?? '');
+    const suggested = suggestUnit(code);
+    setForm(f => ({ ...f, product_code: code, product_unit: suggested }));
+  };
+
   const handleSave = async () => {
     const errors: string[] = [];
     if (!form.product_name.trim()) errors.push('Product name is required');
@@ -115,7 +135,7 @@ export default function CreateBOMPage() {
               label="Product Code *"
               placeholder="e.g. EDP-006"
               value={form.product_code}
-              onChange={(v) => setForm((f) => ({ ...f, product_code: String(v ?? '') }))}
+              onChange={handleCodeChange}
               required
             />
           </Group>
@@ -123,11 +143,12 @@ export default function CreateBOMPage() {
           <Group grow align="flex-start">
             <SelectDropdown
               label="Unit *"
+              placeholder="Select unit of measure..."
               choices={[
-                { text: 'pcs', value: 'pcs' },
-                { text: 'kg', value: 'kg' },
-                { text: 'liter', value: 'liter' },
-                { text: 'bottle', value: 'bottle' },
+                { text: 'pcs — individual pieces (bottles, caps, units)', value: 'pcs' },
+                { text: 'liter — liquid volume (oils, solvents, extracts)', value: 'liter' },
+                { text: 'kg — weight (powders, solids, bulk)', value: 'kg' },
+                { text: 'bottle — bottled product', value: 'bottle' },
               ]}
               value={form.product_unit}
               onChange={(v) => setForm((f) => ({ ...f, product_unit: String(v ?? 'pcs') }))}
@@ -140,6 +161,13 @@ export default function CreateBOMPage() {
               required
             />
           </Group>
+
+          {form.product_unit && (
+            <Text size="xs" c="dimmed">
+              ⚠ The unit <strong>{form.product_unit}</strong> will be permanently attached to this product
+              and cannot be changed after creation to prevent batch data inconsistencies.
+            </Text>
+          )}
 
           <Divider label="Formula Settings" labelPosition="left" />
 

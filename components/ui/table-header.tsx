@@ -101,7 +101,12 @@ const SortableHeaderCell: React.FC<SortableHeaderCellProps> = ({
     isDragging,
   } = useSortable({ id: header.value, disabled: !allowReorder });
 
-  // Track pointer movement so a drag gesture never triggers sort
+  // Suppress sort when the user holds the mouse (drag intent) instead of doing a quick click.
+  // Three independent signals — any one is enough to block sort:
+  //   1. hold duration > 200 ms (left-button held = drag intent)
+  //   2. pointer moved > 4 px before dnd-kit captured events
+  //   3. dnd-kit fired onDragStart (authoritative: a real column reorder happened)
+  const pointerDownTime = useRef(0);
   const pointerDownPos = useRef<{ x: number; y: number } | null>(null);
   const wasDragGesture = useRef(false);
 
@@ -119,6 +124,8 @@ const SortableHeaderCell: React.FC<SortableHeaderCellProps> = ({
       style={style}
       className={getHeaderClasses(header)}
       onPointerDown={(e) => {
+        if (e.button !== 0) return;
+        pointerDownTime.current = Date.now();
         pointerDownPos.current = { x: e.clientX, y: e.clientY };
         wasDragGesture.current = false;
       }}
@@ -129,9 +136,15 @@ const SortableHeaderCell: React.FC<SortableHeaderCellProps> = ({
         if (dx > 4 || dy > 4) wasDragGesture.current = true;
       }}
       onClick={() => {
-        // Suppress sort if local pointer tracking OR dnd-kit drag detected
-        if (wasDragGesture.current) { wasDragGesture.current = false; return; }
-        if (dragHappenedRef.current) { dragHappenedRef.current = false; return; }
+        const heldMs = Date.now() - pointerDownTime.current;
+        const wasHeld = heldMs > 200;
+        const wasMoved = wasDragGesture.current;
+        const wasDndDrag = dragHappenedRef.current;
+
+        wasDragGesture.current = false;
+        dragHappenedRef.current = false;
+
+        if (wasHeld || wasMoved || wasDndDrag) return;
         onSort(header);
       }}
       onContextMenu={(e) => onContextMenu(header, e)}

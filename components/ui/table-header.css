@@ -34,7 +34,6 @@
 .table-header .cell {
   display: flex;
   align-items: center;
-  /* Match data cell padding exactly: 8px top/bottom, 12px left/right */
   padding: 8px 12px;
   font-weight: 600;
   color: var(--mantine-color-text);
@@ -45,7 +44,11 @@
   position: relative;
   min-width: 0;
   overflow: hidden;
-  min-height: 40px;
+  /* Fixed header height matching data rows */
+  height: 48px;
+  max-height: 48px;
+  /* Prevent header text from wrapping */
+  white-space: nowrap;
 }
 
 [data-mantine-color-scheme="dark"] .table-header .cell {

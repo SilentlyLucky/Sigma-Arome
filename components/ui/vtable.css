@@ -30,13 +30,21 @@
 /* ── Single shared grid for the whole table ──────────────────────────────────
    The table itself is the grid. thead, tbody, and every tr use display:contents
    so that ALL th/td cells across header and body rows participate in ONE grid.
-   This guarantees every column header lines up perfectly with the cells below it,
-   regardless of content width (auto-sized columns share track widths across rows). */
+   This guarantees every column header lines up perfectly with the cells below it.
+
+   IMPORTANT: columns use minmax(0, auto) not plain auto.
+   Plain "auto" allows a column to grow as wide as its content even when the cell
+   has overflow:hidden — minmax(0, auto) caps the minimum at 0 so the column
+   cannot force the grid wider than the container. Combined with white-space:nowrap
+   and overflow:hidden on cells, this gives clean single-line rows. */
 .v-table table {
   display: grid;
   grid-template-columns: var(--grid-columns-rows);
   min-width: 100%;
   border-spacing: 0;
+  /* table-layout equivalent for grid: prevent any single column from
+     expanding beyond its track definition */
+  width: 100%;
 }
 
 .v-table table thead,

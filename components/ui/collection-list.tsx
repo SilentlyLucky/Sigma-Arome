@@ -881,10 +881,10 @@ export const CollectionList: React.FC<CollectionListProps> = ({
         const uuid = String(value);
         const resolvedName = nameMap?.get(uuid);
         if (resolvedName) {
-          return <Text size="sm" style={{ wordBreak: 'break-word', whiteSpace: 'normal' }}>{resolvedName}</Text>;
+          return <Text size="sm" truncate="end" style={{ minWidth: 0, maxWidth: '100%', overflow: 'hidden' }}>{resolvedName}</Text>;
         }
-        // Still loading or not found — show UUID wrapped
-        return <Text size="sm" style={{ wordBreak: 'break-all', lineHeight: 1.4, color: 'var(--mantine-color-dimmed)' }}>{uuid}</Text>;
+        // Still loading or not found — show shortened UUID
+        return <Text size="sm" truncate="end" c="dimmed" style={{ minWidth: 0, maxWidth: '100%', overflow: 'hidden', fontFamily: 'monospace', fontSize: '0.75rem' }}>{uuid.slice(0, 8)}…</Text>;
       }
 
       // ---------- Boolean ----------
@@ -902,7 +902,7 @@ export const CollectionList: React.FC<CollectionListProps> = ({
           const dateObj = new Date(value as string);
           if (isNaN(dateObj.getTime())) return null;
           return (
-            <Text size="sm" style={{ whiteSpace: 'normal' }}>
+            <Text size="sm" truncate="end" style={{ minWidth: 0, maxWidth: '100%', overflow: 'hidden' }}>
               {fieldType === "date" ? dateObj.toLocaleDateString() : dateObj.toLocaleString()}
             </Text>
           );
@@ -915,7 +915,7 @@ export const CollectionList: React.FC<CollectionListProps> = ({
       if (fieldType === "integer" || fieldType === "float" || fieldType === "decimal" || fieldType === "bigInteger") {
         const num = Number(value);
         if (!isNaN(num)) {
-          return <Text size="sm">{num.toLocaleString()}</Text>;
+          return <Text size="sm" truncate="end" style={{ minWidth: 0, maxWidth: '100%', overflow: 'hidden' }}>{num.toLocaleString()}</Text>;
         }
         return null;
       }
@@ -928,8 +928,8 @@ export const CollectionList: React.FC<CollectionListProps> = ({
       // ---------- UUID (non-relation) — show full value ----------
       if (fieldType === "uuid") {
         return (
-          <Text size="sm" style={{ wordBreak: 'break-all', lineHeight: 1.4 }}>
-            {String(value)}
+          <Text size="sm" truncate="end" c="dimmed" style={{ minWidth: 0, maxWidth: '100%', overflow: 'hidden', fontFamily: 'monospace', fontSize: '0.75rem' }}>
+            {String(value).slice(0, 8)}…
           </Text>
         );
       }

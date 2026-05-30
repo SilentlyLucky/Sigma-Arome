@@ -278,11 +278,13 @@ export const VTable: React.FC<VTableProps> = ({
   }, [sortProp]);
 
   // Calculate grid columns. Each column is either an explicit px width (when
-  // the user has resized it) or "auto" (fits content). Using "auto" instead of
-  // "1fr" means resizing one column does NOT redistribute space to others.
+  // the user has resized it) or "minmax(0, auto)" (fits content but respects
+  // overflow:hidden so it cannot force the grid wider than the container).
+  // Using minmax(0, auto) instead of plain "auto" prevents content from
+  // expanding the column beyond available space, which caused rows to wrap.
   const columnStyle = useMemo(() => {
     let cols = internalHeaders
-      .map((header) => (header.width ? `${header.width}px` : "auto"))
+      .map((header) => (header.width ? `${header.width}px` : "minmax(0, auto)"))
       .join(" ");
 
     if (showSelect !== "none") cols = "36px " + cols;

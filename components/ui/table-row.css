@@ -19,9 +19,13 @@
   padding: 8px 12px;
   overflow: hidden;
   min-width: 0;
+  /* Fixed row height — content must never wrap to a second line */
+  height: 48px;
+  max-height: 48px;
+  /* Prevent text wrapping — truncate with ellipsis instead */
+  white-space: nowrap;
   background-color: var(--v-table-background-color, transparent);
   border-bottom: 1px solid var(--mantine-color-default-border);
-  min-height: 40px;
 }
 
 /* Remove the last-child override — it was zeroing padding on the spacer cell

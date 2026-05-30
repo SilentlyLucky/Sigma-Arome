@@ -30,10 +30,13 @@ interface CompatibleLocation {
   zone: string;
   temperature_class: string | null;
   capacity_kg: number | null;
+  capacity_pcs: number | null;
   current_occupancy_kg: number;
+  current_occupancy_pcs: number;
   current_material_name: string | null;
   occupancy_pct: number;
-  available_kg: number;
+  available_qty: number;
+  capacity_unit: string;
   slot_state: 'empty' | 'same_material';
   reason: string;
   is_recommended: boolean;
@@ -61,6 +64,7 @@ interface SlotData {
   different_material: DifferentMaterialLocation[];
   incompatible: IncompatibleLocation[];
   batch: { batch_number: string; weight_kg: number | null; hazard_class: string | null; required_temperature_class: string | null };
+  is_packaging: boolean;
 }
 
 interface BatchInfo {
@@ -115,7 +119,6 @@ export default function BatchDetailPage() {
       setLoadingSlots(false);
     }
   }, [batchId]);
-
   useEffect(() => { loadBatch(); }, [loadBatch]);
   useEffect(() => { if (batch?.status === 'approved') loadSlots(); }, [batch?.status, loadSlots]);
 
@@ -250,7 +253,9 @@ export default function BatchDetailPage() {
                           </Group>
                           <Group gap="xs" wrap="nowrap" align="center">
                             <Stack gap={2} align="flex-end" style={{ minWidth: 100 }}>
-                              <Text size="xs" c="dimmed">{loc.current_occupancy_kg}/{loc.capacity_kg ?? '?'} kg</Text>
+                              <Text size="xs" c="dimmed">
+                                {loc.current_occupancy_kg}/{loc.capacity_kg ?? '?'} {loc.capacity_unit ?? 'kg'}
+                              </Text>
                               <Progress value={loc.occupancy_pct} size="xs" color="teal" style={{ width: 80 }} />
                             </Stack>
                             <Button size="compact-xs" color="teal" variant="filled" loading={saving}>

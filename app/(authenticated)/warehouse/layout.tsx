@@ -2,11 +2,13 @@
 
 import { AppShell, Burger, Group, NavLink, Text, Title, ActionIcon, Menu, Avatar, Divider } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
-import { IconDashboard, IconTruckDelivery, IconBarcode, IconMapPin, IconTransferOut, IconHistory, IconLogout, IconSettings, IconMap } from '@tabler/icons-react';
+import { IconDashboard, IconTruckDelivery, IconBarcode, IconMapPin, IconHistory, IconLogout, IconSettings, IconMap } from '@tabler/icons-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import type { ReactNode } from 'react';
 
+// Material Issue tab removed — picking queue is now surfaced directly on the Dashboard
+// and driven automatically by active Production Orders.
 const NAV_ITEMS = [
   { label: 'Dashboard', href: '/warehouse', icon: IconDashboard, section: 'Overview' },
   { label: 'Floor Plan', href: '/warehouse/map', icon: IconMap, section: 'Overview' },
@@ -14,10 +16,9 @@ const NAV_ITEMS = [
   { label: 'Receive Material', href: '/warehouse/receive', icon: IconTruckDelivery, section: 'Receiving' },
   { label: 'Batches', href: '/warehouse/batches', icon: IconBarcode, section: 'Inventory' },
   { label: 'Putaway', href: '/warehouse/putaway', icon: IconMapPin, section: 'Inventory' },
-  { label: 'Material Issue', href: '/warehouse/issue', icon: IconTransferOut, section: 'Issue' },
   { label: 'Movement Log', href: '/warehouse/movements', icon: IconHistory, section: 'History' },
 ];
-const SECTIONS = ['Overview', 'Receiving', 'Inventory', 'Issue', 'History'];
+const SECTIONS = ['Overview', 'Receiving', 'Inventory', 'History'];
 
 export default function WarehouseLayout({ children }: { children: ReactNode }) {
   const [opened, { toggle }] = useDisclosure();
@@ -51,7 +52,15 @@ export default function WarehouseLayout({ children }: { children: ReactNode }) {
               {idx > 0 && <Divider my="xs" />}
               <Text size="xs" c="dimmed" fw={700} tt="uppercase" px="xs" py={4}>{section}</Text>
               {items.map((item) => (
-                <NavLink key={item.href} component={Link} href={item.href} label={item.label} leftSection={<item.icon size={16} />} active={pathname === item.href || (item.href !== '/warehouse' && pathname.startsWith(item.href))} variant="light" />
+                <NavLink
+                  key={item.href}
+                  component={Link}
+                  href={item.href}
+                  label={item.label}
+                  leftSection={<item.icon size={16} />}
+                  active={pathname === item.href || (item.href !== '/warehouse' && pathname.startsWith(item.href))}
+                  variant="light"
+                />
               ))}
             </div>
           );

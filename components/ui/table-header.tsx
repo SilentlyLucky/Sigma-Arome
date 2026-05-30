@@ -98,6 +98,10 @@ const SortableHeaderCell: React.FC<SortableHeaderCellProps> = ({
     isDragging,
   } = useSortable({ id: header.value, disabled: !allowReorder });
 
+  // Track pointer movement so a drag gesture never triggers sort
+  const pointerDownPos = useRef<{ x: number; y: number } | null>(null);
+  const wasDragGesture = useRef(false);
+
   const style: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),
     transition,
@@ -111,7 +115,20 @@ const SortableHeaderCell: React.FC<SortableHeaderCellProps> = ({
       ref={setNodeRef}
       style={style}
       className={getHeaderClasses(header)}
-      onClick={() => onSort(header)}
+      onPointerDown={(e) => {
+        pointerDownPos.current = { x: e.clientX, y: e.clientY };
+        wasDragGesture.current = false;
+      }}
+      onPointerMove={(e) => {
+        if (!pointerDownPos.current) return;
+        const dx = Math.abs(e.clientX - pointerDownPos.current.x);
+        const dy = Math.abs(e.clientY - pointerDownPos.current.y);
+        if (dx > 4 || dy > 4) wasDragGesture.current = true;
+      }}
+      onClick={() => {
+        if (wasDragGesture.current) { wasDragGesture.current = false; return; }
+        onSort(header);
+      }}
       onContextMenu={(e) => onContextMenu(header, e)}
       aria-sort={
         header.sortable
@@ -253,10 +270,6 @@ export const TableHeader: React.FC<TableHeaderProps> = ({
   const handleSort = useCallback(
     (header: Header) => {
       if (!header.sortable || resizing) return;
-      if (dragHappenedRef.current) {
-        dragHappenedRef.current = false;
-        return;
-      }
       if (header.value === sort.by) {
         if (mustSort) {
           onSortChange?.({ by: sort.by, desc: !sort.desc });

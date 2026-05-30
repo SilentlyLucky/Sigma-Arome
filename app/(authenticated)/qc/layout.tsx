@@ -2,15 +2,15 @@
 
 import { AppShell, Burger, Group, NavLink, Text, Title, ActionIcon, Menu, Avatar, Divider } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
-import { IconDashboard, IconFlask, IconEye, IconClipboardCheck, IconAlertTriangle, IconLogout, IconSettings } from '@tabler/icons-react';
+import { IconDashboard, IconFlask, IconClipboardCheck, IconAlertTriangle, IconLogout, IconSettings } from '@tabler/icons-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import type { ReactNode } from 'react';
 
+// CV Review has been merged into Inspection History — no standalone tab needed.
 const NAV_ITEMS = [
   { label: 'Dashboard', href: '/qc', icon: IconDashboard, section: 'Overview' },
   { label: 'QC Queue', href: '/qc/queue', icon: IconFlask, section: 'Inspection' },
-  { label: 'CV Review', href: '/qc/cv-review', icon: IconEye, section: 'Inspection' },
   { label: 'Inspection History', href: '/qc/history', icon: IconClipboardCheck, section: 'Records' },
   { label: 'Hold / Reject List', href: '/qc/holds', icon: IconAlertTriangle, section: 'Records' },
 ];
@@ -43,7 +43,23 @@ export default function QCLayout({ children }: { children: ReactNode }) {
       <AppShell.Navbar p="xs" style={{ overflowY: 'auto' }}>
         {SECTIONS.map((section, idx) => {
           const items = NAV_ITEMS.filter(i => i.section === section);
-          return (<div key={section}>{idx > 0 && <Divider my="xs" />}<Text size="xs" c="dimmed" fw={700} tt="uppercase" px="xs" py={4}>{section}</Text>{items.map(item => (<NavLink key={item.href} component={Link} href={item.href} label={item.label} leftSection={<item.icon size={16} />} active={pathname === item.href || (item.href !== '/qc' && pathname.startsWith(item.href))} variant="light" />))}</div>);
+          return (
+            <div key={section}>
+              {idx > 0 && <Divider my="xs" />}
+              <Text size="xs" c="dimmed" fw={700} tt="uppercase" px="xs" py={4}>{section}</Text>
+              {items.map(item => (
+                <NavLink
+                  key={item.href}
+                  component={Link}
+                  href={item.href}
+                  label={item.label}
+                  leftSection={<item.icon size={16} />}
+                  active={pathname === item.href || (item.href !== '/qc' && pathname.startsWith(item.href))}
+                  variant="light"
+                />
+              ))}
+            </div>
+          );
         })}
       </AppShell.Navbar>
       <AppShell.Main>{children}</AppShell.Main>

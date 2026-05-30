@@ -1,17 +1,50 @@
 'use client';
 
-import { Stack, Title, Text, Group, Badge, Button, Paper, Alert, Divider, Table } from '@mantine/core';
+import { Stack, Title, Text, Group, Badge, Button, Paper, Alert, Divider, Table, RingProgress, Center } from '@mantine/core';
 import { useRouter, useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { notifications } from '@mantine/notifications';
-import { IconAlertCircle, IconCheck, IconX, IconHandStop, IconEye } from '@tabler/icons-react';
+import { IconAlertCircle, IconCheck, IconX, IconHandStop, IconRobot } from '@tabler/icons-react';
 import { Textarea } from '@/components/ui/textarea';
 
-interface Batch { id: string; batch_number: string; material_id: string; batch_type: string; qty: number; unit: string; status: string; expiry_date: string | null }
-interface Inspection { id: string; inspection_number: string; status: string; decision: string | null; decision_reason: string | null }
-interface CVResult { defect_type: string; confidence_score: number; recommendation: string; is_simulated: boolean }
+interface Batch {
+  id: string;
+  batch_number: string;
+  material_id: string;
+  batch_type: string;
+  qty: number;
+  unit: string;
+  status: string;
+  expiry_date: string | null;
+}
+interface Inspection {
+  id: string;
+  inspection_number: string;
+  status: string;
+  decision: string | null;
+  decision_reason: string | null;
+}
+interface CVResult {
+  defect_type: string;
+  confidence_score: number;
+  recommendation: string;
+  is_simulated: boolean;
+}
 
-const STATUS_COLORS: Record<string, string> = { qc_pending: 'orange', under_qc: 'blue', approved: 'green', hold: 'yellow', rejected: 'red' };
+const STATUS_COLORS: Record<string, string> = {
+  qc_pending: 'orange',
+  under_qc: 'blue',
+  approved: 'green',
+  hold: 'yellow',
+  rejected: 'red',
+};
+
+const REC_COLORS: Record<string, string> = {
+  approve: 'green',
+  review: 'orange',
+  reject: 'red',
+};
+
 const INSPECTABLE_STATUSES = ['qc_pending', 'under_qc', 'hold'];
 
 export default function QCInspectPage() {
@@ -24,12 +57,9 @@ export default function QCInspectPage() {
   const [cvResult, setCvResult] = useState<CVResult | null>(null);
   const [reason, setReason] = useState('');
   const [deciding, setDeciding] = useState(false);
-  const [starting, setStarting] = useState(false);
   const [cvLoading, setCvLoading] = useState(false);
-  // QC templates keyed by target_type
-  const [templates, setTemplates] = useState<Record<string, string>>({}); // target_type → id
 
-  // Poll for the CV result until it appears (action hook creates it async, ~1s)
+  // Poll for CV result — used when the auto-trigger hasn't completed yet
   const pollCvResult = async (inspectionId: string, maxAttempts = 10): Promise<CVResult | null> => {
     for (let attempt = 0; attempt < maxAttempts; attempt++) {
       try {
@@ -38,97 +68,41 @@ export default function QCInspectPage() {
         const result: CVResult | null = cv?.data?.[0] ?? null;
         if (result) return result;
       } catch { /* keep polling */ }
-      // Wait 600ms between attempts
       await new Promise(resolve => setTimeout(resolve, 600));
     }
     return null;
   };
 
   useEffect(() => {
+    // Load batch
     fetch(`/api/items/batches/${batchId}`)
       .then(r => r.json()).then(d => setBatch(d?.data ?? null)).catch(() => {});
+
+    // Load existing inspection (auto-created by backend when batch hit qc_pending)
     fetch(`/api/items/qc_inspections?filter[batch_id][_eq]=${batchId}&sort[]=-started_at&limit=1`)
-      .then(r => r.json()).then(d => {
+      .then(r => r.json())
+      .then(async d => {
         const insp: Inspection | null = d?.data?.[0] ?? null;
         setInspection(insp);
+
         if (insp?.id) {
-          fetch(`/api/items/cv_results?filter[qc_id][_eq]=${insp.id}&limit=1`)
-            .then(r => r.json()).then(cv => setCvResult(cv?.data?.[0] ?? null)).catch(() => {});
+          // Try to load the pre-generated CV result immediately
+          const cv = await fetch(`/api/items/cv_results?filter[qc_id][_eq]=${insp.id}&limit=1`)
+            .then(r => r.json()).catch(() => null);
+          const cvData: CVResult | null = cv?.data?.[0] ?? null;
+
+          if (cvData) {
+            setCvResult(cvData);
+          } else {
+            // CV not ready yet — poll for it (auto-trigger may still be running)
+            setCvLoading(true);
+            const polled = await pollCvResult(insp.id);
+            setCvResult(polled);
+            setCvLoading(false);
+          }
         }
-      }).catch(() => {});
-    // Load active QC templates to auto-select by type
-    fetch('/api/items/qc_templates?filter[status][_eq]=active&fields[]=id&fields[]=target_type&limit=20')
-      .then(r => r.json()).then(d => {
-        const map: Record<string, string> = {};
-        for (const t of (d?.data ?? [])) {
-          if (!map[t.target_type]) map[t.target_type] = t.id; // first match wins
-        }
-        setTemplates(map);
       }).catch(() => {});
   }, [batchId]);
-
-  const startInspection = async () => {
-    setStarting(true);
-    try {
-      const inspectionType = batch?.batch_type === 'finished_product' ? 'finished_product' : 'raw_material';
-      // Auto-select the matching QC template for this inspection type
-      const templateId = templates[inspectionType] ?? null;
-
-      const body: Record<string, unknown> = {
-        batch_id: batchId,
-        inspection_type: inspectionType,
-        // inspector_id is auto-filled by DaaS via user-created special — do NOT send it
-      };
-      // Only include qc_template_id if we found a matching template
-      if (templateId) body.qc_template_id = templateId;
-
-      const res = await fetch('/api/items/qc_inspections', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      });
-      if (!res.ok) {
-        let errMsg = 'Failed to start inspection';
-        try {
-          const err = await res.json();
-          errMsg = err?.errors?.[0]?.message || err?.message || JSON.stringify(err);
-        } catch { /* response wasn't JSON */ }
-        throw new Error(errMsg);
-      }
-      const data = await res.json();
-      const newInspection = data?.data ?? null;
-      setInspection(newInspection);
-      setBatch(b => b ? { ...b, status: 'under_qc' } : b);
-
-      // Update batch status to under_qc
-      await fetch(`/api/items/batches/${batchId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: 'under_qc' }),
-      }).catch(() => {});
-
-      notifications.show({ title: 'Inspection Started', message: 'Running CV analysis...', color: 'blue' });
-
-      // Poll for the CV result inline — it appears in the same view automatically
-      if (newInspection?.id) {
-        setCvLoading(true);
-        const result = await pollCvResult(newInspection.id);
-        setCvResult(result);
-        setCvLoading(false);
-        if (result) {
-          notifications.show({
-            title: 'CV Analysis Complete',
-            message: `Defect: ${result.defect_type === 'none' ? 'none detected' : result.defect_type.replace(/_/g, ' ')} · Recommendation: ${result.recommendation}`,
-            color: result.recommendation === 'approve' ? 'green' : result.recommendation === 'reject' ? 'red' : 'orange',
-          });
-        }
-      }
-    } catch (err) {
-      notifications.show({ title: 'Error', message: err instanceof Error ? err.message : 'Failed', color: 'red' });
-    } finally {
-      setStarting(false);
-    }
-  };
 
   const makeDecision = async (decision: 'approved' | 'hold' | 'rejected') => {
     if ((decision === 'hold' || decision === 'rejected') && !reason.trim()) {
@@ -141,7 +115,12 @@ export default function QCInspectPage() {
       await fetch(`/api/items/qc_inspections/${inspection.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ decision, status: decision, decision_reason: reason || null, completed_at: new Date().toISOString() }),
+        body: JSON.stringify({
+          decision,
+          status: decision,
+          decision_reason: reason || null,
+          completed_at: new Date().toISOString(),
+        }),
       });
       await fetch(`/api/items/batches/${batchId}`, {
         method: 'PATCH',
@@ -164,13 +143,20 @@ export default function QCInspectPage() {
 
   if (!batch) return <Text>Loading...</Text>;
 
-  // Decision pending = inspection exists but no final decision yet
   const canDecide = !!inspection && (!inspection.decision || inspection.decision === 'pending');
   const isCompleted = !!inspection && !!inspection.decision && inspection.decision !== 'pending';
-  const canStartInspection = !inspection && INSPECTABLE_STATUSES.includes(batch.status);
+  const isInspectable = INSPECTABLE_STATUSES.includes(batch.status);
+
+  const confidencePct = cvResult ? Math.round(cvResult.confidence_score * 100) : 0;
+  const ringColor = cvResult
+    ? cvResult.recommendation === 'approve' ? 'green'
+      : cvResult.recommendation === 'reject' ? 'red'
+      : 'orange'
+    : 'gray';
 
   return (
     <Stack gap="md">
+      {/* Header */}
       <Group justify="space-between">
         <div>
           <Title order={2}>QC Inspection</Title>
@@ -181,6 +167,7 @@ export default function QCInspectPage() {
         </Badge>
       </Group>
 
+      {/* Batch summary */}
       <Paper p="md" radius="md" withBorder>
         <Group gap="xl">
           <Text size="sm"><strong>Quantity:</strong> {batch.qty} {batch.unit}</Text>
@@ -189,57 +176,75 @@ export default function QCInspectPage() {
         </Group>
       </Paper>
 
-      {canStartInspection && (
-        <Button leftSection={<IconEye size={16} />} color="blue" loading={starting} onClick={startInspection}>
-          Start QC Inspection
-        </Button>
-      )}
-
+      {/* ── AI CV SCORE — shown as soon as available, above the decision panel ── */}
       {cvLoading && (
-        <Alert color="blue" variant="light" icon={<IconEye size={16} />}>
-          Running computer vision analysis… results will appear here in a moment.
+        <Alert color="blue" variant="light" icon={<IconRobot size={16} />}>
+          AI computer vision analysis is running… results will appear here automatically.
         </Alert>
       )}
 
-      {cvResult && (
+      {cvResult && isInspectable && (
         <>
-          <Divider label="Computer Vision Analysis (Decision Support)" labelPosition="left" />
+          <Divider label="AI Computer Vision Analysis" labelPosition="left" />
           <Paper p="md" radius="md" withBorder>
-            <Alert icon={<IconAlertCircle size={16} />} color="blue" variant="light" mb="sm">
-              This is AI-generated decision support only. The final QC decision is made by the inspector.
-              {cvResult.is_simulated && <Text size="xs" c="dimmed" mt={4}>(Simulated result — mock model v1.0)</Text>}
-            </Alert>
-            <Table withTableBorder>
-              <Table.Tbody>
-                <Table.Tr>
-                  <Table.Td fw={500}>Defect Type</Table.Td>
-                  <Table.Td>
-                    <Badge color={cvResult.defect_type === 'none' ? 'green' : 'red'} variant="light">
-                      {cvResult.defect_type === 'none' ? 'No Defect Detected' : cvResult.defect_type.replace(/_/g, ' ')}
-                    </Badge>
-                  </Table.Td>
-                </Table.Tr>
-                <Table.Tr>
-                  <Table.Td fw={500}>Confidence</Table.Td>
-                  <Table.Td>{(cvResult.confidence_score * 100).toFixed(1)}%</Table.Td>
-                </Table.Tr>
-                <Table.Tr>
-                  <Table.Td fw={500}>AI Recommendation</Table.Td>
-                  <Table.Td>
-                    <Badge color={cvResult.recommendation === 'approve' ? 'green' : cvResult.recommendation === 'reject' ? 'red' : 'orange'} variant="light">
-                      {cvResult.recommendation}
-                    </Badge>
-                  </Table.Td>
-                </Table.Tr>
-              </Table.Tbody>
-            </Table>
+            <Group align="flex-start" gap="xl">
+              {/* Confidence ring */}
+              <Center>
+                <RingProgress
+                  size={90}
+                  thickness={8}
+                  roundCaps
+                  sections={[{ value: confidencePct, color: ringColor }]}
+                  label={
+                    <Center>
+                      <Text size="sm" fw={700}>{confidencePct}%</Text>
+                    </Center>
+                  }
+                />
+              </Center>
+
+              {/* CV details */}
+              <Stack gap={6} style={{ flex: 1 }}>
+                <Alert icon={<IconAlertCircle size={14} />} color="blue" variant="light" p="xs">
+                  <Text size="xs">
+                    AI decision support only — the final QC decision is made by the inspector.
+                    {cvResult.is_simulated && ' (Simulated — mock model v1.0)'}
+                  </Text>
+                </Alert>
+                <Table withTableBorder>
+                  <Table.Tbody>
+                    <Table.Tr>
+                      <Table.Td fw={500} w={160}>Defect Detected</Table.Td>
+                      <Table.Td>
+                        <Badge color={cvResult.defect_type === 'none' ? 'green' : 'red'} variant="light">
+                          {cvResult.defect_type === 'none' ? 'None' : cvResult.defect_type.replace(/_/g, ' ')}
+                        </Badge>
+                      </Table.Td>
+                    </Table.Tr>
+                    <Table.Tr>
+                      <Table.Td fw={500}>Confidence Score</Table.Td>
+                      <Table.Td>{confidencePct}%</Table.Td>
+                    </Table.Tr>
+                    <Table.Tr>
+                      <Table.Td fw={500}>AI Recommendation</Table.Td>
+                      <Table.Td>
+                        <Badge size="md" color={REC_COLORS[cvResult.recommendation] ?? 'gray'} variant="filled">
+                          {cvResult.recommendation.toUpperCase()}
+                        </Badge>
+                      </Table.Td>
+                    </Table.Tr>
+                  </Table.Tbody>
+                </Table>
+              </Stack>
+            </Group>
           </Paper>
         </>
       )}
 
+      {/* ── QC DECISION PANEL ── */}
       {canDecide && (
         <>
-          <Divider label="QC Decision" labelPosition="left" />
+          <Divider label="Your QC Decision" labelPosition="left" />
           <Paper p="md" radius="md" withBorder>
             <Stack gap="sm">
               <Textarea
@@ -249,20 +254,49 @@ export default function QCInspectPage() {
                 onChange={(v) => setReason(String(v ?? ''))}
               />
               <Group>
-                <Button leftSection={<IconCheck size={16} />} color="green" loading={deciding} onClick={() => makeDecision('approved')}>Approve</Button>
-                <Button leftSection={<IconHandStop size={16} />} color="yellow" loading={deciding} onClick={() => makeDecision('hold')}>Hold</Button>
-                <Button leftSection={<IconX size={16} />} color="red" loading={deciding} onClick={() => makeDecision('rejected')}>Reject</Button>
+                <Button leftSection={<IconCheck size={16} />} color="green" loading={deciding} onClick={() => makeDecision('approved')}>
+                  Approve
+                </Button>
+                <Button leftSection={<IconHandStop size={16} />} color="yellow" loading={deciding} onClick={() => makeDecision('hold')}>
+                  Hold
+                </Button>
+                <Button leftSection={<IconX size={16} />} color="red" loading={deciding} onClick={() => makeDecision('rejected')}>
+                  Reject
+                </Button>
               </Group>
             </Stack>
           </Paper>
         </>
       )}
 
+      {/* Completed state */}
       {isCompleted && (
-        <Alert color={inspection!.decision === 'approved' ? 'green' : inspection!.decision === 'hold' ? 'yellow' : 'red'} variant="light">
-          <Text fw={500}>Decision: {inspection!.decision?.toUpperCase()}</Text>
-          {inspection!.decision_reason && <Text size="sm" mt={4}>{inspection!.decision_reason}</Text>}
-        </Alert>
+        <>
+          {cvResult && (
+            <>
+              <Divider label="AI Computer Vision Analysis" labelPosition="left" />
+              <Paper p="sm" radius="md" withBorder>
+                <Group gap="md">
+                  <Badge color={REC_COLORS[cvResult.recommendation] ?? 'gray'} variant="light">
+                    AI: {cvResult.recommendation} ({confidencePct}% confidence)
+                  </Badge>
+                  {cvResult.defect_type !== 'none' && (
+                    <Badge color="red" variant="light">
+                      Defect: {cvResult.defect_type.replace(/_/g, ' ')}
+                    </Badge>
+                  )}
+                </Group>
+              </Paper>
+            </>
+          )}
+          <Alert
+            color={inspection!.decision === 'approved' ? 'green' : inspection!.decision === 'hold' ? 'yellow' : 'red'}
+            variant="light"
+          >
+            <Text fw={500}>Decision: {inspection!.decision?.toUpperCase()}</Text>
+            {inspection!.decision_reason && <Text size="sm" mt={4}>{inspection!.decision_reason}</Text>}
+          </Alert>
+        </>
       )}
 
       <Button variant="subtle" onClick={() => router.push('/qc/queue')}>← Back to Queue</Button>

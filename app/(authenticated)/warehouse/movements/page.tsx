@@ -8,7 +8,10 @@ export default function MovementLogPage() {
     <Stack gap="md">
       <div>
         <Title order={2}>Inventory Movement Log</Title>
-        <Text c="dimmed" size="sm">History of all physical material movements — receiving, putaway, issue, and transfers.</Text>
+        <Text c="dimmed" size="sm">
+          History of all physical material movements — receiving, putaway, issue, and transfers.
+          Entries are created automatically when batches are received or their location changes.
+        </Text>
       </div>
       <CollectionList
         collection="inventory_movements"
@@ -17,7 +20,8 @@ export default function MovementLogPage() {
         enableSort
         enableHeaderMenu
         enableResize
-        fields={['batch_id', 'movement_type', 'from_location_id', 'to_location_id', 'qty', 'date_created']}
+        fields={['batch_id', 'movement_type', 'from_location_id', 'to_location_id', 'qty', 'moved_by', 'date_created', 'notes']}
+        defaultSort={{ by: 'date_created', desc: true }}
       />
     </Stack>
   );

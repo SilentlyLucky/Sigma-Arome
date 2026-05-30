@@ -2,13 +2,14 @@
 
 import { AppShell, Burger, Group, NavLink, Text, Title, ActionIcon, Menu, Avatar, Divider } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
-import { IconDashboard, IconTruckDelivery, IconBarcode, IconMapPin, IconTransferOut, IconHistory, IconLogout, IconSettings } from '@tabler/icons-react';
+import { IconDashboard, IconTruckDelivery, IconBarcode, IconMapPin, IconTransferOut, IconHistory, IconLogout, IconSettings, IconMap } from '@tabler/icons-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import type { ReactNode } from 'react';
 
 const NAV_ITEMS = [
   { label: 'Dashboard', href: '/warehouse', icon: IconDashboard, section: 'Overview' },
+  { label: 'Floor Plan', href: '/warehouse/map', icon: IconMap, section: 'Overview' },
   { label: 'Expected Incoming', href: '/warehouse/incoming', icon: IconTruckDelivery, section: 'Receiving' },
   { label: 'Receive Material', href: '/warehouse/receive', icon: IconTruckDelivery, section: 'Receiving' },
   { label: 'Batches', href: '/warehouse/batches', icon: IconBarcode, section: 'Inventory' },

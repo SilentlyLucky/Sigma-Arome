@@ -645,8 +645,8 @@ export const CollectionList: React.FC<CollectionListProps> = ({
   // =========================================================================
   // Build VTable headers from field metadata
   // For M2O relation fields: use the human label (e.g. "Material" not "Material Id"),
-  // and set sortKey to the dot-notation name field (e.g. "material_id.name")
-  // so sorting works by name, not UUID.
+  // strip the " Id" suffix, and DISABLE sorting (DaaS cannot sort by dot-notation
+  // like "material_id.name", and sorting by UUID gives meaningless order).
   // =========================================================================
   const headers = useMemo<HeaderRaw[]>(() => {
     return visibleFieldKeys.map((key) => {
@@ -668,34 +668,12 @@ export const CollectionList: React.FC<CollectionListProps> = ({
         rawLabel = rawLabel.replace(/\s+Id$/i, '').replace(/\s+ID$/i, '');
       }
 
-      // Sort key: for M2O fields, sort by the related name field via dot-notation
-      // so clicking the column header sorts by name, not UUID.
-      let sortKey = key;
-      if (isM2O) {
-        const relatedCollection: string | undefined =
-          fieldMeta?.meta?.options?.related_collection as string | undefined;
-        // Map known related collections to their display field
-        const displayFieldMap: Record<string, string> = {
-          raw_materials: 'name',
-          products: 'name',
-          suppliers: 'supplier_name',
-          warehouse_locations: 'location_code',
-          batches: 'batch_number',
-          raw_material_orders: 'order_number',
-          material_requests: 'request_number',
-          production_orders: 'order_number',
-          boms: 'name',
-          daas_users: 'first_name',
-        };
-        const displayField = relatedCollection ? (displayFieldMap[relatedCollection] ?? 'name') : 'name';
-        sortKey = `${key}.${displayField}`;
-      }
-
       return {
         text: rawLabel,
         value: key,
-        sortable: enableSort,
-        sortKey,
+        // Disable sort on M2O fields — DaaS cannot sort by dot-notation (e.g. material_id.name)
+        // and sorting by UUID gives a meaningless order.
+        sortable: enableSort && !isM2O,
         align: (overrides.align as Alignment) || "left",
         width: overrides.width ?? null,
         description: fieldMeta?.meta?.note || undefined,
@@ -766,14 +744,12 @@ export const CollectionList: React.FC<CollectionListProps> = ({
         onSortChangeProp?.(null);
         return;
       }
-      // If the header has a sortKey (dot-notation for M2O), use that for the API sort param
-      const matchedHeader = headers.find((h) => h.value === newSort.by);
-      const apiSortField = (matchedHeader as (HeaderRaw & { sortKey?: string }) | undefined)?.sortKey ?? newSort.by;
-      setSort({ by: newSort.by, desc: newSort.desc }); // keep UI sort indicator on the column
-      setSortApiField(apiSortField);
-      onSortChangeProp?.({ by: apiSortField, desc: newSort.desc });
+      // Sort directly by the field key — M2O fields are not sortable (disabled above)
+      setSort({ by: newSort.by, desc: newSort.desc });
+      setSortApiField(newSort.by);
+      onSortChangeProp?.(newSort);
     },
-    [headers, onSortChangeProp],
+    [onSortChangeProp],
   );
 
   const handleHeadersChange = useCallback((newHeaders: HeaderRaw[]) => {

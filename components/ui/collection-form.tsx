@@ -362,7 +362,14 @@ export const CollectionForm: React.FC<CollectionFormProps> = ({
         if (mode === "create") {
           const presets = actionAccess?.presets;
           if (presets && typeof presets === "object") {
-            initialData = { ...presets, ...initialData };
+            // Filter out DaaS dynamic variables ($CURRENT_USER, $NOW, etc.)
+            // These are server-side resolved by DaaS and must NOT be sent as literal form values.
+            const safePresets: Record<string, unknown> = {};
+            for (const [key, val] of Object.entries(presets)) {
+              if (typeof val === 'string' && val.startsWith('$')) continue;
+              safePresets[key] = val;
+            }
+            initialData = { ...safePresets, ...initialData };
           }
         }
 

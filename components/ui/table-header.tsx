@@ -459,17 +459,15 @@ export const TableHeader: React.FC<TableHeaderProps> = ({
             {/* Column Headers (sortable) */}
             {headerCells}
 
-            {/* Spacer */}
-            <th className="cell spacer" aria-hidden="true" />
-
-            {/* Append Column */}
-            {renderHeaderAppend ? (
+            {/* Append Column — single trailing cell that matches the colgroup's
+                append column. Holds the "+ add field" button (renderHeaderAppend)
+                or stays empty when only rows have an append slot. NO standalone
+                spacer column: native table-layout:fixed handles remaining width. */}
+            {(renderHeaderAppend || hasItemAppendSlot) && (
               <th className="cell append" onClick={(e) => e.stopPropagation()}>
-                {renderHeaderAppend()}
+                {renderHeaderAppend ? renderHeaderAppend() : null}
               </th>
-            ) : hasItemAppendSlot ? (
-              <th className="cell spacer" aria-hidden="true" />
-            ) : null}
+            )}
           </tr>
         </thead>
       </SortableContext>

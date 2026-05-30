@@ -9,16 +9,17 @@
  */
 
 /**
- * VTable Styles
- * Based on DaaS v-table component
+ * VTable Styles — NATIVE FIXED TABLE LAYOUT
+ *
+ * The table uses `table-layout: fixed` so the browser sizes each column from
+ * the <colgroup> definitions and places every cell by its position WITHIN ITS
+ * OWN ROW. A row with a missing trailing cell leaves that column empty — it
+ * does NOT cascade and shift other rows (the failure mode of the old
+ * display:contents CSS-grid approach).
+ *
+ * Every td/th is forced to a single line with ellipsis truncation, and every
+ * row is locked to a fixed height.
  */
-
-/*
-  CSS Variables:
-  --v-table-sticky-offset-top: 0
-  --v-table-color: var(--mantine-color-text)
-  --v-table-background-color: transparent
-*/
 
 .v-table {
   position: relative;
@@ -27,60 +28,37 @@
   overflow-x: auto;
 }
 
-/* ── Single shared grid for the whole table ──────────────────────────────────
-   The table itself is the grid. thead, tbody, and every tr use display:contents
-   so that ALL th/td cells across header and body rows participate in ONE grid.
-   This guarantees every column header lines up perfectly with the cells below it.
-
-   IMPORTANT: columns use minmax(0, auto) not plain auto.
-   Plain "auto" allows a column to grow as wide as its content even when the cell
-   has overflow:hidden — minmax(0, auto) caps the minimum at 0 so the column
-   cannot force the grid wider than the container. Combined with white-space:nowrap
-   and overflow:hidden on cells, this gives clean single-line rows. */
 .v-table table {
-  display: grid;
-  grid-template-columns: var(--grid-columns-rows);
-  min-width: 100%;
-  border-spacing: 0;
-  /* table-layout equivalent for grid: prevent any single column from
-     expanding beyond its track definition */
+  table-layout: fixed;
   width: 100%;
+  border-collapse: collapse;
+  border-spacing: 0;
 }
 
-.v-table table thead,
-.v-table table tbody {
-  display: contents !important;
-}
-
-/* All tr elements use display:contents so their cells are direct grid children.
-   Exception: the context-menu-row is a layout-only row that must NOT participate
-   in the grid — it renders a fixed-position popup and must be hidden from layout. */
-.v-table table tr {
-  display: contents !important;
-}
-
+/* Every cell: one line, truncate with ellipsis, never wrap */
 .v-table table td,
 .v-table table th {
   color: var(--v-table-color, var(--mantine-color-text));
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  box-sizing: border-box;
 }
 
-/* Alignment */
+/* Alignment (text-align works in native table cells) */
 .v-table table td.align-left,
 .v-table table th.align-left {
   text-align: left;
-  justify-content: flex-start;
 }
 
 .v-table table td.align-center,
 .v-table table th.align-center {
   text-align: center;
-  justify-content: center;
 }
 
 .v-table table td.align-right,
 .v-table table th.align-right {
   text-align: right;
-  justify-content: flex-end;
 }
 
 /* Loading indicator */
@@ -130,7 +108,8 @@
   pointer-events: none;
 }
 
-/* Loading and empty text */
+/* Loading and empty text — these cells use a colSpan attribute set in the
+   component, and must be allowed to wrap so the message is readable */
 .v-table .loading-text,
 .v-table .no-items-text {
   text-align: center;
@@ -146,6 +125,9 @@
 .v-table .no-items-text td {
   padding: 16px;
   color: var(--mantine-color-dimmed);
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
 }
 
 /* Inline style (bordered) */
@@ -178,14 +160,8 @@
   background-color: var(--mantine-color-dark-5);
 }
 
-/* Full column span for loading/empty states — spans every grid column */
-.v-table table .full-colspan {
-  grid-column: 1 / -1;
-}
-
-/* Sticky header: with tr using display:contents, the th cells themselves
-   must be sticky (not the tr). */
-.v-table table thead tr.fixed .cell {
+/* Sticky header — sticky applied to the th cells (not the tr) */
+.v-table table thead tr.fixed th {
   position: sticky;
   top: var(--v-table-sticky-offset-top, 0);
   z-index: 10;

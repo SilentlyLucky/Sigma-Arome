@@ -4,66 +4,54 @@
  *
  * This file was copied from Buildpad UI Packages.
  * To update, run: npx @buildpad/cli add vtable --overwrite
- *
- * Docs: https://buildpad.dev/components/vtable
  */
 
+/* Native table row — fixed 48px height, never grows */
 .table-row {
-  display: grid;
-  grid-template-columns: var(--grid-columns);
+  height: 48px;
+  max-height: 48px;
 }
 
 .table-row .cell {
-  display: flex;
-  align-items: center;
   padding: 8px 12px;
-  overflow: hidden;
-  min-width: 0;
-  /* Fixed row height — content must never wrap to a second line */
   height: 48px;
   max-height: 48px;
-  /* Prevent text wrapping — truncate with ellipsis instead */
+  overflow: hidden;
   white-space: nowrap;
+  text-overflow: ellipsis;
+  vertical-align: middle;
   background-color: var(--v-table-background-color, transparent);
   border-bottom: 1px solid var(--mantine-color-default-border);
+  box-sizing: border-box;
 }
 
-/* Remove the last-child override — it was zeroing padding on the spacer cell
-   which caused the last visible column to misalign with its header */
-
 .table-row .cell.select {
-  display: flex;
-  align-items: center;
+  text-align: center;
+  width: 36px;
 }
 
 .table-row .cell.manual {
-  justify-content: center;
+  text-align: center;
+  width: 36px;
   padding: 8px 4px;
 }
 
-.table-row .cell.spacer {
-  padding: 0;
-}
-
 .table-row .cell.append {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
+  text-align: right;
+  width: 44px;
+  overflow: visible;
 }
 
 .table-row .cell.align-left {
   text-align: left;
-  justify-content: flex-start;
 }
 
 .table-row .cell.align-center {
   text-align: center;
-  justify-content: center;
 }
 
 .table-row .cell.align-right {
   text-align: right;
-  justify-content: flex-end;
 }
 
 /* Subdued state (loading or reordering) */
@@ -77,7 +65,6 @@
   cursor: pointer;
 }
 
-/* Dark mode hover */
 [data-mantine-color-scheme="dark"] .table-row.clickable:not(.subdued):hover .cell {
   background-color: var(--mantine-color-dark-5);
 }
@@ -100,7 +87,7 @@
 .drag-handle {
   color: var(--mantine-color-dimmed);
   cursor: default;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
 }

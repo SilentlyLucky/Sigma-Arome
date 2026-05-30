@@ -42,6 +42,10 @@ export interface TableRowProps extends Omit<React.HTMLAttributes<HTMLTableRowEle
   renderCell?: (item: Item, header: Header) => React.ReactNode;
   /** Custom append slot */
   renderAppend?: (item: Item) => React.ReactNode;
+  /** Whether the table has an append column (header shows "+ add field").
+   *  When true, the row always renders a trailing append <td> (empty if no
+   *  renderAppend) so its cell count matches the colgroup. */
+  hasAppendColumn?: boolean;
   /** Row click handler */
   onClick?: (event: React.MouseEvent) => void;
   /** Selection change handler */
@@ -95,6 +99,7 @@ export const TableRow = forwardRef<HTMLTableRowElement, TableRowProps>(({
   height = 48,
   renderCell,
   renderAppend,
+  hasAppendColumn = false,
   onClick,
   onSelect,
   dragHandleProps,
@@ -178,9 +183,9 @@ export const TableRow = forwardRef<HTMLTableRowElement, TableRowProps>(({
             {content !== null ? (
               content
             ) : value !== null && value !== undefined ? (
-              <Text size="sm" truncate="end" style={{ minWidth: 0, maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              <span style={{ display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {formatValue(value)}
-              </Text>
+              </span>
             ) : (
               <Text size="sm" c="gray.6">—</Text>
             )}
@@ -188,13 +193,13 @@ export const TableRow = forwardRef<HTMLTableRowElement, TableRowProps>(({
         );
       })}
 
-      {/* Spacer */}
-      <td className="cell spacer" aria-hidden="true" />
-
-      {/* Append Slot */}
-      {renderAppend && (
+      {/* Append Slot — must always render a cell when the append column exists
+          in the header, otherwise the row would have one fewer cell than the
+          colgroup defines and the last data column would misalign. The "+ add
+          field" header button has NO value below it: this cell stays empty. */}
+      {hasAppendColumn && (
         <td className="cell append" onClick={handleSelectClick}>
-          {renderAppend(item)}
+          {renderAppend ? renderAppend(item) : null}
         </td>
       )}
     </tr>

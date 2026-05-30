@@ -151,6 +151,7 @@ interface SortableTableRowProps {
   disabled: boolean;
   renderCell?: (item: Item, header: Header) => React.ReactNode;
   renderAppend?: (item: Item) => React.ReactNode;
+  hasAppendColumn?: boolean;
   onClick?: (event: React.MouseEvent) => void;
   onSelect?: (selected: boolean) => void;
 }
@@ -169,6 +170,7 @@ const SortableTableRow: React.FC<SortableTableRowProps> = ({
   disabled,
   renderCell,
   renderAppend,
+  hasAppendColumn,
   onClick,
   onSelect,
 }) => {
@@ -213,6 +215,7 @@ const SortableTableRow: React.FC<SortableTableRowProps> = ({
       dragHandleProps={{ ...attributes, ...listeners }}
       renderCell={renderCell}
       renderAppend={renderAppend}
+      hasAppendColumn={hasAppendColumn}
       onClick={onClick}
       onSelect={onSelect}
     />
@@ -277,43 +280,44 @@ export const VTable: React.FC<VTableProps> = ({
     return sortProp ?? { by: null, desc: false };
   }, [sortProp]);
 
-  // Calculate grid columns. Each column is either an explicit px width (when
-  // the user has resized it) or "minmax(0, auto)" (fits content but respects
-  // overflow:hidden so it cannot force the grid wider than the container).
-  // Using minmax(0, auto) instead of plain "auto" prevents content from
-  // expanding the column beyond available space, which caused rows to wrap.
-  const columnStyle = useMemo(() => {
-    let cols = internalHeaders
-      .map((header) => (header.width ? `${header.width}px` : "minmax(0, auto)"))
-      .join(" ");
+  // Default per-column widths (px) for content columns by field key.
+  // table-layout:fixed reads widths from the <colgroup>; a column with an
+  // explicit header.width uses that, otherwise falls back to a sensible
+  // default based on the field key, else a generic default.
+  const DEFAULT_COL_WIDTH = 150;
+  const COL_WIDTH_BY_KEY: Record<string, number> = {
+    batch_number: 170,
+    material_id: 170,
+    material: 170,
+    batch_type: 120,
+    qty: 90,
+    quantity: 90,
+    unit: 80,
+    status: 130,
+    current_location_id: 140,
+    location: 140,
+    expiry_date: 150,
+    date_created: 170,
+    date_updated: 170,
+  };
 
-    if (showSelect !== "none") cols = "36px " + cols;
-    if (showManualSort) cols = "36px " + cols;
-    cols = cols + " 1fr"; // Spacer
-    if (renderRowAppend || renderHeaderAppend) cols += " min-content";
-
-    return { header: cols, rows: cols };
-  }, [
-    internalHeaders,
-    showSelect,
-    showManualSort,
-    renderRowAppend,
-    renderHeaderAppend,
-  ]);
-
-  // Set CSS custom properties for grid columns via ref to avoid inline styles
-  useEffect(() => {
-    if (tableRef.current) {
-      tableRef.current.style.setProperty(
-        "--grid-columns-header",
-        columnStyle.header,
-      );
-      tableRef.current.style.setProperty(
-        "--grid-columns-rows",
-        columnStyle.rows,
-      );
+  // Build the list of <col> definitions in the exact render order:
+  //   [manual?] [select?] ...content columns... [append?]
+  // This guarantees the colgroup column count matches the cells per row.
+  const colDefs = useMemo(() => {
+    const defs: { key: string; width: number }[] = [];
+    if (showManualSort) defs.push({ key: "__manual__", width: 36 });
+    if (showSelect !== "none") defs.push({ key: "__select__", width: 36 });
+    for (const h of internalHeaders) {
+      const w = h.width ?? COL_WIDTH_BY_KEY[h.value] ?? DEFAULT_COL_WIDTH;
+      defs.push({ key: h.value, width: w });
     }
-  }, [columnStyle]);
+    if (renderRowAppend || renderHeaderAppend) {
+      defs.push({ key: "__append__", width: 44 });
+    }
+    return defs;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [internalHeaders, showSelect, showManualSort, renderRowAppend, renderHeaderAppend]);
 
   // Selection helpers
   const allItemsSelected = useMemo(() => {
@@ -532,6 +536,11 @@ export const VTable: React.FC<VTableProps> = ({
       className={tableClasses}
     >
       <table summary={internalHeaders.map((h) => h.text).join(", ")}>
+        <colgroup>
+          {colDefs.map((c) => (
+            <col key={c.key} style={{ width: `${c.width}px` }} />
+          ))}
+        </colgroup>
         <TableHeader
           headers={internalHeaders}
           sort={internalSort}
@@ -560,7 +569,7 @@ export const VTable: React.FC<VTableProps> = ({
         {loading && (
           <thead className={fixedHeader ? "sticky" : ""} aria-hidden="true">
             <tr className="loading-indicator">
-              <th className="full-colspan">
+              <th colSpan={colDefs.length || 1}>
                 <div className="progress-bar" />
               </th>
             </tr>
@@ -571,7 +580,7 @@ export const VTable: React.FC<VTableProps> = ({
         {loading && items.length === 0 && (
           <tbody role="rowgroup" aria-busy="true">
             <tr className="loading-text">
-              <td className="full-colspan">
+              <td colSpan={colDefs.length || 1}>
                 <Stack gap="xs" py="md">
                   <Text c="dimmed" ta="center" size="sm">
                     {loadingText}
@@ -589,7 +598,7 @@ export const VTable: React.FC<VTableProps> = ({
         {!loading && items.length === 0 && (
           <tbody role="rowgroup">
             <tr className="no-items-text">
-              <td className="full-colspan">
+              <td colSpan={colDefs.length || 1}>
                 <Text c="dimmed" ta="center" py="xl">
                   {noItemsText}
                 </Text>
@@ -623,6 +632,7 @@ export const VTable: React.FC<VTableProps> = ({
                     disabled={disabled || internalSort.by !== manualSortKey}
                     renderCell={renderCell}
                     renderAppend={renderRowAppend}
+                    hasAppendColumn={!!(renderRowAppend || renderHeaderAppend)}
                     onClick={(e) => handleRowClick(item, e)}
                     onSelect={() =>
                       handleItemSelected(item, !isItemSelected(item))

@@ -4,12 +4,7 @@
  *
  * This file was copied from Buildpad UI Packages.
  * To update, run: npx @buildpad/cli add vtable --overwrite
- *
- * Docs: https://buildpad.dev/components/vtable
  */
-
-/* Note: display: contents is set in VTable.css for thead/tbody */
-/* The tr grid styles are also set in VTable.css for consistency */
 
 /* Visually hidden text for screen readers (used for icon-only header cells). */
 .table-header .sr-only {
@@ -24,17 +19,16 @@
   border: 0;
 }
 
-.table-header tr.fixed {
+.table-header tr.fixed th {
   position: sticky;
   top: var(--v-table-sticky-offset-top, 0);
   z-index: 10;
-  background-color: var(--mantine-color-body);
 }
 
 .table-header .cell {
-  display: flex;
-  align-items: center;
   padding: 8px 12px;
+  height: 48px;
+  max-height: 48px;
   font-weight: 600;
   color: var(--mantine-color-text);
   background-color: var(--mantine-color-gray-0);
@@ -42,13 +36,11 @@
   -webkit-user-select: none;
   user-select: none;
   position: relative;
-  min-width: 0;
   overflow: hidden;
-  /* Fixed header height matching data rows */
-  height: 48px;
-  max-height: 48px;
-  /* Prevent header text from wrapping */
   white-space: nowrap;
+  text-overflow: ellipsis;
+  vertical-align: middle;
+  box-sizing: border-box;
 }
 
 [data-mantine-color-scheme="dark"] .table-header .cell {
@@ -56,13 +48,15 @@
 }
 
 .table-header .cell.select {
-  justify-content: center;
-  padding: 12px 8px;
+  text-align: center;
+  width: 36px;
+  padding: 8px;
 }
 
 .table-header .cell.manual {
-  justify-content: center;
-  padding: 12px 4px;
+  text-align: center;
+  width: 36px;
+  padding: 8px 4px;
   cursor: pointer;
 }
 
@@ -78,12 +72,14 @@
   color: var(--mantine-color-primary);
 }
 
-.table-header .cell.spacer {
-  padding: 0;
-}
-
+/* Append column header (the "+ add field" button) — fixed narrow width,
+   no value rendered below it in body rows because body rows simply omit
+   this cell; with table-layout:fixed that leaves the column empty cleanly. */
 .table-header .cell.append {
-  padding: 0 12px;
+  width: 44px;
+  padding: 0 6px;
+  text-align: center;
+  overflow: visible;
 }
 
 /* Sortable header */
@@ -102,17 +98,14 @@
 /* Alignment */
 .table-header .cell.align-left {
   text-align: left;
-  justify-content: flex-start;
 }
 
 .table-header .cell.align-center {
   text-align: center;
-  justify-content: center;
 }
 
 .table-header .cell.align-right {
   text-align: right;
-  justify-content: flex-end;
 }
 
 /* Header content */
@@ -121,16 +114,23 @@
   align-items: center;
   gap: 4px;
   min-width: 0;
-  flex: 1;
+  overflow: hidden;
+}
+
+.header-content > .mantine-Text-root {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .reorder-handle {
   color: var(--mantine-color-dimmed);
   cursor: grab;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   opacity: 0;
   transition: opacity 0.15s;
+  flex-shrink: 0;
 }
 
 .table-header .cell:hover .reorder-handle {
@@ -139,7 +139,7 @@
 
 /* Sort indicator */
 .sort-indicator {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   margin-left: auto;
   flex-shrink: 0;
@@ -182,12 +182,7 @@
 
 /* Small column */
 .table-header .cell.small {
-  padding: 12px 4px;
-}
-
-.table-header .cell.small .header-content {
-  flex-direction: column;
-  gap: 2px;
+  padding: 8px 4px;
 }
 
 /* Resizing state */
@@ -218,15 +213,4 @@
   box-shadow: var(--mantine-shadow-md);
   min-width: 180px;
   overflow: hidden;
-}
-
-/* Context menu row */
-.table-header .context-menu-row {
-  display: contents;
-}
-
-.table-header .context-menu-cell {
-  position: relative;
-  padding: 0;
-  border: none;
 }

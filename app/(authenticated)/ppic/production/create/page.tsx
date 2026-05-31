@@ -101,18 +101,14 @@ export default function CreateProductionOrderPage() {
     if (!form.planned_start_date) errors.push('Planned start date is required');
     if (!form.planned_end_date) errors.push('Planned end date is required');
     if (!form.due_date) errors.push('Due date is required');
-
     if (form.planned_start_date && form.planned_end_date) {
-      if (dayjs(form.planned_end_date).isBefore(dayjs(form.planned_start_date))) {
+      if (dayjs(form.planned_end_date).isBefore(dayjs(form.planned_start_date)))
         errors.push('End date must be on or after start date');
-      }
     }
     if (form.planned_end_date && form.due_date) {
-      if (dayjs(form.due_date).isBefore(dayjs(form.planned_end_date))) {
+      if (dayjs(form.due_date).isBefore(dayjs(form.planned_end_date)))
         errors.push('Due date must be on or after end date');
-      }
     }
-
     if (errors.length > 0) {
       notifications.show({ title: 'Validation', message: errors.join('. '), color: 'red' });
       return;
@@ -129,7 +125,6 @@ export default function CreateProductionOrderPage() {
         planned_end_date: form.planned_end_date,
         due_date: form.due_date,
         notes: form.notes || null,
-        // Passing status here overrides the backend default of 'draft'
         status: targetStatus,
       };
       if (form.bom_id) body.bom_id = form.bom_id;
@@ -143,21 +138,39 @@ export default function CreateProductionOrderPage() {
         const err = await res.json();
         throw new Error(err?.errors?.[0]?.message ?? 'Save failed');
       }
+      const created = await res.json();
+      const createdId = created?.data?.id;
 
-      if (targetStatus === 'planned') {
-        notifications.show({
-          title: 'Order Submitted',
-          message: 'Production order submitted and ready for material availability checks.',
-          color: 'green',
-        });
-      } else {
-        notifications.show({
-          title: 'Draft Saved',
-          message: 'Production order saved as draft. Open it to submit when ready.',
-          color: 'blue',
-        });
+      if (targetStatus === 'draft') {
+        notifications.show({ title: 'Draft Saved', message: 'Production order saved as draft. Open it to submit when ready.', color: 'blue' });
+        router.push('/ppic/production');
+        return;
       }
-      router.push('/ppic/production');
+
+      // Two-step release: POST as 'planned', then PATCH to 'released' (triggers Extension B stock check)
+      await fetch(`/api/items/production_orders/${createdId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'released' }),
+      });
+
+      // Re-read actual status — Extension B may have changed it to waiting_issue
+      const readRes = await fetch(`/api/items/production_orders/${createdId}?fields[]=status&fields[]=notes`);
+      const readData = await readRes.json();
+      const finalStatus = readData?.data?.status;
+      const finalNotes = readData?.data?.notes;
+
+      if (finalStatus === 'released') {
+        notifications.show({ title: 'Order Released', message: 'Production order released — materials confirmed available.', color: 'green' });
+        router.push('/ppic/production');
+      } else if (finalStatus === 'waiting_issue') {
+        const firstLine = finalNotes ? String(finalNotes).split(';')[0] : 'material shortage detected';
+        notifications.show({ title: 'Order Blocked', message: `Order created but blocked: ${firstLine}.`, color: 'orange' });
+        router.push(`/ppic/production/${createdId}`);
+      } else {
+        notifications.show({ title: 'Order Submitted', message: 'Production order submitted.', color: 'green' });
+        router.push('/ppic/production');
+      }
     } catch (err) {
       notifications.show({ title: 'Error', message: err instanceof Error ? err.message : 'Failed', color: 'red' });
     } finally {
@@ -173,9 +186,9 @@ export default function CreateProductionOrderPage() {
       </div>
 
       <Alert icon={<IconInfoCircle size={16} />} color="blue" variant="light">
-        The order number is created for you. Use <strong>Submit Order</strong> when the production
-        plan is ready, or <strong>Save Draft</strong> to finish it later. The active formula is
-        selected automatically after you choose a product.
+        Use <strong>Release for Production</strong> to submit and immediately run an automated stock check.
+        If materials are short, the order is parked as <em>Waiting Issue</em> automatically.
+        Use <strong>Save Draft</strong> to finish later.
       </Alert>
 
       <Paper p="md" radius="md" withBorder>
@@ -294,7 +307,7 @@ export default function CreateProductionOrderPage() {
           onClick={() => handleSave('planned')}
           loading={saving}
         >
-          Submit Order
+          Release for Production
         </Button>
       </Group>
     </Stack>

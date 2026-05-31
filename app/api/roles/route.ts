@@ -10,7 +10,7 @@ import { getAuthHeaders, getDaaSUrl } from '@/lib/api/auth-headers';
 export async function GET(request: NextRequest) {
   try {
     const daasUrl = getDaaSUrl();
-    const headers = await getAuthHeaders();
+    const headers = await getAuthHeaders(request);
     const searchParams = request.nextUrl.searchParams.toString();
     const url = `${daasUrl}/api/roles${searchParams ? `?${searchParams}` : ''}`;
 
@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const daasUrl = getDaaSUrl();
-    const headers = await getAuthHeaders();
+    const headers = await getAuthHeaders(request);
     const body = await request.json();
 
     const response = await fetch(`${daasUrl}/api/roles`, {

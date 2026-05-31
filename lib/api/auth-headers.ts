@@ -19,15 +19,37 @@
  */
 
 import { createClient } from '@/lib/supabase/server';
+import type { NextRequest } from 'next/server';
+
+function getClientIp(request: NextRequest) {
+  return (
+    request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
+    request.headers.get('x-real-ip') ||
+    request.headers.get('cf-connecting-ip') ||
+    request.headers.get('x-client-ip') ||
+    'unknown'
+  );
+}
 
 /**
  * Get authorization headers for forwarding requests to DaaS.
  * Reads the Supabase session JWT from the current request cookies.
  */
-export async function getAuthHeaders(): Promise<Record<string, string>> {
+export async function getAuthHeaders(request?: NextRequest): Promise<Record<string, string>> {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
   };
+
+  if (request) {
+    const clientIp = getClientIp(request);
+    if (clientIp !== 'unknown') {
+      headers['X-Forwarded-For'] = clientIp;
+      headers['X-Real-IP'] = clientIp;
+      headers['X-Client-IP'] = clientIp;
+    }
+    const userAgent = request.headers.get('user-agent');
+    if (userAgent) headers['User-Agent'] = userAgent;
+  }
 
   try {
     const supabase = await createClient();

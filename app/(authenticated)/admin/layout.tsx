@@ -89,7 +89,8 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
           borderRight: '1px solid #DCE5DD',
         },
         main: {
-          backgroundColor: '#F4F7F5',
+          background:
+            'radial-gradient(circle at top left, rgba(46, 125, 50, 0.10), transparent 34%), linear-gradient(180deg, #FBFEFC 0%, #F4F8F5 48%, #EEF5F0 100%)',
           minHeight: '100vh',
         },
       }}

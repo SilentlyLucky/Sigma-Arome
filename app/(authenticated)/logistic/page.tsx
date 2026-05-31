@@ -2,13 +2,14 @@
 
 import {
   SimpleGrid, Paper, Text, Title, Group, Stack, ThemeIcon,
-  Loader, Anchor, Divider, Badge, Alert, Table,
+  Anchor, Divider, Badge, Alert, Table,
 } from '@mantine/core';
 import { BarChart } from '@mantine/charts';
 import {
   IconClipboardList, IconTransferOut, IconClock, IconPackage,
   IconAlertTriangle, IconCircleCheck, IconChevronRight,
 } from '@tabler/icons-react';
+import { DashboardLoading } from '@/components/ui/dashboard-loading';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
@@ -63,7 +64,7 @@ export default function LogisticDashboard() {
         <Text c="dimmed" size="sm">Review material requests, coordinate sending materials to production, and handle finished goods storage.</Text>
       </div>
 
-      {loading ? <Group justify="center" py="xl"><Loader /></Group> : (
+      {loading ? <DashboardLoading cards={4} graphPanels={1} queuePanels={2} /> : (
         <>
           {/* ── Priority Cards ─────────────────────────────────────────────── */}
           <SimpleGrid cols={{ base: 2, sm: 4 }} spacing="md">

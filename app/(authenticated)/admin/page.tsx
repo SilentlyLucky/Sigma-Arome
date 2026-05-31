@@ -14,6 +14,7 @@ import {
   Alert,
   RingProgress,
   Box,
+  Skeleton,
 } from '@mantine/core';
 import {
   IconUsers,
@@ -30,6 +31,7 @@ import {
   IconCircleCheck,
   IconSettings,
 } from '@tabler/icons-react';
+import { DashboardListLoading } from '@/components/ui/dashboard-loading';
 import { useEffect, useState } from 'react';
 
 /**
@@ -242,7 +244,11 @@ export default function AdminDashboard() {
                 <IconUsers size={18} color="#2E7D32" strokeWidth={1.75} />
               </Box>
             </Group>
-            <Title order={2} fw={700} style={{ color: '#0F172A', lineHeight: 1 }}>{userCount ?? '—'}</Title>
+            {loading ? (
+              <Skeleton height={32} width={64} radius="sm" />
+            ) : (
+              <Title order={2} fw={700} style={{ color: '#0F172A', lineHeight: 1 }}>{userCount ?? '—'}</Title>
+            )}
             <Anchor href="/admin/users" size="xs" fw={500} style={{ color: '#2E7D32' }}>Manage users →</Anchor>
           </Stack>
         </Paper>
@@ -257,7 +263,11 @@ export default function AdminDashboard() {
                 <IconShieldCheck size={18} color="#2E7D32" strokeWidth={1.75} />
               </Box>
             </Group>
-            <Title order={2} fw={700} style={{ color: '#0F172A', lineHeight: 1 }}>{roleCount ?? '—'}</Title>
+            {loading ? (
+              <Skeleton height={32} width={64} radius="sm" />
+            ) : (
+              <Title order={2} fw={700} style={{ color: '#0F172A', lineHeight: 1 }}>{roleCount ?? '—'}</Title>
+            )}
             <Anchor href="/admin/roles" size="xs" fw={500} style={{ color: '#2E7D32' }}>Manage roles →</Anchor>
           </Stack>
         </Paper>
@@ -272,14 +282,18 @@ export default function AdminDashboard() {
                 <IconActivity size={18} color={setupDataComplete ? '#2E7D32' : '#D97706'} strokeWidth={1.75} />
               </Box>
             </Group>
-            <Group gap={6} align="center">
-              <Title order={2} fw={700} style={{ color: '#0F172A', lineHeight: 1 }}>
-                {setupDataCount}/{SETUP_DATA_TOTAL}
-              </Title>
-              <Badge size="xs" color={setupDataComplete ? 'primary' : 'yellow'} variant="light">
-                {setupDataComplete ? 'Complete' : 'Incomplete'}
-              </Badge>
-            </Group>
+            {loading ? (
+              <Skeleton height={32} width={112} radius="sm" />
+            ) : (
+              <Group gap={6} align="center">
+                <Title order={2} fw={700} style={{ color: '#0F172A', lineHeight: 1 }}>
+                  {setupDataCount}/{SETUP_DATA_TOTAL}
+                </Title>
+                <Badge size="xs" color={setupDataComplete ? 'primary' : 'yellow'} variant="light">
+                  {setupDataComplete ? 'Complete' : 'Incomplete'}
+                </Badge>
+              </Group>
+            )}
             <Text size="xs" style={{ color: '#9CA3AF' }}>Roles plus setup areas</Text>
           </Stack>
         </Paper>
@@ -294,7 +308,11 @@ export default function AdminDashboard() {
                 <IconFileText size={18} color="#4F46E5" strokeWidth={1.75} />
               </Box>
             </Group>
-            <Title order={2} fw={700} style={{ color: '#0F172A', lineHeight: 1 }}>{auditCount ?? '—'}</Title>
+            {loading ? (
+              <Skeleton height={32} width={80} radius="sm" />
+            ) : (
+              <Title order={2} fw={700} style={{ color: '#0F172A', lineHeight: 1 }}>{auditCount ?? '—'}</Title>
+            )}
             <Anchor href="/admin/audit-log" size="xs" fw={500} style={{ color: '#2E7D32' }}>View audit log →</Anchor>
           </Stack>
         </Paper>
@@ -382,11 +400,17 @@ export default function AdminDashboard() {
                     {card.label}
                   </Text>
                   <Group gap={6} align="center">
-                    <Title order={3} fw={700} style={{ color: '#0F172A' }}>
-                      {counts[card.collection] ?? '—'}
-                    </Title>
-                    {(counts[card.collection] ?? 0) === 0 && (
-                      <Badge size="xs" color="yellow" variant="light">Empty</Badge>
+                    {loading ? (
+                      <Skeleton height={28} width={70} radius="sm" />
+                    ) : (
+                      <>
+                        <Title order={3} fw={700} style={{ color: '#0F172A' }}>
+                          {counts[card.collection] ?? '—'}
+                        </Title>
+                        {(counts[card.collection] ?? 0) === 0 && (
+                          <Badge size="xs" color="yellow" variant="light">Empty</Badge>
+                        )}
+                      </>
                     )}
                   </Group>
                 </Stack>
@@ -405,7 +429,9 @@ export default function AdminDashboard() {
       {/* Setup Exceptions */}
       <Box>
         <Text fw={600} size="sm" mb={12} style={{ color: '#0F172A' }}>Setup Exceptions</Text>
-        {!loading && (() => {
+        {loading ? (
+          <DashboardListLoading rows={3} />
+        ) : (() => {
           const emptyAreas = setupChecklist.filter((item) => !item.done);
           return emptyAreas.length === 0 ? (
             <Alert

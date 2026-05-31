@@ -2,10 +2,11 @@
 
 import {
   SimpleGrid, Paper, Text, Title, Group, Stack, ThemeIcon,
-  Loader, Anchor, Divider, Badge, Alert, Table,
+  Anchor, Divider, Badge, Alert, Table,
 } from '@mantine/core';
 import { DonutChart } from '@mantine/charts';
 import { IconFlask, IconEye, IconAlertTriangle, IconCheck, IconX, IconCircleCheck, IconChevronRight } from '@tabler/icons-react';
+import { DashboardLoading } from '@/components/ui/dashboard-loading';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
@@ -65,7 +66,7 @@ export default function QCDashboard() {
         <Text c="dimmed" size="sm">Inspect raw materials and finished goods, review AI suggestions, and record your quality decisions.</Text>
       </div>
 
-      {loading ? <Group justify="center" py="xl"><Loader /></Group> : (
+      {loading ? <DashboardLoading cards={4} graphPanels={1} queuePanels={2} /> : (
         <>
           {/* ── Priority Cards ─────────────────────────────────────────────── */}
           <SimpleGrid cols={{ base: 2, sm: 4 }} spacing="md">

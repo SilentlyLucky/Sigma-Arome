@@ -1,7 +1,8 @@
 'use client';
 
-import { SimpleGrid, Paper, Text, Title, Group, Stack, Loader, Anchor, Badge, Table, Button, Box } from '@mantine/core';
+import { SimpleGrid, Paper, Text, Title, Group, Stack, Anchor, Badge, Table, Button, Box } from '@mantine/core';
 import { IconTruckDelivery, IconBarcode, IconMapPin, IconAlertTriangle, IconCircleCheck, IconPackage } from '@tabler/icons-react';
+import { DashboardListLoading, DashboardLoading } from '@/components/ui/dashboard-loading';
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { notifications } from '@mantine/notifications';
@@ -240,7 +241,7 @@ export default function WarehouseDashboard() {
       </Group>
 
       {loadingKpis ? (
-        <Group justify="center" py="xl"><Loader color="primary" /></Group>
+        <DashboardLoading cards={4} graphPanels={1} queuePanels={2} />
       ) : (
         <>
           {/* ── KPI Cards ──────────────────────────────────────────────────────── */}
@@ -317,7 +318,7 @@ export default function WarehouseDashboard() {
             </Group>
 
             {loadingPutaway ? (
-              <Group justify="center" py="md"><Loader size="sm" color="primary" /></Group>
+              <DashboardListLoading rows={2} />
             ) : putawayBatches.length === 0 ? (
               <Paper p="lg" withBorder style={{ borderColor: '#C8E6C9', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
                 <Group gap={16} align="center">
@@ -355,7 +356,7 @@ export default function WarehouseDashboard() {
             <Text fw={600} size="sm" mb={16} style={{ color: '#1F2937' }}>Materials Needed for Production</Text>
 
             {loadingPick ? (
-              <Group justify="center" py="md"><Loader size="sm" color="primary" /></Group>
+              <DashboardListLoading rows={3} />
             ) : pickTasks.length === 0 ? (
               <Paper p="lg" withBorder style={{ borderColor: '#C8E6C9', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
                 <Group gap={16} align="center">

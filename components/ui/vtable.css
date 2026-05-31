@@ -26,23 +26,44 @@
   height: auto;
   overflow-y: clip;
   overflow-x: auto;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid #DDE9E1;
+  border-radius: 14px;
+  box-shadow: 0 18px 45px rgba(15, 23, 42, 0.06);
 }
 
 .v-table table {
   table-layout: fixed;
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
   border-spacing: 0;
 }
 
 /* Every cell: one line, truncate with ellipsis, never wrap */
 .v-table table td,
 .v-table table th {
-  color: var(--v-table-color, var(--mantine-color-text));
+  color: var(--v-table-color, #1E293B);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   box-sizing: border-box;
+}
+
+.v-table table tbody tr.table-row {
+  background: #FFFFFF;
+}
+
+.v-table table tbody tr.table-row:nth-child(even) {
+  background: #FAFCFA;
+}
+
+.v-table table tbody tr.table-row.clickable:hover,
+.v-table table tbody tr.table-row:hover {
+  background: #F0FAF3;
+}
+
+.v-table table tbody tr.table-row.subdued {
+  opacity: 0.64;
 }
 
 /* Alignment (text-align works in native table cells) */
@@ -132,8 +153,8 @@
 
 /* Inline style (bordered) */
 .v-table.inline {
-  border: 1px solid var(--mantine-color-default-border);
-  border-radius: var(--mantine-radius-md);
+  border: 1px solid #DDE9E1;
+  border-radius: 14px;
   overflow: hidden;
 }
 

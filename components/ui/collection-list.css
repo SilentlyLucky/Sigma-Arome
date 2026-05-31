@@ -15,10 +15,12 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 12px;
+  padding: 14px 16px;
   gap: 12px;
-  border-bottom: 1px solid var(--mantine-color-default-border);
-  background: var(--mantine-color-body);
+  border: 1px solid #DDE9E1;
+  border-bottom: 0;
+  border-radius: 14px 14px 0 0;
+  background: rgba(255, 255, 255, 0.92);
   flex-wrap: wrap;
 }
 
@@ -52,7 +54,7 @@
 
 /* Search input */
 .collection-list-search {
-  width: 250px;
+  width: min(420px, 70vw);
 }
 
 /* Per-page select */
@@ -65,8 +67,9 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 16px;
-  border-top: 1px solid var(--mantine-color-default-border);
+  padding: 14px 16px;
+  border-top: 1px solid #DDE9E1;
+  background: rgba(255, 255, 255, 0.92);
 }
 
 /* ── Bottom Pagination ── */

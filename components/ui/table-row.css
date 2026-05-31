@@ -20,8 +20,8 @@
   white-space: nowrap;
   text-overflow: ellipsis;
   vertical-align: middle;
-  background-color: var(--v-table-background-color, #FFFFFF);
-  border-bottom: 1px solid #DCE5DD;
+  background-color: var(--v-table-background-color, transparent);
+  border-bottom: 1px solid #E7EFE9;
   box-sizing: border-box;
 }
 
@@ -61,7 +61,7 @@
 
 /* Clickable row hover */
 .table-row.clickable:not(.subdued):hover .cell {
-  background-color: #F4F7F5;
+  background-color: #F0FAF3;
   cursor: pointer;
 }
 

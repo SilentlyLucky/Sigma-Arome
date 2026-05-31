@@ -13,7 +13,7 @@ export async function GET(
   try {
     const { id } = await params;
     const daasUrl = getDaaSUrl();
-    const headers = await getAuthHeaders();
+    const headers = await getAuthHeaders(_request);
 
     const response = await fetch(`${daasUrl}/api/users/${id}`, { headers, cache: 'no-store' });
     const data = await response.json();
@@ -31,7 +31,7 @@ export async function PATCH(
   try {
     const { id } = await params;
     const daasUrl = getDaaSUrl();
-    const headers = await getAuthHeaders();
+    const headers = await getAuthHeaders(request);
     const body = await request.json();
 
     const response = await fetch(`${daasUrl}/api/users/${id}`, {
@@ -54,7 +54,7 @@ export async function DELETE(
   try {
     const { id } = await params;
     const daasUrl = getDaaSUrl();
-    const headers = await getAuthHeaders();
+    const headers = await getAuthHeaders(_request);
 
     const response = await fetch(`${daasUrl}/api/users/${id}`, {
       method: 'DELETE',

@@ -2,7 +2,7 @@
 
 import {
   SimpleGrid, Paper, Text, Title, Group, Stack, ThemeIcon,
-  Loader, Anchor, Divider, Badge, Alert, Table,
+  Anchor, Divider, Badge, Alert, Table,
 } from '@mantine/core';
 import { BarChart, DonutChart } from '@mantine/charts';
 import {
@@ -10,6 +10,7 @@ import {
   IconBuildingFactory, IconFlask, IconTruckDelivery, IconPackage,
   IconCircleCheck, IconX,
 } from '@tabler/icons-react';
+import { DashboardLoading } from '@/components/ui/dashboard-loading';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
@@ -78,7 +79,7 @@ export default function ManagerDashboard() {
         <Text c="dimmed" size="sm">Cross-department view — surface blockers, quality issues, and overdue work before they impact production.</Text>
       </div>
 
-      {loading ? <Group justify="center" py="xl"><Loader /></Group> : (
+      {loading ? <DashboardLoading cards={4} graphPanels={2} queuePanels={2} /> : (
         <>
           {/* ── Priority Cards ─────────────────────────────────────────────── */}
           <SimpleGrid cols={{ base: 2, sm: 4 }} spacing="md">

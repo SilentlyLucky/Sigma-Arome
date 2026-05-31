@@ -33,7 +33,7 @@ async function proxyRequest(
   method: string
 ) {
   const daasUrl = getDaaSUrl();
-  const headers = await getAuthHeaders();
+  const headers = await getAuthHeaders(request);
   const searchParams = request.nextUrl.searchParams.toString();
   const url = `${daasUrl}/api/items/${collection}/${id}${searchParams ? `?${searchParams}` : ''}`;
 

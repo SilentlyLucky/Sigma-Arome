@@ -140,6 +140,7 @@ export default function CreateProductionOrderPage() {
       }
       const created = await res.json();
       const createdId = created?.data?.id;
+      if (!createdId) throw new Error('Order created but ID not returned from server');
 
       if (targetStatus === 'draft') {
         notifications.show({ title: 'Draft Saved', message: 'Production order saved as draft. Open it to submit when ready.', color: 'blue' });
@@ -148,14 +149,19 @@ export default function CreateProductionOrderPage() {
       }
 
       // Two-step release: POST as 'planned', then PATCH to 'released' (triggers Extension B stock check)
-      await fetch(`/api/items/production_orders/${createdId}`, {
+      const patchRes = await fetch(`/api/items/production_orders/${createdId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: 'released' }),
       });
+      if (!patchRes.ok) {
+        const patchErr = await patchRes.json();
+        throw new Error(patchErr?.errors?.[0]?.message ?? 'Failed to release order');
+      }
 
-      // Re-read actual status — Extension B may have changed it to waiting_issue
+      // Re-read actual status — Extension B may have overridden it to waiting_issue
       const readRes = await fetch(`/api/items/production_orders/${createdId}?fields[]=status&fields[]=notes`);
+      if (!readRes.ok) throw new Error('Failed to retrieve order status after release');
       const readData = await readRes.json();
       const finalStatus = readData?.data?.status;
       const finalNotes = readData?.data?.notes;
@@ -168,8 +174,7 @@ export default function CreateProductionOrderPage() {
         notifications.show({ title: 'Order Blocked', message: `Order created but blocked: ${firstLine}.`, color: 'orange' });
         router.push(`/ppic/production/${createdId}`);
       } else {
-        notifications.show({ title: 'Order Submitted', message: 'Production order submitted.', color: 'green' });
-        router.push('/ppic/production');
+        throw new Error(`Unexpected order status after release: "${finalStatus}". Please check the order manually.`);
       }
     } catch (err) {
       notifications.show({ title: 'Error', message: err instanceof Error ? err.message : 'Failed', color: 'red' });

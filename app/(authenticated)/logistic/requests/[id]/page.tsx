@@ -33,7 +33,7 @@ export default function LogisticRequestDetailPage() {
       });
       if (!res.ok) throw new Error((await res.json())?.errors?.[0]?.message ?? 'Failed');
       setStatus('approved');
-      notifications.show({ title: 'Approved', message: 'Request approved — Warehouse can now issue material', color: 'green' });
+      notifications.show({ title: 'Request approved', message: 'Warehouse can now prepare these materials for production.', color: 'green' });
     } catch (err) {
       notifications.show({ title: 'Error', message: err instanceof Error ? err.message : 'Failed', color: 'red' });
     } finally {
@@ -46,7 +46,7 @@ export default function LogisticRequestDetailPage() {
       <Group justify="space-between">
         <div>
           <Title order={2}>Material Request Detail</Title>
-          <Text c="dimmed" size="sm">Review request and approve for Warehouse to issue.</Text>
+          <Text c="dimmed" size="sm">Review the request before Warehouse prepares the materials.</Text>
         </div>
         {status && <Badge size="lg" color={STATUS_COLORS[status] ?? 'gray'} variant="light">{status}</Badge>}
       </Group>
@@ -56,17 +56,17 @@ export default function LogisticRequestDetailPage() {
           <Button leftSection={<IconCheck size={16} />} color="green" loading={approving} onClick={handleApprove}>
             Approve Request
           </Button>
-          <Text size="xs" c="dimmed">Approving allows Warehouse to issue the requested materials.</Text>
+          <Text size="xs" c="dimmed">Approving tells Warehouse to prepare these materials for production.</Text>
         </Group>
       )}
 
       {status === 'approved' && (
         <Alert icon={<IconInfoCircle size={16} />} color="green" variant="light">
-          Request approved. Waiting for Warehouse to issue materials.
+          Request approved. Waiting for Warehouse to send the materials to production.
         </Alert>
       )}
 
-      <Divider label="Request Items" labelPosition="left" />
+      <Divider label="Requested Materials" labelPosition="left" />
 
       <CollectionList
         collection="material_request_items"
@@ -82,7 +82,7 @@ export default function LogisticRequestDetailPage() {
         }}
       />
 
-      <Button variant="subtle" onClick={() => router.push('/logistic/requests')}>← Back to Queue</Button>
+      <Button variant="subtle" onClick={() => router.push('/logistic/requests')}>← Back to Requests</Button>
     </Stack>
   );
 }

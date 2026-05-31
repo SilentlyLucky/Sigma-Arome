@@ -9,10 +9,10 @@ import type { ReactNode } from 'react';
 
 const NAV_ITEMS = [
   { label: 'Dashboard', href: '/logistic', icon: IconDashboard, section: 'Overview' },
-  { label: 'Material Request Queue', href: '/logistic/requests', icon: IconClipboardList, section: 'Coordination' },
-  { label: 'Movement Priority', href: '/logistic/priority', icon: IconArrowsSort, section: 'Coordination' },
-  { label: 'Issue Monitor', href: '/logistic/issue-monitor', icon: IconTransferOut, section: 'Monitoring' },
-  { label: 'FG Putaway', href: '/logistic/fg-putaway', icon: IconPackage, section: 'Monitoring' },
+  { label: 'Material Requests to Review', href: '/logistic/requests', icon: IconClipboardList, section: 'Coordination' },
+  { label: 'Material Move Priorities', href: '/logistic/priority', icon: IconArrowsSort, section: 'Coordination' },
+  { label: 'Material Release Progress', href: '/logistic/issue-monitor', icon: IconTransferOut, section: 'Monitoring' },
+  { label: 'Finished Goods Storage', href: '/logistic/fg-putaway', icon: IconPackage, section: 'Monitoring' },
 ];
 const SECTIONS = ['Overview', 'Coordination', 'Monitoring'];
 

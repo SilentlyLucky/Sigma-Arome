@@ -7,8 +7,10 @@ export default function MovementPriorityPage() {
   return (
     <Stack gap="md">
       <div>
-        <Title order={2}>Movement Priority Board</Title>
-        <Text c="dimmed" size="sm">All active material requests sorted by priority and needed date. Coordinate with Warehouse for timely execution.</Text>
+        <Title order={2}>Material Move Priorities</Title>
+        <Text c="dimmed" size="sm">
+          Active material requests sorted by priority and needed date. Use this to decide what Warehouse should prepare first.
+        </Text>
       </div>
       <CollectionList
         collection="material_requests"

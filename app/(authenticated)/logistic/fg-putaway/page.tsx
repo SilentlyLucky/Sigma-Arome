@@ -11,11 +11,13 @@ export default function FGPutawayPage() {
   return (
     <Stack gap="md">
       <div>
-        <Title order={2}>Finished Goods Putaway Coordination</Title>
-        <Text c="dimmed" size="sm">Monitor FG batches approved by QC and ready for warehouse putaway.</Text>
+        <Title order={2}>Finished Goods Storage</Title>
+        <Text c="dimmed" size="sm">
+          Finished product batches approved by QC and ready to be stored.
+        </Text>
       </div>
       <Alert icon={<IconInfoCircle size={16} />} color="cyan" variant="light">
-        Finished product batches with status <strong>Approved</strong> are ready for Warehouse to put away into FG storage.
+        Finished product batches approved by QC are ready for Warehouse to move into finished goods storage.
       </Alert>
       <CollectionList
         collection="batches"

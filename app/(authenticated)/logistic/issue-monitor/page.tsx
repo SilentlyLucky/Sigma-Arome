@@ -7,8 +7,10 @@ export default function IssueMonitorPage() {
   return (
     <Stack gap="md">
       <div>
-        <Title order={2}>Material Issue Monitor</Title>
-        <Text c="dimmed" size="sm">Track Warehouse material issue progress. Monitor which requests have been fulfilled.</Text>
+        <Title order={2}>Material Release Progress</Title>
+        <Text c="dimmed" size="sm">
+          Track materials that Warehouse has sent or is preparing to send to production.
+        </Text>
       </div>
       <CollectionList
         collection="inventory_movements"

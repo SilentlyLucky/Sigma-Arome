@@ -10,11 +10,13 @@ export default function LogisticRequestsPage() {
   return (
     <Stack gap="md">
       <div>
-        <Title order={2}>Material Request Queue</Title>
-        <Text c="dimmed" size="sm">PPIC material requests submitted for coordination. Review, approve, and assign to Warehouse.</Text>
+        <Title order={2}>Material Requests to Review</Title>
+        <Text c="dimmed" size="sm">
+          Review material requests from PPIC and approve the ones Warehouse should prepare for production.
+        </Text>
       </div>
       <Alert icon={<IconInfoCircle size={16} />} color="cyan" variant="light">
-        Requests with status <strong>Submitted</strong> need your review. Approve to allow Warehouse to issue material.
+        Submitted requests need your review. Approve them when Warehouse should prepare the materials for production.
       </Alert>
       <CollectionList
         collection="material_requests"

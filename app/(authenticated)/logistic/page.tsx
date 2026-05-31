@@ -28,10 +28,10 @@ export default function LogisticDashboard() {
       ]);
 
       setKpis([
-        { label: 'Requests Pending Review', value: submitted, color: 'orange', icon: IconClipboardList, href: '/logistic/requests' },
-        { label: 'Approved — Awaiting Issue', value: approved, color: 'blue', icon: IconTransferOut, href: '/logistic/issue-monitor' },
-        { label: 'Issued / In Progress', value: issued, color: 'green', icon: IconClock },
-        { label: 'Available Stock (batches)', value: storedAvailable, color: 'teal', icon: IconPackage },
+        { label: 'Requests Waiting for Review', value: submitted, color: 'orange', icon: IconClipboardList, href: '/logistic/requests' },
+        { label: 'Approved, Waiting to Send', value: approved, color: 'blue', icon: IconTransferOut, href: '/logistic/issue-monitor' },
+        { label: 'Materials Being Sent', value: issued, color: 'green', icon: IconClock },
+        { label: 'Batches Available for Production', value: storedAvailable, color: 'teal', icon: IconPackage },
       ]);
       setLoading(false);
     }
@@ -42,7 +42,7 @@ export default function LogisticDashboard() {
     <Stack gap="lg">
       <div>
         <Title order={2}>Logistic Coordination Dashboard</Title>
-        <Text c="dimmed" size="sm">Coordinate internal material movement — review requests, prioritize tasks, monitor handoffs.</Text>
+        <Text c="dimmed" size="sm">Review material requests, prioritize urgent moves, and track what has been sent to production.</Text>
       </div>
       {loading ? <Group justify="center" py="xl"><Loader /></Group> : (
         <SimpleGrid cols={{ base: 2, sm: 4 }} spacing="md">

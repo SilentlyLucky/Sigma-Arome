@@ -319,6 +319,11 @@ export const VTable: React.FC<VTableProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [internalHeaders, showSelect, showManualSort, renderRowAppend, renderHeaderAppend]);
 
+  const tableWidth = useMemo(
+    () => colDefs.reduce((total, col) => total + col.width, 0),
+    [colDefs],
+  );
+
   // Selection helpers
   const allItemsSelected = useMemo(() => {
     return !loading && items.length > 0 && value.length === items.length;
@@ -535,7 +540,10 @@ export const VTable: React.FC<VTableProps> = ({
       ref={tableRef}
       className={tableClasses}
     >
-      <table summary={internalHeaders.map((h) => h.text).join(", ")}>
+      <table
+        summary={internalHeaders.map((h) => h.text).join(", ")}
+        style={{ width: `${tableWidth}px`, minWidth: "100%" }}
+      >
         <colgroup>
           {colDefs.map((c) => (
             <col key={c.key} style={{ width: `${c.width}px` }} />

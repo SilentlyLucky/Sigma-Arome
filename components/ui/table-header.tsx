@@ -123,6 +123,7 @@ const SortableHeaderCell: React.FC<SortableHeaderCellProps> = ({
     <th
       ref={setNodeRef}
       style={style}
+      data-column-value={header.value}
       className={getHeaderClasses(header)}
       onPointerDown={(e) => {
         if (e.button !== 0) return;
@@ -235,6 +236,9 @@ export const TableHeader: React.FC<TableHeaderProps> = ({
     header: Header;
     startX: number;
     startWidth: number;
+    baseHeaders: Header[];
+    handle: HTMLElement;
+    pointerId: number;
   } | null>(null);
   // Tracks whether a column reorder drag just happened so the subsequent click doesn't trigger sort
   const dragHappenedRef = useRef(false);
@@ -320,36 +324,62 @@ export const TableHeader: React.FC<TableHeaderProps> = ({
   const handleResizeStart = useCallback(
     (header: Header, event: React.PointerEvent) => {
       event.preventDefault();
+      event.stopPropagation();
       const target = event.currentTarget as HTMLElement;
       const parent = target.parentElement as HTMLElement;
 
-      // Use getBoundingClientRect for accurate rendered width
-      // This avoids the cursor-jump caused by offsetWidth vs actual width mismatch
-      const rect = parent.getBoundingClientRect();
-      const actualWidth = rect.width;
+      const renderedWidths = new Map<string, number>();
+      parent.parentElement?.querySelectorAll<HTMLElement>("th[data-column-value]").forEach((cell) => {
+        const value = cell.dataset.columnValue;
+        if (value) renderedWidths.set(value, cell.getBoundingClientRect().width);
+      });
+
+      // Lock every content column to its rendered width before changing the
+      // target column. Native table layout otherwise redistributes extra space
+      // and makes the handle jump away from the cursor.
+      const baseHeaders = headers.map((h) => ({
+        ...h,
+        width: renderedWidths.get(h.value) ?? h.width ?? null,
+      }));
+      const actualWidth = renderedWidths.get(header.value) ?? parent.getBoundingClientRect().width;
 
       setResizing(true);
-      resizeRef.current = { header, startX: event.pageX, startWidth: actualWidth };
+      target.setPointerCapture?.(event.pointerId);
+      resizeRef.current = {
+        header,
+        startX: event.clientX,
+        startWidth: actualWidth,
+        baseHeaders,
+        handle: target,
+        pointerId: event.pointerId,
+      };
 
       const handleMouseMove = (e: PointerEvent) => {
         if (!resizeRef.current) return;
-        const deltaX = e.pageX - resizeRef.current.startX;
+        e.preventDefault();
+        const deltaX = e.clientX - resizeRef.current.startX;
         const newWidth = Math.max(32, resizeRef.current.startWidth + deltaX);
-        const newHeaders = headers.map((h) =>
+        const newHeaders = resizeRef.current.baseHeaders.map((h) =>
           h.value === resizeRef.current!.header.value ? { ...h, width: newWidth } : h,
         );
         onHeadersChange?.(newHeaders);
       };
 
-      const handleMouseUp = () => {
+      const handleMouseUp = (e: PointerEvent) => {
+        e.preventDefault();
+        if (resizeRef.current?.handle.hasPointerCapture?.(resizeRef.current.pointerId)) {
+          resizeRef.current.handle.releasePointerCapture(resizeRef.current.pointerId);
+        }
         setResizing(false);
         resizeRef.current = null;
         window.removeEventListener("pointermove", handleMouseMove);
         window.removeEventListener("pointerup", handleMouseUp);
+        window.removeEventListener("pointercancel", handleMouseUp);
       };
 
       window.addEventListener("pointermove", handleMouseMove);
       window.addEventListener("pointerup", handleMouseUp);
+      window.addEventListener("pointercancel", handleMouseUp);
     },
     [headers, onHeadersChange],
   );

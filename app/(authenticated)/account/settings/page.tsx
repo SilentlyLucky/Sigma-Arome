@@ -46,6 +46,13 @@ function getPasswordStrength(password: string): number {
 
 const STRENGTH_COLORS = ['#E5E7EB', '#EF4444', '#F97316', '#EAB308', '#22C55E'];
 const STRENGTH_LABELS = ['', 'Weak', 'Fair', 'Good', 'Strong'];
+const STRENGTH_HINTS = [
+  '',
+  'Too short — use at least 6 characters.',
+  'Almost there — use at least 8 characters.',
+  'Good length. Add uppercase, numbers, or symbols to make it stronger.',
+  'Strong — long password with mixed characters.',
+];
 
 export default function AccountSettingsPage() {
   const [user, setUser] = useState<CurrentUser | null>(null);
@@ -333,9 +340,14 @@ export default function AccountSettingsPage() {
                 ))}
               </Group>
               {newPassword.length > 0 && (
-                <Text size="xs" fw={500} style={{ color: STRENGTH_COLORS[strength] }}>
-                  {STRENGTH_LABELS[strength]}
-                </Text>
+                <Group gap={6} align="baseline">
+                  <Text size="xs" fw={600} style={{ color: STRENGTH_COLORS[strength], flexShrink: 0 }}>
+                    {STRENGTH_LABELS[strength]}
+                  </Text>
+                  <Text size="xs" style={{ color: '#9CA3AF' }}>
+                    {STRENGTH_HINTS[strength]}
+                  </Text>
+                </Group>
               )}
             </Box>
 

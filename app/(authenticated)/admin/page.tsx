@@ -1,7 +1,6 @@
 'use client';
 
 import {
-  Grid,
   Paper,
   Text,
   Title,
@@ -257,51 +256,45 @@ export default function AdminDashboard() {
       })()}
 
       {/* Quick Links */}
-      <Grid>
-        <Grid.Col span={{ base: 12, md: 6 }}>
-          <Paper p="md" radius="md" withBorder h="100%">
-            <Title order={4} mb="sm">Configuration Quick Links</Title>
-            <Stack gap="xs">
-              {QUICK_LINKS.map((link) => (
-                <Group key={link.href} justify="space-between">
-                  <Group gap="xs">
-                    <link.icon size={14} />
-                    <Anchor href={link.href} size="sm">{link.label}</Anchor>
-                  </Group>
-                  <Text size="xs" c="dimmed">{link.description}</Text>
-                </Group>
-              ))}
-            </Stack>
-          </Paper>
-        </Grid.Col>
+      <SimpleGrid cols={{ base: 1, md: 2 }} spacing="md">
+        <Paper p="md" radius="md" withBorder>
+          <Title order={4} mb="sm">Configuration Quick Links</Title>
+          <Stack gap="xs">
+          {QUICK_LINKS.map((link) => (
+            <Group key={link.href} gap="xs">
+              <link.icon size={14} />
+              <Anchor href={link.href} size="sm">{link.label}</Anchor>
+              <Text size="xs" c="dimmed">— {link.description}</Text>
+            </Group>
+          ))}
+          </Stack>
+        </Paper>
 
-        <Grid.Col span={{ base: 12, md: 6 }}>
-          <Paper p="md" radius="md" withBorder h="100%">
-            <Title order={4} mb="sm">Setup Checklist</Title>
-            <Stack gap="xs">
-              {[
-                { label: 'Users created', done: (userCount ?? 0) > 0 },
-                { label: 'Roles configured', done: (roleCount ?? 0) >= 7 },
-                { label: 'Suppliers added', done: (counts['suppliers'] ?? 0) > 0 },
-                { label: 'Raw materials added', done: (counts['raw_materials'] ?? 0) > 0 },
-                { label: 'Products added', done: (counts['products'] ?? 0) > 0 },
-                { label: 'Warehouse locations added', done: (counts['warehouse_locations'] ?? 0) > 0 },
-                { label: 'Quality check forms added', done: (counts['qc_templates'] ?? 0) > 0 },
-                { label: 'IoT sensors configured', done: (counts['iot_sensors'] ?? 0) > 0 },
-              ].map((item) => (
-                <Group key={item.label} gap="xs">
-                  <Badge size="xs" color={item.done ? 'green' : 'gray'} variant="light">
-                    {item.done ? '✓' : '○'}
-                  </Badge>
-                  <Text size="sm" c={item.done ? undefined : 'dimmed'}>
-                    {item.label}
-                  </Text>
-                </Group>
-              ))}
-            </Stack>
-          </Paper>
-        </Grid.Col>
-      </Grid>
+        <Paper p="md" radius="md" withBorder>
+          <Title order={4} mb="sm">Setup Checklist</Title>
+          <Stack gap="xs">
+            {[
+              { label: 'Users created', done: (userCount ?? 0) > 0 },
+              { label: 'Roles configured', done: (roleCount ?? 0) >= 7 },
+              { label: 'Suppliers added', done: (counts['suppliers'] ?? 0) > 0 },
+              { label: 'Raw materials added', done: (counts['raw_materials'] ?? 0) > 0 },
+              { label: 'Products added', done: (counts['products'] ?? 0) > 0 },
+              { label: 'Warehouse locations added', done: (counts['warehouse_locations'] ?? 0) > 0 },
+              { label: 'Quality check forms added', done: (counts['qc_templates'] ?? 0) > 0 },
+              { label: 'IoT sensors configured', done: (counts['iot_sensors'] ?? 0) > 0 },
+            ].map((item) => (
+              <Group key={item.label} gap="xs">
+                <Badge size="xs" color={item.done ? 'green' : 'gray'} variant="light">
+                  {item.done ? 'Done' : 'Todo'}
+                </Badge>
+                <Text size="sm" c={item.done ? undefined : 'dimmed'}>
+                  {item.label}
+                </Text>
+              </Group>
+            ))}
+          </Stack>
+        </Paper>
+      </SimpleGrid>
     </Stack>
   );
 }

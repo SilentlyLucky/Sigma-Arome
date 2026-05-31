@@ -30,8 +30,14 @@ yarn-error.log*
 # Claude Code local settings
 .claude/
 
+# Codex local settings
+.codex/
+
 # Local git worktrees
 .worktrees/
+
+# Local planning / pitch drafts
+PITCH-DECK-BUSINESS-VIABILITY.md
 
 # TypeScript build cache
 tsconfig.tsbuildinfo

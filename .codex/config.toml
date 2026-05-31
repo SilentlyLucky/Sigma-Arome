@@ -1,14 +1,17 @@
 [mcp_servers.buildpad]
 command = "npx"
-args = ["-y", "@buildpad/mcp@latest"]
-enabled = true
-
-[mcp_servers.daas]
-url = "https://e2a46ebf-7136-4641-9a10-ed908ee9d72a.daas4.buildpad.ai/api/mcp"
-bearer_token_env_var = "BUILDPAD_DAAS_TOKEN"
-enabled = true
+args = [
+    "-y",
+    "@buildpad/mcp@latest",
+]
+enabled = false
 
 [mcp_servers.buildpad-platform]
 url = "https://app.buildpad.ai/api/tools/mcp"
 bearer_token_env_var = "BUILDPAD_PLATFORM_TOKEN"
 enabled = true
+
+[mcp_servers.daas]
+url = "https://e2a46ebf-7136-4641-9a10-ed908ee9d72a.daas4.buildpad.ai/api/mcp"
+bearer_token_env_var = "BUILDPAD_DAAS_TOKEN"
+enabled = false

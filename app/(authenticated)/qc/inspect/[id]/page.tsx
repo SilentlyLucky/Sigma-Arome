@@ -274,16 +274,53 @@ export default function QCInspectPage() {
           {cvResult && (
             <>
               <Divider label="Image Quality Check" labelPosition="left" />
-              <Paper p="sm" radius="md" withBorder>
-                <Group gap="md">
-                  <Badge color={REC_COLORS[cvResult.recommendation] ?? 'gray'} variant="light">
-                    Suggested: {cvResult.recommendation} ({confidencePct}% confidence)
-                  </Badge>
-                  {cvResult.defect_type !== 'none' && (
-                    <Badge color="red" variant="light">
-                      Defect: {cvResult.defect_type.replace(/_/g, ' ')}
-                    </Badge>
-                  )}
+              <Paper p="md" radius="md" withBorder>
+                <Group align="flex-start" gap="xl">
+                  <Center>
+                    <RingProgress
+                      size={90}
+                      thickness={8}
+                      roundCaps
+                      sections={[{ value: confidencePct, color: ringColor }]}
+                      label={
+                        <Center>
+                          <Text size="sm" fw={700}>{confidencePct}%</Text>
+                        </Center>
+                      }
+                    />
+                  </Center>
+                  <Stack gap={6} style={{ flex: 1 }}>
+                    <Table withTableBorder>
+                      <Table.Tbody>
+                        <Table.Tr>
+                          <Table.Td fw={500} w={160}>Detected issue</Table.Td>
+                          <Table.Td>
+                            <Badge color={cvResult.defect_type === 'none' ? 'green' : 'red'} variant="light">
+                              {cvResult.defect_type === 'none' ? 'None' : cvResult.defect_type.replace(/_/g, ' ')}
+                            </Badge>
+                          </Table.Td>
+                        </Table.Tr>
+                        <Table.Tr>
+                          <Table.Td fw={500}>Confidence</Table.Td>
+                          <Table.Td>{confidencePct}%</Table.Td>
+                        </Table.Tr>
+                        <Table.Tr>
+                          <Table.Td fw={500}>Suggested decision</Table.Td>
+                          <Table.Td>
+                            <Badge size="md" color={REC_COLORS[cvResult.recommendation] ?? 'gray'} variant="filled">
+                              {cvResult.recommendation.toUpperCase()}
+                            </Badge>
+                          </Table.Td>
+                        </Table.Tr>
+                        {cvResult.is_simulated && (
+                          <Table.Tr>
+                            <Table.Td fw={500}>Source</Table.Td>
+                            <Table.Td><Badge size="xs" color="gray" variant="outline">Simulated</Badge></Table.Td>
+                          </Table.Tr>
+                        )}
+                      </Table.Tbody>
+                    </Table>
+                  </Stack>
                 </Group>
               </Paper>
             </>

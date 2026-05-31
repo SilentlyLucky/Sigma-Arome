@@ -31,7 +31,18 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.next({ request });
   }
 
+  // Define public routes that don't require authentication
+  const publicRoutes = ['/login', '/signup', '/auth', '/api/auth'];
+  const isPublicRoute = publicRoutes.some(route =>
+    request.nextUrl.pathname.startsWith(route)
+  );
+  const isApiRoute = request.nextUrl.pathname.startsWith('/api');
+
   let supabaseResponse = NextResponse.next({ request });
+
+  if (isPublicRoute || isApiRoute) {
+    return supabaseResponse;
+  }
 
   const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
     cookies: {
@@ -50,23 +61,12 @@ export async function updateSession(request: NextRequest) {
     },
   });
 
-  // IMPORTANT: Avoid writing any logic between createServerClient and
-  // supabase.auth.getUser(). A simple mistake could make it very hard to debug
-  // issues with users being randomly logged out.
-
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // Define public routes that don't require authentication
-  const publicRoutes = ['/login', '/signup', '/auth', '/api/auth'];
-  const isPublicRoute = publicRoutes.some(route => 
-    request.nextUrl.pathname.startsWith(route)
-  );
-  const isApiRoute = request.nextUrl.pathname.startsWith('/api');
-
   // Redirect unauthenticated users to login (except for public and API routes)
-  if (!user && !isPublicRoute && !isApiRoute) {
+  if (!user) {
     const url = request.nextUrl.clone();
     url.pathname = '/login';
     return NextResponse.redirect(url);

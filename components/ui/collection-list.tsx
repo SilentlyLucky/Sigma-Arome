@@ -456,14 +456,14 @@ export const CollectionList: React.FC<CollectionListProps> = ({
 
         // If no visible fields remain, stop loading with a clear message
         if (visible.length === 0 && !cancelled) {
-          setError(`No visible fields found for collection "${collection}". Verify the collection exists and has non-hidden fields.`);
+          setError("There are no visible fields to show here. Check the page setup or your role access.");
           setLoading(false);
         }
       } catch (err) {
         console.error("Error loading fields:", err);
         if (!cancelled) {
           setError(
-            "Failed to load collection fields. Make sure the Storybook Host app is running (pnpm dev:host) and connected at http://localhost:3000.",
+            "We could not load the table setup. Please refresh the page or check that the app is connected.",
           );
           setLoading(false);
         }
@@ -586,7 +586,7 @@ export const CollectionList: React.FC<CollectionListProps> = ({
       }
     } catch (err) {
       console.error("Error loading items:", err);
-      setError(err instanceof Error ? err.message : "Failed to load items");
+      setError(err instanceof Error ? err.message : "We could not load the records.");
       setItems([]);
     } finally {
       setLoading(false);
@@ -1008,7 +1008,7 @@ export const CollectionList: React.FC<CollectionListProps> = ({
       getTotalCount();
     } catch (err) {
       console.error("Error deleting items:", err);
-      setError(err instanceof Error ? err.message : "Failed to delete items");
+      setError(err instanceof Error ? err.message : "We could not delete the selected records.");
       setDeleteConfirmOpen(false);
     } finally {
       setDeleteLoading(false);
@@ -1038,21 +1038,21 @@ export const CollectionList: React.FC<CollectionListProps> = ({
 
   const itemCountDisplay = useMemo(() => {
     if (loading) return "Loading...";
-    if (filterCount === 0) return "No items";
+    if (filterCount === 0) return "No records";
     const from = Math.min((page - 1) * limit + 1, filterCount);
     const to = Math.min(page * limit, filterCount);
     // When filtered and result set is smaller than total, show both
     if (isFiltered && filterCount < totalCount) {
       if (filterCount <= limit) {
-        return `${filterCount} item${filterCount !== 1 ? "s" : ""} (filtered from ${totalCount})`;
+        return `${filterCount} record${filterCount !== 1 ? "s" : ""} (filtered from ${totalCount})`;
       }
-      return `${from}–${to} of ${filterCount} items (filtered from ${totalCount})`;
+      return `${from}–${to} of ${filterCount} records (filtered from ${totalCount})`;
     }
     // Single page — just show count
     if (filterCount <= limit) {
-      return `${filterCount} item${filterCount !== 1 ? "s" : ""}`;
+      return `${filterCount} record${filterCount !== 1 ? "s" : ""}`;
     }
-    return `${from}–${to} of ${filterCount} items`;
+    return `${from}–${to} of ${filterCount} records`;
   }, [loading, totalCount, filterCount, page, limit, isFiltered]);
 
   // =========================================================================
@@ -1141,11 +1141,11 @@ export const CollectionList: React.FC<CollectionListProps> = ({
         value={selectedItems}
         fixedHeader
         loading={loading}
-        loadingText="Loading items..."
+        loadingText="Loading records..."
         noItemsText={
           isFiltered
             ? "No results — try adjusting your search or filters"
-            : "No items in this collection"
+            : "No records to show yet"
         }
         rowHeight={rowHeight}
         selectionUseKeys

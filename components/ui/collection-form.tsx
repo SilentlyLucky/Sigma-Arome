@@ -389,7 +389,7 @@ export const CollectionForm: React.FC<CollectionFormProps> = ({
       } catch (err) {
         console.error("Error loading form data:", err);
         setError(
-          err instanceof Error ? err.message : "Failed to load form data",
+          err instanceof Error ? err.message : "We could not load this form.",
         );
       } finally {
         setLoading(false);
@@ -693,7 +693,7 @@ export const CollectionForm: React.FC<CollectionFormProps> = ({
         setFieldErrors(perFieldErrors);
         setError("Validation failed. Please fix the highlighted fields.");
       } else {
-        setError(err instanceof Error ? err.message : "Failed to save item");
+        setError(err instanceof Error ? err.message : "We could not save your changes.");
       }
     } finally {
       setSaving(false);
@@ -730,7 +730,7 @@ export const CollectionForm: React.FC<CollectionFormProps> = ({
       onDelete?.();
     } catch (err) {
       console.error("Error deleting item:", err);
-      setError(err instanceof Error ? err.message : "Failed to delete item");
+      setError(err instanceof Error ? err.message : "We could not delete this record.");
       setDeleteConfirmOpen(false);
     } finally {
       setDeleting(false);
@@ -770,8 +770,8 @@ export const CollectionForm: React.FC<CollectionFormProps> = ({
           data-testid="form-success"
         >
           {mode === "create"
-            ? "Item created successfully!"
-            : "Item updated successfully!"}
+            ? "Created successfully."
+            : "Saved successfully."}
         </Alert>
       )}
 
@@ -780,8 +780,8 @@ export const CollectionForm: React.FC<CollectionFormProps> = ({
           {fields.length === 0 ? (
             <Text c="dimmed" ta="center" py="xl">
               {!saveAllowed
-                ? `You don't have permission to ${mode} items in ${collection}`
-                : `No editable fields found for ${collection}`}
+                ? "You do not have access to make changes here."
+                : "There are no editable fields available for this page."}
             </Text>
           ) : (
             <>
@@ -872,14 +872,14 @@ export const CollectionForm: React.FC<CollectionFormProps> = ({
       <Modal
         opened={deleteConfirmOpen}
         onClose={() => setDeleteConfirmOpen(false)}
-        title="Confirm Delete"
+        title="Confirm delete"
         centered
         size="sm"
         data-testid="delete-confirm-modal"
       >
         <Stack gap="md">
           <Text size="sm">
-            Are you sure you want to delete this item? This action cannot be
+            Are you sure you want to delete this record? This action cannot be
             undone.
           </Text>
           <Group justify="flex-end">

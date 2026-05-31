@@ -15,7 +15,7 @@ const STATUS_COLORS: Record<string, string> = {
 };
 const STATUS_LABELS: Record<string, string> = {
   draft: 'Draft', submitted: 'Submitted to Warehouse', approved: 'Approved',
-  partially_issued: 'Partially Issued', issued: 'Fully Issued', cancelled: 'Cancelled',
+  partially_issued: 'Partially Sent', issued: 'Fully Sent', cancelled: 'Cancelled',
 };
 
 export default function MaterialRequestDetailPage() {
@@ -43,7 +43,7 @@ export default function MaterialRequestDetailPage() {
       });
       if (!res.ok) throw new Error('Submit failed');
       setStatus('submitted');
-      notifications.show({ title: 'Submitted', message: 'Material request sent to Warehouse', color: 'green' });
+      notifications.show({ title: 'Submitted', message: 'Material request sent to Warehouse.', color: 'green' });
     } catch (err) {
       notifications.show({ title: 'Error', message: err instanceof Error ? err.message : 'Failed', color: 'red' });
     } finally {
@@ -56,7 +56,7 @@ export default function MaterialRequestDetailPage() {
       <Group justify="space-between" align="flex-start">
         <div>
           <Title order={2}>Material Request Detail</Title>
-          <Text c="dimmed" size="sm">Manage request header and line items.</Text>
+          <Text c="dimmed" size="sm">Review the materials needed and track what Warehouse has sent.</Text>
         </div>
         {status && (
           <Badge size="lg" color={STATUS_COLORS[status]} variant="light">
@@ -70,13 +70,13 @@ export default function MaterialRequestDetailPage() {
           <Button color="blue" loading={submitting} onClick={handleSubmit}>
             Submit to Warehouse
           </Button>
-          <Text size="xs" c="dimmed">Once submitted, Warehouse can approve and issue materials.</Text>
+          <Text size="xs" c="dimmed">Once submitted, Warehouse can approve the request and send materials to production.</Text>
         </Group>
       )}
 
       {status && status !== 'draft' && status !== 'cancelled' && (
         <Alert icon={<IconInfoCircle size={16} />} color="blue" variant="light">
-          This request has been submitted. Warehouse will approve and issue materials. You can track progress below.
+          This request has been submitted. Warehouse will approve it and send materials to production. You can track progress below.
         </Alert>
       )}
 

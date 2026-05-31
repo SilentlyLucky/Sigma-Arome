@@ -253,7 +253,7 @@ export function AutoSlottingPanel() {
                         <Group gap={6} wrap="nowrap">
                           <Badge size="xs" color={c.comparison.hazard_allowed ? 'teal' : 'red'} variant="dot" />
                           <Text size="xs">
-                            <strong>Hazard Class:</strong> {c.comparison.material_hazard} — {c.comparison.hazard_allowed ? 'Allowed' : 'Not allowed'}
+                            <strong>Hazard Class:</strong> {c.comparison.material_hazard} — {c.comparison.hazard_allowed ? 'Safe for this bin' : 'Not suitable for this bin'}
                           </Text>
                         </Group>
                         <Group gap={6} wrap="nowrap">

@@ -303,7 +303,7 @@ export default function PutawayPage() {
                         <Group gap={6} wrap="nowrap">
                           <Badge size="xs" color={cmp?.hazard_allowed ? 'teal' : 'red'} variant="dot" />
                           <Text size="xs">
-                            <strong>Hazard Class:</strong> {cmp?.material_hazard} — {cmp?.hazard_allowed ? 'Allowed' : 'Not allowed'}
+                            <strong>Hazard Class:</strong> {cmp?.material_hazard} — {cmp?.hazard_allowed ? 'Safe for this bin' : 'Not suitable for this bin'}
                           </Text>
                         </Group>
                         <Group gap={6} wrap="nowrap">

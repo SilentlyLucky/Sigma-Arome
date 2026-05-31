@@ -130,10 +130,10 @@ export const defaultTranslations: M2MTranslations = {
     create_new: 'Create New',
     add_existing: 'Add Existing',
     batch_edit: 'Edit Selected',
-    not_allowed: 'Not allowed',
+    not_allowed: 'You do not have access',
 
     // States
-    no_items: 'No related items',
+    no_items: 'No related records',
     relationship_not_setup: 'Relationship not configured',
     relationship_not_setup_detail: 'The many-to-many relationship is not properly configured for this field.',
     no_singleton_relations: 'The related collection is a singleton and cannot be used in an M2M relationship.',
@@ -142,16 +142,16 @@ export const defaultTranslations: M2MTranslations = {
     loading: 'Loading...',
 
     // Pagination
-    per_page: 'Items per page:',
+    per_page: 'Records per page:',
     showing_range: 'Showing {start} to {end} of {total}',
-    item_count_one: '1 item',
-    item_count_other: '{count} items',
+    item_count_one: '1 record',
+    item_count_other: '{count} records',
     unsaved_changes: '(unsaved changes)',
 
     // Actions
     edit: 'Edit',
     remove: 'Remove',
-    navigate_to_item: 'Open item',
+    navigate_to_item: 'Open record',
     search_placeholder: 'Search...',
     select_items: 'Select Items',
     add_selected: 'Add Selected',
@@ -159,12 +159,12 @@ export const defaultTranslations: M2MTranslations = {
     deselect_all: 'Deselect All',
 
     // Drawer
-    create_item: 'Create New Item',
-    edit_item: 'Edit Item',
-    junction_fields: 'Junction Fields',
+    create_item: 'Create New Record',
+    edit_item: 'Edit Record',
+    junction_fields: 'Relationship Details',
 
     // Batch Edit
-    batch_edit_title: 'Editing {count} items',
+    batch_edit_title: 'Editing {count} records',
     batch_edit_apply: 'Apply Changes',
 
     // Sorting

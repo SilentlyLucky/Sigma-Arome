@@ -52,7 +52,7 @@ export const BulkActionsBar: React.FC<BulkActionsBarProps> = ({
       </Badge>
 
       {enableDelete && (
-        <Tooltip label={deleteAllowed ? "Delete selected" : "Not allowed"}>
+        <Tooltip label={deleteAllowed ? "Delete selected" : "You do not have access"}>
           <Button
             variant="light"
             color="red"
@@ -77,7 +77,7 @@ export const BulkActionsBar: React.FC<BulkActionsBarProps> = ({
         return (
           <Tooltip
             key={index}
-            label={permAllowed ? action.label : "Not allowed"}
+            label={permAllowed ? action.label : "You do not have access"}
           >
             <Button
               variant="light"

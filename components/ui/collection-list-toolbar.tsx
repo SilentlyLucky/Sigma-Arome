@@ -191,7 +191,7 @@ export const CollectionListToolbar: React.FC<CollectionListToolbarProps> = ({
         )}
 
         {enableCreate && onCreate && (
-          <Tooltip label={createAllowed ? "Create item" : "Not allowed"}>
+          <Tooltip label={createAllowed ? "Add new" : "You do not have access"}>
             <Button
               variant="filled"
               size="compact-sm"
@@ -199,9 +199,9 @@ export const CollectionListToolbar: React.FC<CollectionListToolbarProps> = ({
               onClick={createAllowed ? onCreate : undefined}
               disabled={!createAllowed}
               data-testid="collection-list-create"
-              aria-label={createAllowed ? "Create item" : "Create item (not allowed)"}
+              aria-label={createAllowed ? "Add new" : "Add new unavailable"}
             >
-              Create item
+              Add new
             </Button>
           </Tooltip>
         )}

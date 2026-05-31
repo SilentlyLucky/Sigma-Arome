@@ -19,9 +19,9 @@ const STATUS_COLORS: Record<string, string> = {
 };
 const STATUS_LABELS: Record<string, string> = {
   qc_pending: 'QC Pending', under_qc: 'Under QC', approved: 'QC Approved',
-  hold: 'On Hold', rejected: 'Rejected', storage_assigned: 'Storage Assigned',
-  stored_available: 'Stored — Available', requested: 'Requested for Production',
-  issued: 'Issued to Production', consumed: 'Consumed',
+  hold: 'On Hold', rejected: 'Rejected', storage_assigned: 'Storage Location Assigned',
+  stored_available: 'Stored and Ready for Production', requested: 'Requested for Production',
+  issued: 'Sent to Production', consumed: 'Used in Production',
 };
 
 interface CompatibleLocation {

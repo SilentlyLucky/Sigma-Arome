@@ -7,6 +7,7 @@
 
 import { type NextRequest, NextResponse } from 'next/server';
 import { updateSession } from '@/lib/supabase/middleware';
+import { checkRateLimit, readRateLimitNumber } from '@/lib/api/rate-limit';
 
 // Route prefix → allowed role_keys
 const ROLE_ROUTES: Record<string, string[]> = {
@@ -22,6 +23,55 @@ const ROLE_ROUTES: Record<string, string[]> = {
 // In-memory cache: userId → { route, expiresAt }
 const roleCache = new Map<string, { route: string; expiresAt: number }>();
 const CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes
+const API_RATE_LIMIT_MAX = readRateLimitNumber(process.env.API_RATE_LIMIT_MAX, 100);
+const API_RATE_LIMIT_WINDOW_MS = readRateLimitNumber(process.env.API_RATE_LIMIT_WINDOW_MS, 60_000);
+
+function getClientIp(request: NextRequest) {
+  const forwardedFor = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim();
+  return (
+    forwardedFor ||
+    request.headers.get('x-real-ip') ||
+    request.headers.get('cf-connecting-ip') ||
+    'unknown'
+  );
+}
+
+function rateLimitApiRequest(request: NextRequest) {
+  const pathname = request.nextUrl.pathname;
+  if (!pathname.startsWith('/api') || pathname === '/api/health') return null;
+
+  const clientIp = getClientIp(request);
+  const result = checkRateLimit(
+    `api:${clientIp}`,
+    API_RATE_LIMIT_MAX,
+    API_RATE_LIMIT_WINDOW_MS
+  );
+
+  const headers = {
+    'X-RateLimit-Limit': String(result.limit),
+    'X-RateLimit-Remaining': String(result.remaining),
+    'X-RateLimit-Reset': new Date(result.resetAt).toISOString(),
+  };
+
+  if (result.allowed) {
+    return { headers };
+  }
+
+  return NextResponse.json(
+    {
+      errors: [{
+        message: 'Too many requests. Please wait before trying again.',
+      }],
+    },
+    {
+      status: 429,
+      headers: {
+        ...headers,
+        'Retry-After': String(result.retryAfter),
+      },
+    }
+  );
+}
 
 async function getUserRoute(accessToken: string, userId: string): Promise<string | null> {
   const cached = roleCache.get(userId);
@@ -54,8 +104,16 @@ async function getUserRoute(accessToken: string, userId: string): Promise<string
 }
 
 export async function middleware(request: NextRequest) {
+  const rateLimitResponse = rateLimitApiRequest(request);
+  if (rateLimitResponse instanceof NextResponse) return rateLimitResponse;
+
   // Step 1: Refresh Supabase session + redirect unauthenticated to /login
   const response = await updateSession(request);
+  if (rateLimitResponse?.headers) {
+    for (const [key, value] of Object.entries(rateLimitResponse.headers)) {
+      response.headers.set(key, value);
+    }
+  }
 
   // If updateSession issued a redirect, return it immediately
   const location = response.headers.get('location');

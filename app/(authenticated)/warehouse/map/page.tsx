@@ -8,7 +8,8 @@ interface Location {
   id: string;
   location_code: string;
   zone: string;
-  temperature_class: string | null;
+  temperature_min: number | null;
+  temperature_max: number | null;
   capacity_kg: number | null;
   current_occupancy_kg: number;
   capacity_pcs: number | null;
@@ -99,7 +100,8 @@ export default function WarehouseMapPage() {
   useEffect(() => {
     fetch(
       '/api/items/warehouse_locations' +
-      '?fields[]=id&fields[]=location_code&fields[]=zone&fields[]=temperature_class' +
+      '?fields[]=id&fields[]=location_code&fields[]=zone' +
+      '&fields[]=temperature_min&fields[]=temperature_max' +
       '&fields[]=capacity_kg&fields[]=current_occupancy_kg' +
       '&fields[]=capacity_pcs&fields[]=current_occupancy_pcs' +
       '&fields[]=current_material_name&fields[]=current_material_id' +
@@ -181,9 +183,9 @@ export default function WarehouseMapPage() {
                             <Text size="sm" fw={700} style={{ fontFamily: 'monospace' }}>
                               {loc.location_code}
                             </Text>
-                            {loc.temperature_class && loc.temperature_class !== 'ambient' && (
+                            {loc.temperature_min != null && loc.temperature_max != null && (
                               <Badge size="xs" color="cyan" variant="light">
-                                {loc.temperature_class}
+                                {loc.temperature_min}–{loc.temperature_max}°C
                               </Badge>
                             )}
                           </Group>

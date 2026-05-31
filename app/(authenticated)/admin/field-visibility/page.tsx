@@ -56,7 +56,7 @@ interface AccessEntry { id: string; role: string | null; policy: string }
 // Known fields per collection (from DaaS schema)
 const COLLECTION_FIELDS: Record<string, string[]> = {
   suppliers: ['id', 'supplier_name', 'contact_person', 'email', 'phone', 'address', 'status', 'notes'],
-  raw_materials: ['id', 'name', 'code', 'category', 'unit', 'storage_temp_min', 'storage_temp_max', 'required_temperature_class', 'shelf_life_days', 'hazard_class_id', 'status', 'notes'],
+  raw_materials: ['id', 'name', 'code', 'category', 'unit', 'storage_temp_min', 'storage_temp_max', 'shelf_life_days', 'hazard_class_id', 'status', 'notes'],
   products: ['id', 'name', 'code', 'category', 'unit', 'storage_temp_min', 'storage_temp_max', 'status', 'notes'],
   warehouses: ['id', 'code', 'name', 'description', 'status'],
   zones: ['id', 'code', 'name', 'warehouse_id', 'temperature_min', 'temperature_max', 'status'],

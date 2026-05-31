@@ -181,7 +181,7 @@ export default function ManagerDashboard() {
 
             <Paper
               p="md" radius="md" withBorder style={{ cursor: 'pointer' }}
-              onClick={() => router.push('/ppic/production')}
+              onClick={() => router.push('/production/active')}
             >
               <Group justify="space-between" wrap="nowrap">
                 <Stack gap={2}>

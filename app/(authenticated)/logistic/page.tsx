@@ -103,7 +103,7 @@ export default function LogisticDashboard() {
               </Group>
             </Paper>
 
-            <Paper p="md" radius="md" withBorder style={{ cursor: 'pointer', borderColor: n('approved') > 0 ? 'var(--mantine-color-blue-4)' : undefined }} onClick={() => router.push('/logistic/issue-monitor')}>
+            <Paper p="md" radius="md" withBorder style={{ cursor: 'pointer', borderColor: n('approved') > 0 ? 'var(--mantine-color-blue-4)' : undefined }} onClick={() => router.push('/logistic/requests')}>
               <Group justify="space-between" wrap="nowrap">
                 <Stack gap={2}>
                   <Text size="xs" c="dimmed" fw={600} tt="uppercase">Approved — Ready to Send</Text>
@@ -114,7 +114,7 @@ export default function LogisticDashboard() {
               </Group>
             </Paper>
 
-            <Paper p="md" radius="md" withBorder style={{ cursor: 'pointer' }} onClick={() => router.push('/logistic/issue-monitor')}>
+            <Paper p="md" radius="md" withBorder style={{ cursor: 'pointer' }} onClick={() => router.push('/logistic/requests')}>
               <Group justify="space-between" wrap="nowrap">
                 <Stack gap={2}>
                   <Text size="xs" c="dimmed" fw={600} tt="uppercase">Materials Being Sent</Text>
@@ -183,7 +183,7 @@ export default function LogisticDashboard() {
             <Paper p="md" radius="md" withBorder>
               <Group justify="space-between" mb="sm">
                 <Text fw={600} size="sm">Approved — Ready to Pick & Send</Text>
-                <Anchor href="/logistic/issue-monitor" size="xs">View all →</Anchor>
+                <Anchor href="/logistic/requests" size="xs">View all →</Anchor>
               </Group>
               {approvedRequests.length === 0 ? (
                 <Alert color="green" variant="light" icon={<IconCircleCheck size={14} />}>

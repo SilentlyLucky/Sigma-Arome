@@ -29,7 +29,6 @@ interface Location {
   id: string;
   location_code: string;
   zone: string;
-  temperature_class: string | null;
   temperature_min: number | null;
   temperature_max: number | null;
   allowed_hazard_classes: string[] | null;
@@ -48,7 +47,6 @@ interface Batch {
   batch_number: string;
   material_id: string | null;
   batch_type: string | null;
-  required_temperature_class: string | null;
   weight_kg: number | null;
   qty: number | null;
   unit: string | null;
@@ -63,7 +61,6 @@ interface Material {
   hazard_class_id: string | null;
   storage_temp_min: number | null;
   storage_temp_max: number | null;
-  required_temperature_class: string | null;
 }
 
 interface HazardClass {
@@ -133,7 +130,7 @@ export async function GET(request: NextRequest) {
     const batchRes = await fetch(
       `${daasUrl}/api/items/batches/${batchId}` +
         `?fields[]=id&fields[]=batch_number&fields[]=material_id&fields[]=batch_type` +
-        `&fields[]=required_temperature_class&fields[]=weight_kg&fields[]=qty&fields[]=unit&fields[]=status`,
+        `&fields[]=weight_kg&fields[]=qty&fields[]=unit&fields[]=status`,
       { headers, cache: 'no-store' }
     );
     if (!batchRes.ok) return NextResponse.json({ error: 'Batch not found' }, { status: 404 });
@@ -145,7 +142,7 @@ export async function GET(request: NextRequest) {
       const matRes = await fetch(
         `${daasUrl}/api/items/raw_materials/${batch.material_id}` +
           `?fields[]=id&fields[]=name&fields[]=category&fields[]=unit&fields[]=hazard_class_id` +
-          `&fields[]=storage_temp_min&fields[]=storage_temp_max&fields[]=required_temperature_class`,
+          `&fields[]=storage_temp_min&fields[]=storage_temp_max`,
         { headers, cache: 'no-store' }
       );
       if (matRes.ok) material = (await matRes.json()).data;
@@ -161,20 +158,9 @@ export async function GET(request: NextRequest) {
         ? ['finished_goods']
         : ['raw_material', 'cold_storage'];
 
-    // Material temperature band
-    let matTempMin = material?.storage_temp_min ?? null;
-    let matTempMax = material?.storage_temp_max ?? null;
-    const reqClass =
-      batch.required_temperature_class ?? material?.required_temperature_class ?? 'ambient';
-    if (matTempMin == null || matTempMax == null) {
-      if (reqClass === 'cold') {
-        matTempMin = 2;
-        matTempMax = 8;
-      } else {
-        matTempMin = 15;
-        matTempMax = 30;
-      }
-    }
+    // Material temperature band — use min/max directly; fall back to ambient if not set
+    const matTempMin = material?.storage_temp_min ?? 15;
+    const matTempMax = material?.storage_temp_max ?? 30;
 
     const batchHazardId = material?.hazard_class_id ?? null;
 
@@ -191,7 +177,7 @@ export async function GET(request: NextRequest) {
     const locRes = await fetch(
       `${daasUrl}/api/items/warehouse_locations` +
         `?filter[is_active][_eq]=true` +
-        `&fields[]=id&fields[]=location_code&fields[]=zone&fields[]=temperature_class` +
+        `&fields[]=id&fields[]=location_code&fields[]=zone` +
         `&fields[]=temperature_min&fields[]=temperature_max` +
         `&fields[]=allowed_hazard_classes&fields[]=capacity_kg&fields[]=current_occupancy_kg` +
         `&fields[]=capacity_pcs&fields[]=current_occupancy_pcs` +
@@ -251,8 +237,8 @@ export async function GET(request: NextRequest) {
       // Temperature
       let tempScore = 1;
       if (!isPackaging) {
-        const bMin = loc.temperature_min ?? (loc.temperature_class === 'cold' ? 2 : 15);
-        const bMax = loc.temperature_max ?? (loc.temperature_class === 'cold' ? 8 : 30);
+        const bMin = loc.temperature_min ?? 15;
+        const bMax = loc.temperature_max ?? 30;
         if (!rangesOverlap(matTempMin, matTempMax, bMin, bMax)) {
           eliminated.push({
             location_id: loc.id,
@@ -352,8 +338,8 @@ export async function GET(request: NextRequest) {
         ) / 10;
 
       // Build comparison data for user-friendly display
-      const locTempMin = loc.temperature_min ?? (loc.temperature_class === 'cold' ? 2 : 15);
-      const locTempMax = loc.temperature_max ?? (loc.temperature_class === 'cold' ? 8 : 30);
+      const locTempMin = loc.temperature_min ?? 15;
+      const locTempMax = loc.temperature_max ?? 30;
       const currentOccPct = capacity > 0 ? Math.round((occupancy / capacity) * 100) : 0;
 
       candidates.push({

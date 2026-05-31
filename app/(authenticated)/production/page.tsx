@@ -119,7 +119,7 @@ export default function ProductionDashboard() {
               </Group>
             </Paper>
 
-            <Paper p="md" radius="md" withBorder style={{ cursor: 'pointer', borderColor: fgWaiting > 0 ? 'var(--mantine-color-orange-4)' : undefined }} onClick={() => router.push('/production/completed')}>
+            <Paper p="md" radius="md" withBorder style={{ cursor: 'pointer', borderColor: fgWaiting > 0 ? 'var(--mantine-color-orange-4)' : undefined }} onClick={() => router.push('/logistic/fg-putaway')}>
               <Group justify="space-between" wrap="nowrap">
                 <Stack gap={2}>
                   <Text size="xs" c="dimmed" fw={600} tt="uppercase">Finished Goods Waiting</Text>
@@ -130,7 +130,7 @@ export default function ProductionDashboard() {
               </Group>
             </Paper>
 
-            <Paper p="md" radius="md" withBorder style={{ cursor: 'pointer', borderColor: n('blocked') > 0 ? 'var(--mantine-color-red-4)' : undefined }} onClick={() => router.push('/production/orders')}>
+            <Paper p="md" radius="md" withBorder style={{ cursor: 'pointer', borderColor: n('blocked') > 0 ? 'var(--mantine-color-red-4)' : undefined }} onClick={() => router.push('/ppic/production')}>
               <Group justify="space-between" wrap="nowrap">
                 <Stack gap={2}>
                   <Text size="xs" c="dimmed" fw={600} tt="uppercase">Blocked by Materials</Text>

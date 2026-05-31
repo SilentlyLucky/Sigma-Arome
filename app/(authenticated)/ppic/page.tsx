@@ -63,7 +63,6 @@ export default function PPICDashboard() {
               { key: 'prodReady', collection: 'production_orders', filter: { status: { _in: ['ready', 'released'] } } },
               { key: 'prodActive', collection: 'production_orders', filter: { status: { _eq: 'in_progress' } } },
               { key: 'requestsPending', collection: 'material_requests', filter: { status: { _eq: 'submitted' } } },
-              { key: 'bomActive', collection: 'boms', filter: { is_active: { _eq: true } } },
             ],
           }),
         }).then(async r => r.ok ? (await r.json())?.counts ?? {} : {}).catch(() => ({})),

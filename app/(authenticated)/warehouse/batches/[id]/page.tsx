@@ -28,7 +28,8 @@ interface CompatibleLocation {
   id: string;
   location_code: string;
   zone: string;
-  temperature_class: string | null;
+  temperature_min: number | null;
+  temperature_max: number | null;
   capacity_kg: number | null;
   capacity_pcs: number | null;
   current_occupancy_kg: number;
@@ -63,7 +64,7 @@ interface SlotData {
   compatible: CompatibleLocation[];
   different_material: DifferentMaterialLocation[];
   incompatible: IncompatibleLocation[];
-  batch: { batch_number: string; weight_kg: number | null; hazard_class: string | null; required_temperature_class: string | null };
+  batch: { batch_number: string; weight_kg: number | null; hazard_class: string | null };
   is_packaging: boolean;
 }
 
@@ -75,7 +76,6 @@ interface BatchInfo {
   unit: string;
   weight_kg: number | null;
   hazard_class: string | null;
-  required_temperature_class: string | null;
   current_location_id: string | null;
 }
 
@@ -105,7 +105,7 @@ export default function BatchDetailPage() {
 
   const loadBatch = useCallback(async () => {
     const res = await fetch(
-      `/api/items/batches/${batchId}?fields[]=id&fields[]=batch_number&fields[]=status&fields[]=qty&fields[]=unit&fields[]=weight_kg&fields[]=hazard_class&fields[]=required_temperature_class&fields[]=current_location_id`
+      `/api/items/batches/${batchId}?fields[]=id&fields[]=batch_number&fields[]=status&fields[]=qty&fields[]=unit&fields[]=weight_kg&fields[]=hazard_class&fields[]=current_location_id`
     );
     if (res.ok) setBatch((await res.json())?.data ?? null);
   }, [batchId]);
@@ -184,7 +184,6 @@ export default function BatchDetailPage() {
           <Text size="sm"><strong>Qty:</strong> {batch.qty} {batch.unit}</Text>
           {batch.weight_kg != null && <Text size="sm"><strong>Weight:</strong> {batch.weight_kg} kg</Text>}
           {batch.hazard_class && <Text size="sm"><strong>Hazard:</strong> {batch.hazard_class.replace(/_/g, ' ')}</Text>}
-          {batch.required_temperature_class && <Text size="sm"><strong>Temp:</strong> {batch.required_temperature_class}</Text>}
         </Group>
       </Paper>
 

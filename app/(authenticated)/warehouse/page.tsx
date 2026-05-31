@@ -86,7 +86,7 @@ export default function WarehouseDashboard() {
     setLoadingPick(true);
     try {
       const ordersRes = await fetch(
-        '/api/items/production_orders?filter[status][_in]=ready,released,in_progress' +
+        '/api/items/production_orders?filter[status][_in]=released,in_progress' +
         '&fields[]=id&fields[]=order_number&fields[]=product_id&fields[]=status&limit=50&sort[]=priority'
       );
       const orders: Array<{ id: string; order_number: string; product_id: string }> =
@@ -363,7 +363,14 @@ export default function WarehouseDashboard() {
                     <Table.Tbody>
                       {pendingTasks.map(task => (
                         <Table.Tr key={task.mr_item_id}>
-                          <Table.Td><Text size="sm" fw={500}>{task.order_number}</Text></Table.Td>
+                          <Table.Td>
+                            <Text
+                              size="sm" fw={500} style={{ cursor: 'pointer', textDecoration: 'underline' }}
+                              onClick={() => router.push(`/warehouse/production/${task.production_order_id}`)}
+                            >
+                              {task.order_number}
+                            </Text>
+                          </Table.Td>
                           <Table.Td><Text size="sm">{task.material_name}</Text></Table.Td>
                           <Table.Td><Text size="sm">{task.requested_qty} {task.unit}</Text></Table.Td>
                           <Table.Td><Text size="xs" style={{ fontFamily: 'monospace' }}>{task.available_batch_number}</Text></Table.Td>
@@ -397,7 +404,14 @@ export default function WarehouseDashboard() {
                     <Table.Tbody>
                       {blockedTasks.map(task => (
                         <Table.Tr key={task.mr_item_id}>
-                          <Table.Td><Text size="sm" fw={500}>{task.order_number}</Text></Table.Td>
+                          <Table.Td>
+                            <Text
+                              size="sm" fw={500} style={{ cursor: 'pointer', textDecoration: 'underline' }}
+                              onClick={() => router.push(`/warehouse/production/${task.production_order_id}`)}
+                            >
+                              {task.order_number}
+                            </Text>
+                          </Table.Td>
                           <Table.Td><Text size="sm">{task.material_name}</Text></Table.Td>
                           <Table.Td><Text size="sm">{task.requested_qty} {task.unit}</Text></Table.Td>
                           <Table.Td><Badge size="xs" color="orange" variant="light">No batch available</Badge></Table.Td>

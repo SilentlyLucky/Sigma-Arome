@@ -4,36 +4,14 @@ import {
   SimpleGrid, Paper, Text, Title, Group, Stack, ThemeIcon,
   Loader, Anchor, Divider, Badge, Alert, Table,
 } from '@mantine/core';
+import { DonutChart } from '@mantine/charts';
 import {
   IconShoppingCart, IconTruckDelivery, IconFlask, IconCheck,
   IconAlertTriangle, IconClock, IconBuildingFactory, IconClipboardList,
   IconCircleCheck, IconChevronRight,
 } from '@tabler/icons-react';
 import { useEffect, useState } from 'react';
-import React from 'react';
 import { useRouter } from 'next/navigation';
-
-function StatusBar({ segments }: { segments: { label: string; count: number; color: string }[] }) {
-  const total = Math.max(segments.reduce((s, seg) => s + seg.count, 0), 1);
-  return (
-    <Stack gap="xs">
-      <Group gap={2} style={{ borderRadius: 4, overflow: 'hidden', height: 10 }}>
-        {segments.filter(s => s.count > 0).map(seg => (
-          <div key={seg.label} style={{ flex: seg.count / total, height: '100%', background: `var(--mantine-color-${seg.color}-5)`, minWidth: 4 }} />
-        ))}
-      </Group>
-      <Group gap="sm" wrap="wrap">
-        {segments.map(seg => (
-          <Group key={seg.label} gap={4} wrap="nowrap">
-            <div style={{ width: 10, height: 10, borderRadius: 2, background: `var(--mantine-color-${seg.color}-5)`, flexShrink: 0 }} />
-            <Text size="xs" c="dimmed">{seg.label}:</Text>
-            <Text size="xs" fw={600}>{seg.count}</Text>
-          </Group>
-        ))}
-      </Group>
-    </Stack>
-  );
-}
 
 interface OverdueOrder { id: string; status: string; expected_arrival_date: string | null; ordered_qty: number; unit: string }
 interface BlockedOrder { id: string; order_number: string; status: string; planned_qty: number; unit: string }
@@ -145,20 +123,32 @@ export default function PPICDashboard() {
           <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
             <Paper p="md" radius="md" withBorder>
               <Text fw={600} size="sm" mb="sm">Material Order Status</Text>
-              <StatusBar segments={[
-                { label: 'Ordered', count: n('ordersWaiting'), color: 'blue' },
-                { label: 'Partially received', count: n('ordersPartial'), color: 'yellow' },
-              ]} />
+              <DonutChart
+                data={[
+                  { name: 'Ordered', value: n('ordersWaiting'), color: 'blue.5' },
+                  { name: 'Partially received', value: n('ordersPartial'), color: 'yellow.5' },
+                ]}
+                size={160}
+                thickness={30}
+                withLabels
+                withLabelsLine={false}
+              />
               <Anchor href="/ppic/orders" size="xs" mt="xs" display="block">Manage orders →</Anchor>
             </Paper>
             <Paper p="md" radius="md" withBorder>
               <Text fw={600} size="sm" mb="sm">Production Readiness</Text>
-              <StatusBar segments={[
-                { label: 'Draft / planning', count: n('prodDraft'), color: 'gray' },
-                { label: 'Waiting for materials', count: n('prodBlocked'), color: 'red' },
-                { label: 'Ready to start', count: n('prodReady'), color: 'lime' },
-                { label: 'Running', count: n('prodActive'), color: 'violet' },
-              ]} />
+              <DonutChart
+                data={[
+                  { name: 'Draft / planning', value: n('prodDraft'), color: 'gray.5' },
+                  { name: 'Waiting for materials', value: n('prodBlocked'), color: 'red.5' },
+                  { name: 'Ready to start', value: n('prodReady'), color: 'lime.5' },
+                  { name: 'Running', value: n('prodActive'), color: 'violet.5' },
+                ]}
+                size={160}
+                thickness={30}
+                withLabels
+                withLabelsLine={false}
+              />
               <Anchor href="/ppic/production" size="xs" mt="xs" display="block">View production orders →</Anchor>
             </Paper>
           </SimpleGrid>

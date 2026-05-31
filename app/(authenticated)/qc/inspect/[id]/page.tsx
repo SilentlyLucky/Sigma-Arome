@@ -63,7 +63,7 @@ export default function QCInspectPage() {
   const pollCvResult = async (inspectionId: string, maxAttempts = 10): Promise<CVResult | null> => {
     for (let attempt = 0; attempt < maxAttempts; attempt++) {
       try {
-        const cv = await fetch(`/api/items/cv_results?filter[qc_id][_eq]=${inspectionId}&limit=1`)
+        const cv = await fetch(`/api/items/cv_results?filter[inspection_id][_eq]=${inspectionId}&limit=1`)
           .then(r => r.json());
         const result: CVResult | null = cv?.data?.[0] ?? null;
         if (result) return result;
@@ -87,7 +87,7 @@ export default function QCInspectPage() {
 
         if (insp?.id) {
           // Try to load the pre-generated CV result immediately
-          const cv = await fetch(`/api/items/cv_results?filter[qc_id][_eq]=${insp.id}&limit=1`)
+          const cv = await fetch(`/api/items/cv_results?filter[inspection_id][_eq]=${insp.id}&limit=1`)
             .then(r => r.json()).catch(() => null);
           const cvData: CVResult | null = cv?.data?.[0] ?? null;
 

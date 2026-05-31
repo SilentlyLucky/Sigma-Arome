@@ -16,6 +16,7 @@ export default function CreateHazardClassPage() {
       <CollectionForm
         collection="hazard_classes"
         mode="create"
+        excludeFields={['unsuitable_with']}
         onSuccess={() => router.push('/admin/hazard-classes')}
         onCancel={() => router.push('/admin/hazard-classes')}
       />

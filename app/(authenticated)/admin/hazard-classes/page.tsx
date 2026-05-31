@@ -22,7 +22,7 @@ export default function HazardClassesPage() {
         enableResize
         enableReorder
         enableSort
-        fields={['name', 'code', 'description', 'color', 'unsuitable_with']}
+        fields={['name', 'code', 'description', 'color']}
         onCreate={() => router.push('/admin/hazard-classes/create')}
         onItemClick={(item) => router.push(`/admin/hazard-classes/${item.id}`)}
       />

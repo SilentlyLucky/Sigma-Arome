@@ -87,6 +87,7 @@ export default function EditHazardClassPage() {
         collection="hazard_classes"
         mode="edit"
         id={id}
+        excludeFields={['unsuitable_with']}
         onSuccess={() => router.push('/admin/hazard-classes')}
         onCancel={() => router.push('/admin/hazard-classes')}
       />

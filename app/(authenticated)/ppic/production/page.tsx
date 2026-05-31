@@ -13,7 +13,7 @@ export default function ProductionOrdersPage() {
     <Stack gap="md">
       <div>
         <Title order={2}>Production Orders</Title>
-        <Text c="dimmed" size="sm">Plan production runs and track material readiness status.</Text>
+        <Text c="dimmed" size="sm">Plan production runs and check whether the required materials are available.</Text>
         <Text c="dimmed" size="xs" mt={4}>💡 Right-click column header to sort, align, or hide. Drag the ⋮⋮ grip to reorder columns.</Text>
       </div>
       <CollectionList

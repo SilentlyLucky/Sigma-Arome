@@ -147,7 +147,7 @@ export default function CreateProductionOrderPage() {
       if (targetStatus === 'planned') {
         notifications.show({
           title: 'Order Submitted',
-          message: 'Production order submitted and is now in the planning pipeline.',
+          message: 'Production order submitted and ready for material availability checks.',
           color: 'green',
         });
       } else {
@@ -173,9 +173,9 @@ export default function CreateProductionOrderPage() {
       </div>
 
       <Alert icon={<IconInfoCircle size={16} />} color="blue" variant="light">
-        Order number is auto-generated. Use <strong>Submit Order</strong> to send it directly into
-        the planning pipeline, or <strong>Save Draft</strong> to finish later.
-        Each product has one active formula — it is auto-selected when you pick a product.
+        The order number is created for you. Use <strong>Submit Order</strong> when the production
+        plan is ready, or <strong>Save Draft</strong> to finish it later. The active formula is
+        selected automatically after you choose a product.
       </Alert>
 
       <Paper p="md" radius="md" withBorder>

@@ -71,13 +71,13 @@ export default function PPICDashboard() {
       ]);
 
       results.push(
-        { label: 'Orders Waiting Arrival', value: ordersWaiting, icon: IconTruckDelivery, color: 'orange', href: '/ppic/orders' },
+        { label: 'Raw Materials Waiting to Arrive', value: ordersWaiting, icon: IconTruckDelivery, color: 'orange', href: '/ppic/orders' },
         { label: 'Orders Partially Received', value: ordersPartial, icon: IconShoppingCart, color: 'yellow', href: '/ppic/orders' },
-        { label: 'Materials Pending QC', value: pendingQC, icon: IconFlask, color: 'blue', href: '/ppic/readiness' },
-        { label: 'Materials Approved', value: approved, icon: IconCheck, color: 'green', href: '/ppic/readiness' },
+        { label: 'Materials Waiting for QC', value: pendingQC, icon: IconFlask, color: 'blue', href: '/ppic/readiness' },
+        { label: 'Materials Approved for Storage', value: approved, icon: IconCheck, color: 'green', href: '/ppic/readiness' },
         { label: 'Materials on Hold', value: onHold, icon: IconAlertTriangle, color: 'red' },
-        { label: 'Requests Pending Logistic', value: requestsPending, icon: IconClipboardList, color: 'grape', href: '/ppic/requests' },
-        { label: 'Production Waiting Material', value: prodWaiting, icon: IconClock, color: 'indigo', href: '/ppic/production' },
+        { label: 'Requests Waiting for Logistics', value: requestsPending, icon: IconClipboardList, color: 'grape', href: '/ppic/requests' },
+        { label: 'Production Waiting for Materials', value: prodWaiting, icon: IconClock, color: 'indigo', href: '/ppic/production' },
         { label: 'Production In Progress', value: prodInProgress, icon: IconBuildingFactory, color: 'teal', href: '/ppic/production' },
       );
 
@@ -92,7 +92,7 @@ export default function PPICDashboard() {
       <div>
         <Title order={2}>PPIC Planning Dashboard</Title>
         <Text c="dimmed" size="sm">
-          Production planning and inventory control — raw material ordering, production planning, and material readiness.
+          Plan raw material orders, product formulas, production schedules, and material availability.
         </Text>
       </div>
 

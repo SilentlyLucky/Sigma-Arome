@@ -13,8 +13,8 @@ export default function EditBOMItemPage() {
   return (
     <Stack gap="md">
       <div>
-        <Title order={2}>Edit BOM Item</Title>
-        <Text c="dimmed" size="sm">Update material quantity for this formula line.</Text>
+        <Title order={2}>Edit Formula Material</Title>
+        <Text c="dimmed" size="sm">Update the material quantity needed for this product formula.</Text>
       </div>
       <CollectionForm
         collection="bom_items"

@@ -29,10 +29,10 @@ import type { ReactNode } from 'react';
 const NAV_ITEMS = [
   { label: 'Dashboard', href: '/ppic', icon: IconDashboard, section: 'Overview' },
   { label: 'Raw Material Orders', href: '/ppic/orders', icon: IconShoppingCart, section: 'Ordering' },
-  { label: 'BOM / Formula', href: '/ppic/bom', icon: IconClipboardList, section: 'Planning' },
+  { label: 'Product Formulas', href: '/ppic/bom', icon: IconClipboardList, section: 'Planning' },
   { label: 'Production Orders', href: '/ppic/production', icon: IconBuildingFactory, section: 'Planning' },
   // Material Requests removed — auto-generated from BOM when a Production Order is created
-  { label: 'Material Readiness', href: '/ppic/readiness', icon: IconPackageExport, section: 'Monitoring' },
+  { label: 'Materials Ready for Production', href: '/ppic/readiness', icon: IconPackageExport, section: 'Monitoring' },
 ];
 
 const SECTIONS = ['Overview', 'Ordering', 'Planning', 'Monitoring'];

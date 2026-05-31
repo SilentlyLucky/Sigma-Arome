@@ -9,9 +9,9 @@ import { IconAlertCircle } from '@tabler/icons-react';
 
 // Valid next statuses per current status — shown as action buttons
 const STATUS_TRANSITIONS: Record<string, Array<{ value: string; label: string; color: string }>> = {
-  draft:              [{ value: 'ordered', label: 'Submit Order', color: 'blue' }, { value: 'cancelled', label: 'Cancel', color: 'red' }],
-  ordered:            [{ value: 'partially_received', label: 'Mark Partially Received', color: 'yellow' }, { value: 'received', label: 'Mark Fully Received', color: 'green' }, { value: 'cancelled', label: 'Cancel', color: 'red' }],
-  partially_received: [{ value: 'received', label: 'Mark Fully Received', color: 'green' }, { value: 'cancelled', label: 'Cancel', color: 'red' }],
+  draft:              [{ value: 'ordered', label: 'Submit Order', color: 'blue' }, { value: 'cancelled', label: 'Cancel Order', color: 'red' }],
+  ordered:            [{ value: 'partially_received', label: 'Mark Partially Received', color: 'yellow' }, { value: 'received', label: 'Mark Fully Received', color: 'green' }, { value: 'cancelled', label: 'Cancel Order', color: 'red' }],
+  partially_received: [{ value: 'received', label: 'Mark Fully Received', color: 'green' }, { value: 'cancelled', label: 'Cancel Order', color: 'red' }],
   received:           [{ value: 'closed', label: 'Close Order', color: 'gray' }],
   closed:             [],
   cancelled:          [],
@@ -55,7 +55,7 @@ export default function RawMaterialOrderDetailPage() {
         throw new Error(err?.errors?.[0]?.message ?? 'Status update failed');
       }
       setStatus(newStatus);
-      notifications.show({ title: 'Updated', message: `Status changed to ${STATUS_LABELS[newStatus]}`, color: 'green' });
+      notifications.show({ title: 'Updated', message: `Order is now ${STATUS_LABELS[newStatus]}`, color: 'green' });
     } catch (err) {
       notifications.show({ title: 'Error', message: err instanceof Error ? err.message : 'Failed', color: 'red' });
     } finally {
@@ -99,7 +99,7 @@ export default function RawMaterialOrderDetailPage() {
 
       {(status === 'closed' || status === 'cancelled') && (
         <Alert icon={<IconAlertCircle size={16} />} color="gray" variant="light">
-          This order is in a terminal state and cannot be modified.
+          This order is closed or cancelled, so it can no longer be changed.
         </Alert>
       )}
 

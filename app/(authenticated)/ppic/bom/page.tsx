@@ -12,10 +12,9 @@ export default function BOMListPage() {
   return (
     <Stack gap="md">
       <div>
-        <Title order={2}>BOM / Formula</Title>
+        <Title order={2}>Product Formulas</Title>
         <Text c="dimmed" size="sm">
-          Bill of Materials defines material requirements per unit of finished product.
-          Used to auto-calculate material needs for Production Orders.
+          Define which raw materials are needed to make each product.
         </Text>
       </div>
       <CollectionList

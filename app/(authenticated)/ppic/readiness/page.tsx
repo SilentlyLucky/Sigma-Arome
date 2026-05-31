@@ -11,15 +11,14 @@ export default function MaterialReadinessPage() {
   return (
     <Stack gap="md">
       <div>
-        <Title order={2}>Material Readiness</Title>
+        <Title order={2}>Materials Ready for Production</Title>
         <Text c="dimmed" size="sm">
-          View approved raw material availability. Check stock before creating production orders.
+          Check whether raw materials have arrived, passed QC, and are available before planning production.
         </Text>
       </div>
 
       <Alert icon={<IconInfoCircle size={16} />} color="blue" variant="light">
-        This view shows raw material orders and their current status. Materials with status &quot;Received&quot; or &quot;Closed&quot; have been delivered.
-        Once QC approves a batch (Phase 4), approved inventory will appear here.
+        Use this page before creating production orders. Materials become available for production after QC approval and warehouse storage.
       </Alert>
 
       <CollectionList

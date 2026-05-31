@@ -63,7 +63,7 @@ export default function CreateBOMItemPage() {
 
   const handleSave = async () => {
     const errors: string[] = [];
-    if (!form.bom_id) errors.push('BOM is required');
+    if (!form.bom_id) errors.push('Product formula is required');
     if (!form.material_id) errors.push('Material is required');
     const qty = typeof form.qty_per_unit === 'number' ? form.qty_per_unit : parseFloat(String(form.qty_per_unit));
     if (!qty || isNaN(qty) || qty <= 0) errors.push('Quantity per unit must be a positive number');
@@ -90,7 +90,7 @@ export default function CreateBOMItemPage() {
         const err = await res.json();
         throw new Error(err?.errors?.[0]?.message ?? 'Save failed');
       }
-      notifications.show({ title: 'Added', message: 'Material added to BOM', color: 'green' });
+      notifications.show({ title: 'Added', message: 'Material added to product formula', color: 'green' });
       router.push(`/ppic/bom/${bomId}`);
     } catch (err) {
       notifications.show({ title: 'Error', message: err instanceof Error ? err.message : 'Failed', color: 'red' });
@@ -102,7 +102,7 @@ export default function CreateBOMItemPage() {
   return (
     <Stack gap="md">
       <div>
-        <Title order={2}>Add Material to BOM</Title>
+        <Title order={2}>Add Material to Product Formula</Title>
         <Text c="dimmed" size="sm">
           Select a raw material and specify the quantity needed per unit of finished product.
         </Text>
@@ -114,20 +114,20 @@ export default function CreateBOMItemPage() {
 
       <Paper p="md" radius="md" withBorder>
         <Stack gap="sm">
-          {/* BOM field — pre-filled but changeable */}
+          {/* Product formula field - pre-filled but changeable */}
           {loading ? (
-            <Input label="BOM / Formula" placeholder="Loading..." disabled onChange={() => {}} />
+            <Input label="Product Formula" placeholder="Loading..." disabled onChange={() => {}} />
           ) : bomChoices.length > 0 ? (
             <SelectDropdown
-              label="BOM / Formula"
-              placeholder="Select BOM..."
+              label="Product Formula"
+              placeholder="Select product formula..."
               choices={bomChoices}
               value={form.bom_id || null}
               onChange={(v) => setForm((f) => ({ ...f, bom_id: String(v ?? '') }))}
               required
             />
           ) : (
-            <Input label="BOM / Formula" value="" placeholder="No BOMs available" disabled onChange={() => {}} />
+            <Input label="Product Formula" value="" placeholder="No product formulas available" disabled onChange={() => {}} />
           )}
 
           {/* Material selection — auto-fills unit */}

@@ -8,13 +8,13 @@ import { notifications } from '@mantine/notifications';
 import { IconAlertCircle } from '@tabler/icons-react';
 
 const STATUS_TRANSITIONS: Record<string, Array<{ value: string; label: string; color: string }>> = {
-  draft:          [{ value: 'planned', label: 'Mark as Planned', color: 'blue' }, { value: 'cancelled', label: 'Cancel', color: 'red' }],
-  planned:        [{ value: 'material_check', label: 'Check Material Readiness', color: 'teal' }, { value: 'cancelled', label: 'Cancel', color: 'red' }],
-  material_check: [{ value: 'ready', label: 'Mark Ready', color: 'green' }, { value: 'planned', label: 'Back to Planned', color: 'gray' }],
+  draft:          [{ value: 'planned', label: 'Submit for Planning', color: 'blue' }, { value: 'cancelled', label: 'Cancel Order', color: 'red' }],
+  planned:        [{ value: 'material_check', label: 'Check Available Materials', color: 'teal' }, { value: 'cancelled', label: 'Cancel Order', color: 'red' }],
+  material_check: [{ value: 'ready', label: 'Mark Ready to Release', color: 'green' }, { value: 'planned', label: 'Back to Planning', color: 'gray' }],
   ready:          [{ value: 'released', label: 'Release to Production', color: 'blue' }, { value: 'on_hold', label: 'Put on Hold', color: 'orange' }],
   released:       [{ value: 'in_progress', label: 'Start Production', color: 'teal' }, { value: 'on_hold', label: 'Put on Hold', color: 'orange' }],
-  in_progress:    [{ value: 'completed', label: 'Mark Completed', color: 'green' }, { value: 'on_hold', label: 'Put on Hold', color: 'orange' }],
-  on_hold:        [{ value: 'ready', label: 'Resume', color: 'green' }, { value: 'cancelled', label: 'Cancel', color: 'red' }],
+  in_progress:    [{ value: 'completed', label: 'Mark Production Complete', color: 'green' }, { value: 'on_hold', label: 'Put on Hold', color: 'orange' }],
+  on_hold:        [{ value: 'ready', label: 'Resume Order', color: 'green' }, { value: 'cancelled', label: 'Cancel Order', color: 'red' }],
   completed:      [],
   cancelled:      [],
 };
@@ -57,7 +57,7 @@ export default function ProductionOrderDetailPage() {
         throw new Error(err?.errors?.[0]?.message ?? 'Status update failed');
       }
       setStatus(newStatus);
-      notifications.show({ title: 'Updated', message: `Status → ${STATUS_LABELS[newStatus]}`, color: 'green' });
+      notifications.show({ title: 'Updated', message: `Production order is now ${STATUS_LABELS[newStatus]}`, color: 'green' });
     } catch (err) {
       notifications.show({ title: 'Error', message: err instanceof Error ? err.message : 'Failed', color: 'red' });
     } finally {
@@ -72,7 +72,7 @@ export default function ProductionOrderDetailPage() {
       <Group justify="space-between" align="flex-start">
         <div>
           <Title order={2}>Production Order Detail</Title>
-          <Text c="dimmed" size="sm">View and manage production plan.</Text>
+          <Text c="dimmed" size="sm">Review the production plan and move it through the next step.</Text>
         </div>
         {status && (
           <Badge size="lg" color={STATUS_COLORS[status]} variant="light">
@@ -94,7 +94,7 @@ export default function ProductionOrderDetailPage() {
 
       {(status === 'completed' || status === 'cancelled') && (
         <Alert icon={<IconAlertCircle size={16} />} color="gray" variant="light">
-          This production order is in a terminal state and cannot be modified.
+          This production order is finished or cancelled, so it can no longer be changed.
         </Alert>
       )}
 

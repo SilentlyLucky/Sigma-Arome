@@ -116,7 +116,7 @@ export default function CreateBOMPage() {
       </div>
 
       <Alert icon={<IconInfoCircle size={16} />} color="blue" variant="light">
-        This form is for <strong>new product lines</strong>. To edit an existing formula (e.g. Sigma Rose EDP, Sigma Oud EDT), go back to the BOM list and click the formula directly.
+        This form is for <strong>new product lines</strong>. To edit an existing formula (e.g. Sigma Rose EDP, Sigma Oud EDT), go back to Product Formulas and open the formula directly.
       </Alert>
 
       <Paper p="md" radius="md" withBorder>

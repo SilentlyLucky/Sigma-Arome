@@ -15,8 +15,10 @@ export default function BOMDetailPage() {
   return (
     <Stack gap="md">
       <div>
-        <Title order={2}>BOM / Formula Detail</Title>
-        <Text c="dimmed" size="sm">Edit formula header and manage line items (materials + quantities per unit).</Text>
+        <Title order={2}>Product Formula Detail</Title>
+        <Text c="dimmed" size="sm">
+          Edit the formula and manage the raw materials needed per unit of product.
+        </Text>
       </div>
 
       <CollectionForm
@@ -28,7 +30,7 @@ export default function BOMDetailPage() {
         onCancel={() => router.push('/ppic/bom')}
       />
 
-      <Divider label="Formula Items — Materials Required" labelPosition="left" />
+      <Divider label="Raw Materials Required" labelPosition="left" />
 
       <CollectionList
         collection="bom_items"

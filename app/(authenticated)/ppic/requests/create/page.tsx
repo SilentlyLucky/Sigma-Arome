@@ -17,7 +17,7 @@ export default function CreateMaterialRequestPage() {
       </div>
       <Alert icon={<IconInfoCircle size={16} />} color="blue" variant="light">
         After creating the request header, add line items (materials + quantities) on the detail page.
-        Request number is auto-generated. Status starts as <strong>Draft</strong> — submit when ready.
+        The request number is created for you. It starts as <strong>Draft</strong>; submit it when the material request is ready.
       </Alert>
       <CollectionForm
         collection="material_requests"

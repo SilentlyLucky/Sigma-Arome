@@ -23,6 +23,7 @@
     "@editorjs/quote": "^2.7.6",
     "@editorjs/table": "^2.4.5",
     "@editorjs/underline": "^1.2.1",
+    "@mantine/charts": "^8.3.18",
     "@mantine/core": "^8.0.0",
     "@mantine/dates": "^8.3.18",
     "@mantine/dropzone": "^8.3.18",
@@ -56,6 +57,7 @@
     "next": "^16.1.6",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "recharts": "^3.8.1",
     "tailwind-merge": "^2.0.0"
   },
   "devDependencies": {

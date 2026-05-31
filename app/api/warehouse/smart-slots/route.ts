@@ -1,36 +1,37 @@
 /**
- * GET /api/warehouse/smart-slots?batch_id=...
+ * GET /api/warehouse/smart-slots?batch_id=...[&limit=3]
  *
- * Returns three sections of storage locations for a given batch:
- *   1. compatible        — empty or same-material locations that meet all requirements
- *   2. different_material — compatible by all rules but holds a DIFFERENT material (hard block)
- *   3. incompatible      — wrong zone, wrong temp, hazard not allowed, hazard conflict, or full
+ * Rule-based auto-slotting engine (NO LLM).
  *
- * Hazard system (single source of truth: `hazard_classes` collection):
- *   - Every raw_material has a `hazard_class_id` FK → hazard_classes
- *   - Every warehouse_location has `allowed_hazard_classes` (array of hazard_class IDs)
- *   - Every hazard_class has `unsuitable_with` (array of hazard_class IDs that cannot be co-located)
+ * Mirrors the DaaS custom service `slotting_engine` so the UI can request live,
+ * scored recommendations on demand (Auto Slotting tab + Putaway screen).
  *
- * Hazard checks performed:
- *   A) Allowed list — batch hazard must be in location.allowed_hazard_classes
- *   B) Co-location — if location holds another material, that material's hazard must NOT be
- *      in batch hazard's unsuitable_with list (and vice versa)
+ * Scoring weights:
+ *   Temperature Match = 40%   Hazard Match = 30%   Capacity Fit = 15%   Occupancy = 15%
  *
- * Zone routing:
- *   - packaging category → packaging_components zones only (capacity in pcs)
- *   - liquid/solid/powder → raw_material or cold_storage zones (capacity in kg)
+ * Hard elimination (location dropped entirely):
+ *   - wrong zone for material stage
+ *   - temperature range incompatible
+ *   - hazard class not permitted / hazard co-location conflict
+ *   - capacity insufficient
+ *   - holds a different material (single-material rule)
  *
- * Single-material rule: one material type per location at all times.
+ * Returns Top-N scored candidates with persisted-style reasoning + the
+ * eliminated list (for transparency / audit).
  */
 
 import { type NextRequest, NextResponse } from 'next/server';
 import { getAuthHeaders, getDaaSUrl } from '@/lib/api/auth-headers';
+
+const WEIGHTS = { temperature: 0.4, hazard: 0.3, capacity: 0.15, occupancy: 0.15 } as const;
 
 interface Location {
   id: string;
   location_code: string;
   zone: string;
   temperature_class: string | null;
+  temperature_min: number | null;
+  temperature_max: number | null;
   allowed_hazard_classes: string[] | null;
   capacity_kg: number | null;
   current_occupancy_kg: number;
@@ -46,6 +47,7 @@ interface Batch {
   id: string;
   batch_number: string;
   material_id: string | null;
+  batch_type: string | null;
   required_temperature_class: string | null;
   weight_kg: number | null;
   qty: number | null;
@@ -59,6 +61,9 @@ interface Material {
   category: string | null;
   unit: string | null;
   hazard_class_id: string | null;
+  storage_temp_min: number | null;
+  storage_temp_max: number | null;
+  required_temperature_class: string | null;
 }
 
 interface HazardClass {
@@ -68,34 +73,41 @@ interface HazardClass {
   unsuitable_with: string[] | null;
 }
 
-/** Determine if a material category is packaging (uses pcs, packaging_components zone) */
-function isPackagingCategory(category: string | null): boolean {
-  return category === 'packaging';
+export interface Candidate {
+  location_id: string;
+  location_code: string;
+  zone: string;
+  rank: number;
+  score: number;
+  temperature_score: number;
+  hazard_score: number;
+  capacity_score: number;
+  occupancy_score: number;
+  occupancy_after_pct: number;
+  available_after: number | null;
+  capacity_unit: string;
+  slot_state: 'empty' | 'same_material';
+  is_recommended: boolean;
+  reasoning: string;
 }
 
-/** Determine valid storage zones for a material category */
-function validZonesForCategory(category: string | null): string[] {
-  if (isPackagingCategory(category)) return ['packaging_components'];
-  return ['raw_material', 'cold_storage'];
+export interface Eliminated {
+  location_id: string;
+  location_code: string;
+  zone: string;
+  reason: string;
 }
 
-export interface SlotResult {
-  compatible: Array<Location & {
-    occupancy_pct: number;
-    available_qty: number;
-    capacity_unit: string;
-    slot_state: 'empty' | 'same_material';
-    reason: string;
-    is_recommended: boolean;
-  }>;
-  different_material: Array<Location & { block_reason: string }>;
-  incompatible: Array<Location & { incompatibility_reason: string }>;
-  batch: Batch;
-  is_packaging: boolean;
+function rangesOverlap(aMin: number, aMax: number, bMin: number, bMax: number) {
+  return aMin <= bMax && bMin <= aMax;
+}
+function clamp01(n: number) {
+  return n < 0 ? 0 : n > 1 ? 1 : n;
 }
 
 export async function GET(request: NextRequest) {
   const batchId = request.nextUrl.searchParams.get('batch_id');
+  const limit = Number(request.nextUrl.searchParams.get('limit') ?? '3') || 3;
   if (!batchId) {
     return NextResponse.json({ error: 'batch_id is required' }, { status: 400 });
   }
@@ -104,237 +116,267 @@ export async function GET(request: NextRequest) {
   const headers = await getAuthHeaders();
 
   try {
-    // Fetch batch details
+    // ── Batch ──
     const batchRes = await fetch(
       `${daasUrl}/api/items/batches/${batchId}` +
-      `?fields[]=id&fields[]=batch_number&fields[]=material_id` +
-      `&fields[]=required_temperature_class` +
-      `&fields[]=weight_kg&fields[]=qty&fields[]=unit&fields[]=status`,
+        `?fields[]=id&fields[]=batch_number&fields[]=material_id&fields[]=batch_type` +
+        `&fields[]=required_temperature_class&fields[]=weight_kg&fields[]=qty&fields[]=unit&fields[]=status`,
       { headers, cache: 'no-store' }
     );
     if (!batchRes.ok) return NextResponse.json({ error: 'Batch not found' }, { status: 404 });
     const batch: Batch = (await batchRes.json()).data;
 
-    // Fetch material to determine category + hazard
+    // ── Material ──
     let material: Material | null = null;
     if (batch.material_id) {
       const matRes = await fetch(
         `${daasUrl}/api/items/raw_materials/${batch.material_id}` +
-        `?fields[]=id&fields[]=name&fields[]=category&fields[]=unit&fields[]=hazard_class_id`,
+          `?fields[]=id&fields[]=name&fields[]=category&fields[]=unit&fields[]=hazard_class_id` +
+          `&fields[]=storage_temp_min&fields[]=storage_temp_max&fields[]=required_temperature_class`,
         { headers, cache: 'no-store' }
       );
       if (matRes.ok) material = (await matRes.json()).data;
     }
 
-    const matCategory = material?.category ?? null;
-    const isPackaging = isPackagingCategory(matCategory);
-    const validZones = validZonesForCategory(matCategory);
+    const category = material?.category ?? null;
+    const isPackaging = category === 'packaging';
+    const isFinishedGoods = batch.batch_type === 'finished_product';
+
+    const validZones: string[] = isPackaging
+      ? ['packaging_components']
+      : isFinishedGoods
+        ? ['finished_goods']
+        : ['raw_material', 'cold_storage'];
+
+    // Material temperature band
+    let matTempMin = material?.storage_temp_min ?? null;
+    let matTempMax = material?.storage_temp_max ?? null;
+    const reqClass =
+      batch.required_temperature_class ?? material?.required_temperature_class ?? 'ambient';
+    if (matTempMin == null || matTempMax == null) {
+      if (reqClass === 'cold') {
+        matTempMin = 2;
+        matTempMax = 8;
+      } else {
+        matTempMin = 15;
+        matTempMax = 30;
+      }
+    }
+
     const batchHazardId = material?.hazard_class_id ?? null;
 
-    // Fetch hazard classes (single source of truth) to resolve names + unsuitable_with rules
+    // ── Hazard classes ──
     const hazRes = await fetch(
-      `${daasUrl}/api/items/hazard_classes` +
-      `?fields[]=id&fields[]=name&fields[]=code&fields[]=unsuitable_with&limit=200`,
+      `${daasUrl}/api/items/hazard_classes?fields[]=id&fields[]=name&fields[]=code&fields[]=unsuitable_with&limit=200`,
       { headers, cache: 'no-store' }
     );
     const hazards: HazardClass[] = hazRes.ok ? ((await hazRes.json()).data ?? []) : [];
     const hazardById = new Map(hazards.map((h) => [h.id, h]));
     const batchHazard = batchHazardId ? hazardById.get(batchHazardId) ?? null : null;
 
-    // Fetch all active locations
+    // ── Active locations ──
     const locRes = await fetch(
       `${daasUrl}/api/items/warehouse_locations` +
-      `?filter[is_active][_eq]=true` +
-      `&fields[]=id&fields[]=location_code&fields[]=zone` +
-      `&fields[]=temperature_class` +
-      `&fields[]=allowed_hazard_classes&fields[]=capacity_kg&fields[]=current_occupancy_kg` +
-      `&fields[]=capacity_pcs&fields[]=current_occupancy_pcs` +
-      `&fields[]=current_material_id&fields[]=current_material_name` +
-      `&fields[]=is_active&fields[]=status&limit=200`,
+        `?filter[is_active][_eq]=true` +
+        `&fields[]=id&fields[]=location_code&fields[]=zone&fields[]=temperature_class` +
+        `&fields[]=temperature_min&fields[]=temperature_max` +
+        `&fields[]=allowed_hazard_classes&fields[]=capacity_kg&fields[]=current_occupancy_kg` +
+        `&fields[]=capacity_pcs&fields[]=current_occupancy_pcs` +
+        `&fields[]=current_material_id&fields[]=current_material_name` +
+        `&fields[]=is_active&fields[]=status&limit=500`,
       { headers, cache: 'no-store' }
     );
     if (!locRes.ok) return NextResponse.json({ error: 'Failed to fetch locations' }, { status: 500 });
     const locations: Location[] = (await locRes.json()).data ?? [];
 
-    // For co-location hazard checks we need the hazard of any material currently occupying a location.
-    // Collect those material IDs and resolve their hazard_class_id in one batch fetch.
-    const occupyingMaterialIds = Array.from(
+    // ── Resolve hazards of materials occupying locations (co-location check) ──
+    const occMatIds = Array.from(
       new Set(
         locations
           .map((l) => l.current_material_id)
           .filter((id): id is string => !!id && id !== batch.material_id)
       )
     );
-    const occupyingMaterialHazard = new Map<string, string | null>();
-    if (occupyingMaterialIds.length > 0) {
-      const ids = occupyingMaterialIds.map(encodeURIComponent).join(',');
+    const occMatHazard = new Map<string, string | null>();
+    if (occMatIds.length > 0) {
+      const ids = occMatIds.map(encodeURIComponent).join(',');
       const omRes = await fetch(
-        `${daasUrl}/api/items/raw_materials?filter[id][_in]=${ids}` +
-        `&fields[]=id&fields[]=hazard_class_id&limit=200`,
+        `${daasUrl}/api/items/raw_materials?filter[id][_in]=${ids}&fields[]=id&fields[]=hazard_class_id&limit=200`,
         { headers, cache: 'no-store' }
       );
       if (omRes.ok) {
-        const list: Array<{ id: string; hazard_class_id: string | null }> = (await omRes.json()).data ?? [];
-        for (const m of list) occupyingMaterialHazard.set(m.id, m.hazard_class_id);
+        const list: Array<{ id: string; hazard_class_id: string | null }> =
+          (await omRes.json()).data ?? [];
+        for (const m of list) occMatHazard.set(m.id, m.hazard_class_id);
       }
     }
 
     const batchWeight = batch.weight_kg ?? 0;
     const batchQty = batch.qty ?? 0;
-    const batchTemp = batch.required_temperature_class ?? 'ambient';
-    const batchMaterialId = batch.material_id ?? null;
+    const need = isPackaging ? batchQty : batchWeight;
+    const unitLabel = isPackaging ? 'pcs' : 'kg';
 
-    const compatible: SlotResult['compatible'] = [];
-    const different_material: SlotResult['different_material'] = [];
-    const incompatible: SlotResult['incompatible'] = [];
+    const candidates: Candidate[] = [];
+    const eliminated: Eliminated[] = [];
 
     for (const loc of locations) {
-      // Skip receiving/quarantine and staging — never for permanent storage
-      if (loc.zone === 'receiving_quarantine' || loc.zone === 'staging') {
-        incompatible.push({
-          ...loc,
-          incompatibility_reason: 'Receiving/staging zones are not for permanent storage',
+      if (loc.zone === 'receiving_quarantine' || loc.zone === 'staging') continue;
+
+      const reasons: string[] = [];
+
+      // Zone gate
+      if (!validZones.includes(loc.zone)) {
+        eliminated.push({
+          location_id: loc.id,
+          location_code: loc.location_code,
+          zone: loc.zone,
+          reason: `Zone "${loc.zone.replace(/_/g, ' ')}" not valid for this material stage`,
         });
         continue;
       }
 
-      const hardReasons: string[] = [];
-
-      // ── Zone check ──────────────────────────────────────────────────────────
-      if (!validZones.includes(loc.zone)) {
-        if (isPackaging) {
-          hardReasons.push(`Packaging materials must go to Packaging Components zones, not "${loc.zone.replace(/_/g, ' ')}"`);
-        } else if (loc.zone === 'packaging_components') {
-          hardReasons.push('Packaging Components zones are reserved for packaging materials only');
-        } else {
-          hardReasons.push(`Zone "${loc.zone.replace(/_/g, ' ')}" is not designated for this material stage`);
-        }
-      }
-
-      // ── Temperature check (not applicable to packaging zones) ───────────────
+      // Temperature
+      let tempScore = 1;
       if (!isPackaging) {
-        const locTemp = loc.temperature_class ?? 'ambient';
-        if (locTemp !== batchTemp) {
-          hardReasons.push(`Requires ${batchTemp} storage, location is ${locTemp}`);
+        const bMin = loc.temperature_min ?? (loc.temperature_class === 'cold' ? 2 : 15);
+        const bMax = loc.temperature_max ?? (loc.temperature_class === 'cold' ? 8 : 30);
+        if (!rangesOverlap(matTempMin, matTempMax, bMin, bMax)) {
+          eliminated.push({
+            location_id: loc.id,
+            location_code: loc.location_code,
+            zone: loc.zone,
+            reason: `Temperature incompatible — material needs ${matTempMin}–${matTempMax}°C, bin is ${bMin}–${bMax}°C`,
+          });
+          continue;
         }
+        const overlap = Math.min(matTempMax, bMax) - Math.max(matTempMin, bMin);
+        const matWidth = Math.max(0.0001, matTempMax - matTempMin);
+        tempScore = clamp01(overlap / matWidth);
+        reasons.push(`Temperature compatible (${bMin}–${bMax}°C)`);
+      } else {
+        reasons.push('Packaging — ambient, temperature not constrained');
       }
 
-      // ── Hazard check A: allowed list (UUID-based) ───────────────────────────
+      // Hazard
+      let hazScore = 1;
       if (!isPackaging && batchHazardId) {
-        const allowedHazards: string[] = Array.isArray(loc.allowed_hazard_classes)
-          ? loc.allowed_hazard_classes
-          : [];
-        if (allowedHazards.length > 0 && !allowedHazards.includes(batchHazardId)) {
-          const hazardName = batchHazard?.name ?? 'this hazard class';
-          hardReasons.push(`${hazardName} is not in the allowed hazards for this location`);
+        const allowed = Array.isArray(loc.allowed_hazard_classes) ? loc.allowed_hazard_classes : [];
+        if (allowed.length > 0 && !allowed.includes(batchHazardId)) {
+          eliminated.push({
+            location_id: loc.id,
+            location_code: loc.location_code,
+            zone: loc.zone,
+            reason: `${batchHazard?.name ?? 'Hazard class'} not permitted in this bin`,
+          });
+          continue;
         }
-      }
-
-      // ── Hazard check B: co-location with existing material (unsuitable_with) ─
-      // Only fires when location currently holds a DIFFERENT material AND we have hazard data for both.
-      const occupyingMatId = loc.current_material_id;
-      if (
-        !isPackaging &&
-        occupyingMatId &&
-        batchMaterialId &&
-        occupyingMatId !== batchMaterialId &&
-        batchHazard &&
-        batchHazardId
-      ) {
-        const otherHazardId = occupyingMaterialHazard.get(occupyingMatId) ?? null;
-        if (otherHazardId) {
-          const otherHazard = hazardById.get(otherHazardId);
-          const batchUnsuitable = Array.isArray(batchHazard.unsuitable_with) ? batchHazard.unsuitable_with : [];
-          const otherUnsuitable = otherHazard && Array.isArray(otherHazard.unsuitable_with)
-            ? otherHazard.unsuitable_with
-            : [];
-          if (batchUnsuitable.includes(otherHazardId) || otherUnsuitable.includes(batchHazardId)) {
-            const otherName = otherHazard?.name ?? 'another hazardous material';
-            hardReasons.push(`Cannot be co-located with ${otherName} (hazard incompatibility)`);
+        const occId = loc.current_material_id;
+        if (occId && occId !== batch.material_id && batchHazard) {
+          const otherHazId = occMatHazard.get(occId) ?? null;
+          if (otherHazId) {
+            const otherHaz = hazardById.get(otherHazId);
+            const bUns = Array.isArray(batchHazard.unsuitable_with) ? batchHazard.unsuitable_with : [];
+            const oUns =
+              otherHaz && Array.isArray(otherHaz.unsuitable_with) ? otherHaz.unsuitable_with : [];
+            if (bUns.includes(otherHazId) || oUns.includes(batchHazardId)) {
+              eliminated.push({
+                location_id: loc.id,
+                location_code: loc.location_code,
+                zone: loc.zone,
+                reason: `Hazard co-location conflict with ${otherHaz?.name ?? 'existing material'}`,
+              });
+              continue;
+            }
           }
         }
+        hazScore = allowed.length > 0 ? 1 : 0.7;
+        reasons.push(`Hazard class ${batchHazard?.name ?? ''} allowed`);
       }
 
-      // ── Capacity check ──────────────────────────────────────────────────────
-      let capacityUnit: string;
-      let capacity: number;
-      let occupancy: number;
-      let batchNeed: number;
-
-      if (isPackaging) {
-        capacityUnit = 'pcs';
-        capacity = loc.capacity_pcs ?? 0;
-        occupancy = loc.current_occupancy_pcs ?? 0;
-        batchNeed = batchQty;
-      } else {
-        capacityUnit = 'kg';
-        capacity = loc.capacity_kg ?? 0;
-        occupancy = loc.current_occupancy_kg ?? 0;
-        batchNeed = batchWeight;
-      }
-
+      // Capacity
+      const capacity = isPackaging ? loc.capacity_pcs ?? 0 : loc.capacity_kg ?? 0;
+      const occupancy = isPackaging ? loc.current_occupancy_pcs ?? 0 : loc.current_occupancy_kg ?? 0;
       const available = capacity > 0 ? capacity - occupancy : Infinity;
-      if (capacity > 0 && batchNeed > available) {
-        hardReasons.push(
-          `At capacity — ${available.toLocaleString()} ${capacityUnit} available, batch needs ${batchNeed.toLocaleString()} ${capacityUnit}`
-        );
-      }
-
-      if (hardReasons.length > 0) {
-        incompatible.push({ ...loc, incompatibility_reason: hardReasons.join(' · ') });
+      if (capacity > 0 && need > available) {
+        eliminated.push({
+          location_id: loc.id,
+          location_code: loc.location_code,
+          zone: loc.zone,
+          reason: `Capacity insufficient — needs ${need} ${unitLabel}, only ${available} ${unitLabel} free`,
+        });
         continue;
       }
+      let capScore = 1;
+      if (capacity > 0 && need > 0) capScore = clamp01(need / available);
+      const availableDisplay = available === Infinity ? 'unlimited' : available.toLocaleString();
+      reasons.push(`Available capacity sufficient (${availableDisplay} ${unitLabel} free)`);
 
-      // ── Single-material rule ────────────────────────────────────────────────
-      const locMaterialId = loc.current_material_id ?? null;
-      const locIsEmpty = !locMaterialId;
-      const locHasDifferentMaterial = locMaterialId && batchMaterialId && locMaterialId !== batchMaterialId;
-
-      if (locHasDifferentMaterial) {
-        different_material.push({
-          ...loc,
-          block_reason: `Contains ${loc.current_material_name ?? 'another material'} — single-material rule applies. Available after that material is cleared.`,
+      // Single-material rule
+      const locMatId = loc.current_material_id;
+      if (locMatId && batch.material_id && locMatId !== batch.material_id) {
+        eliminated.push({
+          location_id: loc.id,
+          location_code: loc.location_code,
+          zone: loc.zone,
+          reason: `Holds ${loc.current_material_name ?? 'another material'} (single-material rule)`,
         });
         continue;
       }
 
-      // ── Compatible ──────────────────────────────────────────────────────────
-      const occupancy_pct = capacity > 0 ? Math.round((occupancy / capacity) * 100) : 0;
-      const slot_state: 'empty' | 'same_material' = locIsEmpty ? 'empty' : 'same_material';
+      // Occupancy
+      const occupancyAfter = capacity > 0 ? clamp01((occupancy + need) / capacity) : 0;
+      const occScore = occupancyAfter;
+      reasons.push(`Occupancy after putaway ${Math.round(occupancyAfter * 100)}%`);
+      reasons.push(locMatId ? `Consolidate with existing ${loc.current_material_name ?? 'stock'}` : 'Empty compatible location');
 
-      const reasonParts: string[] = [];
-      if (slot_state === 'same_material') {
-        reasonParts.push('Same material — consolidate with existing stock');
-      } else {
-        reasonParts.push('Empty — ready for any compatible material');
-      }
-      if (!isPackaging && (loc.temperature_class ?? 'ambient') !== 'ambient') {
-        reasonParts.push(`${loc.temperature_class} storage`);
-      }
-      const availableDisplay = available === Infinity ? '∞' : available.toLocaleString();
-      reasonParts.push(`${occupancy_pct}% occupied · ${availableDisplay} ${capacityUnit} free`);
+      const score =
+        Math.round(
+          (WEIGHTS.temperature * tempScore +
+            WEIGHTS.hazard * hazScore +
+            WEIGHTS.capacity * capScore +
+            WEIGHTS.occupancy * occScore) *
+            1000
+        ) / 10;
 
-      compatible.push({
-        ...loc,
-        occupancy_pct,
-        available_qty: available === Infinity ? 0 : available,
-        capacity_unit: capacityUnit,
-        slot_state,
-        reason: reasonParts.join(' · '),
+      candidates.push({
+        location_id: loc.id,
+        location_code: loc.location_code,
+        zone: loc.zone,
+        rank: 0,
+        score,
+        temperature_score: Math.round(tempScore * WEIGHTS.temperature * 1000) / 10,
+        hazard_score: Math.round(hazScore * WEIGHTS.hazard * 1000) / 10,
+        capacity_score: Math.round(capScore * WEIGHTS.capacity * 1000) / 10,
+        occupancy_score: Math.round(occScore * WEIGHTS.occupancy * 1000) / 10,
+        occupancy_after_pct: Math.round(occupancyAfter * 100),
+        available_after: available === Infinity ? null : Math.round((available - need) * 1000) / 1000,
+        capacity_unit: unitLabel,
+        slot_state: locMatId ? 'same_material' : 'empty',
         is_recommended: false,
+        reasoning: reasons.join(' · '),
       });
     }
 
-    // Sort: same-material first, then highest occupancy, then alphabetical
-    compatible.sort((a, b) => {
+    candidates.sort((a, b) => {
+      if (b.score !== a.score) return b.score - a.score;
       if (a.slot_state !== b.slot_state) return a.slot_state === 'same_material' ? -1 : 1;
-      if (b.occupancy_pct !== a.occupancy_pct) return b.occupancy_pct - a.occupancy_pct;
       return a.location_code.localeCompare(b.location_code);
     });
 
-    if (compatible.length > 0) compatible[0].is_recommended = true;
+    const top = candidates.slice(0, limit).map((c, i) => ({
+      ...c,
+      rank: i + 1,
+      is_recommended: i === 0,
+    }));
 
-    return NextResponse.json({ compatible, different_material, incompatible, batch, is_packaging: isPackaging });
+    return NextResponse.json({
+      batch,
+      material,
+      is_packaging: isPackaging,
+      weights: WEIGHTS,
+      candidates: top,
+      eliminated,
+    });
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Internal error';
     return NextResponse.json({ error: msg }, { status: 500 });

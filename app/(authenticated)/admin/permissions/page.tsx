@@ -514,7 +514,7 @@ export default function PermissionsPage() {
           <MultiSelect
             label="Fields"
             description='Select "All fields" for full access, or pick specific fields to restrict.'
-            data={['*', 'id', 'name', 'status', 'zone', 'rack', 'bin', 'location_code', 'location_type', 'capacity'].map((f) => ({
+            data={['*', 'id', 'name', 'status', 'zone', 'location_code', 'rack_id', 'capacity_kg', 'current_occupancy_kg', 'temperature_min', 'temperature_max'].map((f) => ({
               value: f,
               label: f === '*' ? 'All fields (no restriction)' : f,
               disabled: f !== '*' && permForm.fields.includes('*'),

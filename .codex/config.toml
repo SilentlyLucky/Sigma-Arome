@@ -1,0 +1,18 @@
+[mcp_servers.buildpad]
+command = "npx"
+args = [
+    "-y",
+    "@buildpad/mcp@latest",
+]
+
+[mcp_servers.buildpad-platform]
+url = "https://app.buildpad.ai/api/tools/mcp"
+
+[mcp_servers.buildpad-platform.http_headers]
+Authorization = "Bearer b0ecbc0db152432f9c59b6276e3806b20ca0038d8a914365826ead467a9326ac"
+
+[mcp_servers.daas]
+url = "https://e2a46ebf-7136-4641-9a10-ed908ee9d72a.daas4.buildpad.ai/api/mcp"
+
+[mcp_servers.daas.http_headers]
+Authorization = "Bearer dFgUV1NWEmWtg3Z2VrxR9HWZJEMGuCF4"

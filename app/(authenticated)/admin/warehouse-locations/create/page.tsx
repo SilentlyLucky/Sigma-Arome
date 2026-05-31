@@ -1,34 +1,21 @@
 'use client';
 
-import { Stack, Title, Text, Alert } from '@mantine/core';
-import { CollectionForm } from '@/components/ui/collection-form';
+import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { Group, Loader } from '@mantine/core';
 
-export default function CreateWarehouseLocationPage() {
+/**
+ * Bin creation now happens inline on the Warehouse Location page (Bins tab → New Bin).
+ * This legacy route redirects there to keep old links working.
+ */
+export default function CreateWarehouseLocationRedirect() {
   const router = useRouter();
-
+  useEffect(() => {
+    router.replace('/admin/warehouse-locations');
+  }, [router]);
   return (
-    <Stack gap="md">
-      <div>
-        <Title order={2}>Create Warehouse Location</Title>
-        <Text c="dimmed" size="sm">Add a new storage location.</Text>
-      </div>
-
-      <Alert color="blue" variant="light">
-        Hazard rules can be configured after creation by opening this location and editing
-        <strong> Allowed Hazard Classes</strong>. Hazard classes are managed in{' '}
-        <strong>Master Data → Hazard Classes</strong>.
-      </Alert>
-
-      <CollectionForm
-        collection="warehouse_locations"
-        mode="create"
-        onSuccess={(item) => {
-          if (item?.id) router.push(`/admin/warehouse-locations/${item.id}`);
-          else router.push('/admin/warehouse-locations');
-        }}
-        onCancel={() => router.push('/admin/warehouse-locations')}
-      />
-    </Stack>
+    <Group justify="center" py="xl">
+      <Loader />
+    </Group>
   );
 }

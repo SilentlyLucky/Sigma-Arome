@@ -319,11 +319,17 @@ export const TableHeader: React.FC<TableHeaderProps> = ({
 
   const handleResizeStart = useCallback(
     (header: Header, event: React.PointerEvent) => {
+      event.preventDefault();
       const target = event.currentTarget as HTMLElement;
       const parent = target.parentElement as HTMLElement;
 
+      // Use getBoundingClientRect for accurate rendered width
+      // This avoids the cursor-jump caused by offsetWidth vs actual width mismatch
+      const rect = parent.getBoundingClientRect();
+      const actualWidth = rect.width;
+
       setResizing(true);
-      resizeRef.current = { header, startX: event.pageX, startWidth: parent.offsetWidth };
+      resizeRef.current = { header, startX: event.pageX, startWidth: actualWidth };
 
       const handleMouseMove = (e: PointerEvent) => {
         if (!resizeRef.current) return;

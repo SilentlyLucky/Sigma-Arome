@@ -56,9 +56,12 @@ interface AccessEntry { id: string; role: string | null; policy: string }
 // Known fields per collection (from DaaS schema)
 const COLLECTION_FIELDS: Record<string, string[]> = {
   suppliers: ['id', 'supplier_name', 'contact_person', 'email', 'phone', 'address', 'status', 'notes'],
-  raw_materials: ['id', 'name', 'code', 'category', 'unit', 'temp_min', 'temp_max', 'shelf_life_days', 'hazard_class_id', 'status', 'notes'],
+  raw_materials: ['id', 'name', 'code', 'category', 'unit', 'storage_temp_min', 'storage_temp_max', 'required_temperature_class', 'shelf_life_days', 'hazard_class_id', 'status', 'notes'],
   products: ['id', 'name', 'code', 'category', 'unit', 'storage_temp_min', 'storage_temp_max', 'status', 'notes'],
-  warehouse_locations: ['id', 'zone', 'rack', 'bin', 'location_code', 'location_type', 'temp_zone', 'capacity', 'current_occupancy', 'status'],
+  warehouses: ['id', 'code', 'name', 'description', 'status'],
+  zones: ['id', 'code', 'name', 'warehouse_id', 'temperature_min', 'temperature_max', 'status'],
+  racks: ['id', 'code', 'zone_id', 'capacity_kg', 'status'],
+  warehouse_locations: ['id', 'location_code', 'rack_id', 'zone', 'capacity_kg', 'current_occupancy_kg', 'capacity_pcs', 'current_occupancy_pcs', 'temperature_min', 'temperature_max', 'allowed_hazard_classes', 'status', 'is_active'],
   hazard_classes: ['id', 'name', 'code', 'description', 'color'],
   qc_templates: ['id', 'name', 'target_type', 'material_id', 'product_id', 'parameters', 'status'],
   iot_sensors: ['id', 'sensor_name', 'sensor_code', 'location_id', 'sensor_type', 'temp_threshold_min', 'temp_threshold_max', 'humidity_threshold_min', 'humidity_threshold_max', 'status', 'calibration_due_date', 'is_simulated'],

@@ -11,15 +11,15 @@ import type { ReactNode } from 'react';
 // and driven automatically by active Production Orders.
 const NAV_ITEMS = [
   { label: 'Dashboard', href: '/warehouse', icon: IconDashboard, section: 'Overview' },
-  { label: 'Floor Plan', href: '/warehouse/map', icon: IconMap, section: 'Overview' },
-  { label: 'Expected Incoming', href: '/warehouse/incoming', icon: IconTruckDelivery, section: 'Receiving' },
-  { label: 'Receive Material', href: '/warehouse/receive', icon: IconTruckDelivery, section: 'Receiving' },
-  { label: 'Batches', href: '/warehouse/batches', icon: IconBarcode, section: 'Inventory' },
-  { label: 'Putaway', href: '/warehouse/putaway', icon: IconMapPin, section: 'Inventory' },
-  { label: 'Auto Slotting', href: '/warehouse/slotting', icon: IconWand, section: 'Inventory' },
-  { label: 'Movement Log', href: '/warehouse/movements', icon: IconHistory, section: 'History' },
+  { label: 'Warehouse Floor Plan', href: '/warehouse/map', icon: IconMap, section: 'Overview' },
+  { label: 'Expected Raw Material Deliveries', href: '/warehouse/incoming', icon: IconTruckDelivery, section: 'Raw Material Receiving' },
+  { label: 'Receive Raw Materials', href: '/warehouse/receive', icon: IconTruckDelivery, section: 'Raw Material Receiving' },
+  { label: 'Batch Inventory', href: '/warehouse/batches', icon: IconBarcode, section: 'Inventory' },
+  { label: 'Put Away Approved Batches', href: '/warehouse/putaway', icon: IconMapPin, section: 'Inventory' },
+  { label: 'Storage Suggestions', href: '/warehouse/slotting', icon: IconWand, section: 'Inventory' },
+  { label: 'Inventory Movement History', href: '/warehouse/movements', icon: IconHistory, section: 'History' },
 ];
-const SECTIONS = ['Overview', 'Receiving', 'Inventory', 'History'];
+const SECTIONS = ['Overview', 'Raw Material Receiving', 'Inventory', 'History'];
 
 export default function WarehouseLayout({ children }: { children: ReactNode }) {
   const [opened, { toggle }] = useDisclosure();

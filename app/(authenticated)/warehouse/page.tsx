@@ -63,18 +63,18 @@ export default function WarehouseDashboard() {
       ]);
 
       setKpis([
-        { label: 'Expected Incoming Orders', value: incoming, icon: IconTruckDelivery, color: 'blue', href: '/warehouse/incoming' },
-        { label: 'Received Today', value: receivedToday, icon: IconTruckDelivery, color: 'green', href: '/warehouse/receive' },
-        { label: 'Batches in Quarantine (QC Pending)', value: qcPending, icon: IconBarcode, color: 'orange', href: '/warehouse/batches' },
-        { label: 'Approved — Waiting Putaway', value: approvedWaiting, icon: IconMapPin, color: 'teal', href: '/warehouse/putaway' },
-        { label: 'Pick Tasks Pending', value: pickPending, icon: IconBuildingFactory, color: 'grape' },
+        { label: 'Expected Raw Material Deliveries', value: incoming, icon: IconTruckDelivery, color: 'blue', href: '/warehouse/incoming' },
+        { label: 'Received Materials', value: receivedToday, icon: IconTruckDelivery, color: 'green', href: '/warehouse/receive' },
+        { label: 'Batches Waiting for QC', value: qcPending, icon: IconBarcode, color: 'orange', href: '/warehouse/batches' },
+        { label: 'Approved Batches to Store', value: approvedWaiting, icon: IconMapPin, color: 'teal', href: '/warehouse/putaway' },
+        { label: 'Materials to Send to Production', value: pickPending, icon: IconBuildingFactory, color: 'grape' },
       ]);
       setLoadingKpis(false);
     }
     load();
   }, []);
 
-  // ── Production Picking Queue ─────────────────────────────────────────────────
+  // ── Materials Needed for Production ──────────────────────────────────────────
   // Builds a pick list from:
   //   active production orders (released / in_progress / ready)
   //   → their auto-generated material requests (submitted / approved)
@@ -208,7 +208,7 @@ export default function WarehouseDashboard() {
   // Issue a batch to production
   const issueBatch = async (task: PickTask) => {
     if (!task.available_batch_id) {
-      notifications.show({ title: 'No stock', message: `No stored-available batch found for ${task.material_name}`, color: 'orange' });
+      notifications.show({ title: 'No available batch', message: `No production-ready batch found for ${task.material_name}`, color: 'orange' });
       return;
     }
     setIssuing(task.mr_item_id);
@@ -226,8 +226,8 @@ export default function WarehouseDashboard() {
         body: JSON.stringify({ issued_qty: task.available_qty }),
       });
       notifications.show({
-        title: 'Issued',
-        message: `${task.material_name} (${task.available_batch_number}) issued to production`,
+        title: 'Sent to production',
+        message: `${task.material_name} (${task.available_batch_number}) was sent to production.`,
         color: 'green',
       });
       await loadPickQueue();
@@ -245,7 +245,7 @@ export default function WarehouseDashboard() {
     <Stack gap="lg">
       <div>
         <Title order={2}>Warehouse Operation Dashboard</Title>
-        <Text c="dimmed" size="sm">Physical warehouse operations — receiving, putaway, and production picking.</Text>
+        <Text c="dimmed" size="sm">Receive raw materials, store approved batches, and send available materials to production.</Text>
       </div>
 
       {/* KPI tiles */}
@@ -268,26 +268,26 @@ export default function WarehouseDashboard() {
         </SimpleGrid>
       )}
 
-      {/* Production Picking Queue */}
-      <Divider label="Production Picking Queue" labelPosition="left" />
+      {/* Materials Needed for Production */}
+      <Divider label="Materials Needed for Production" labelPosition="left" />
       <Text size="sm" c="dimmed">
-        Materials required by active production orders. Only <strong>Stored — Available</strong> batches
-        can be issued. Requirements are generated automatically when a Production Order is created.
+        These materials are needed for active production orders. Only batches marked Available for production
+        can be sent to the production floor. New requirements appear here when PPIC creates a production order.
       </Text>
 
       {loadingPick ? (
         <Group justify="center" py="md"><Loader size="sm" /></Group>
       ) : pickTasks.length === 0 ? (
         <Alert color="green" variant="light" icon={<IconCheck size={16} />}>
-          No pending pick tasks — all active production orders are fully stocked or have no open material requests.
+          No materials need to be sent right now. Active production orders are already covered or have no open material requests.
         </Alert>
       ) : (
         <Stack gap="md">
-          {/* Ready to pick */}
+          {/* Ready to send */}
           {pendingTasks.length > 0 && (
             <Paper p="md" radius="md" withBorder>
               <Text size="sm" fw={600} mb="sm" c="green">
-                Ready to Pick ({pendingTasks.length})
+                Ready to Send ({pendingTasks.length})
               </Text>
               <Table withTableBorder withColumnBorders>
                 <Table.Thead>
@@ -329,7 +329,7 @@ export default function WarehouseDashboard() {
                           loading={issuing === task.mr_item_id}
                           onClick={() => issueBatch(task)}
                         >
-                          Issue
+                          Send
                         </Button>
                       </Table.Td>
                     </Table.Tr>
@@ -339,13 +339,13 @@ export default function WarehouseDashboard() {
             </Paper>
           )}
 
-          {/* Blocked — no stock */}
+          {/* Blocked - no production-ready stock */}
           {blockedTasks.length > 0 && (
             <Paper p="md" radius="md" withBorder>
               <Group gap="xs" mb="sm">
                 <IconAlertTriangle size={16} color="var(--mantine-color-orange-6)" />
                 <Text size="sm" fw={600} c="orange">
-                  Blocked — No Available Stock ({blockedTasks.length})
+                  Blocked - No Production-Ready Stock ({blockedTasks.length})
                 </Text>
               </Group>
               <Table withTableBorder withColumnBorders>
@@ -366,7 +366,7 @@ export default function WarehouseDashboard() {
                       <Table.Td><Text size="sm">{task.material_name}</Text></Table.Td>
                       <Table.Td><Text size="sm">{task.requested_qty} {task.unit}</Text></Table.Td>
                       <Table.Td>
-                        <Badge size="xs" color="orange" variant="light">No stored-available stock</Badge>
+                        <Badge size="xs" color="orange" variant="light">No batch available for production</Badge>
                       </Table.Td>
                     </Table.Tr>
                   ))}

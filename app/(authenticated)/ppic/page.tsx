@@ -1,126 +1,233 @@
 'use client';
 
 import {
-  SimpleGrid,
-  Paper,
-  Text,
-  Title,
-  Group,
-  Stack,
-  ThemeIcon,
-  Badge,
-  Loader,
-  Anchor,
+  SimpleGrid, Paper, Text, Title, Group, Stack, ThemeIcon,
+  Loader, Anchor, Divider, Badge, Alert, Table,
 } from '@mantine/core';
 import {
-  IconShoppingCart,
-  IconTruckDelivery,
-  IconFlask,
-  IconCheck,
-  IconAlertTriangle,
-  IconClock,
-  IconBuildingFactory,
-  IconClipboardList,
-  IconPackage,
+  IconShoppingCart, IconTruckDelivery, IconFlask, IconCheck,
+  IconAlertTriangle, IconClock, IconBuildingFactory, IconClipboardList,
+  IconCircleCheck, IconChevronRight,
 } from '@tabler/icons-react';
 import { useEffect, useState } from 'react';
+import React from 'react';
+import { useRouter } from 'next/navigation';
 
-/**
- * PPIC Dashboard
- * KPIs per PRD Section 17.3
- */
-
-interface KPI {
-  label: string;
-  value: number | null;
-  icon: typeof IconShoppingCart;
-  color: string;
-  href?: string;
+function StatusBar({ segments }: { segments: { label: string; count: number; color: string }[] }) {
+  const total = Math.max(segments.reduce((s, seg) => s + seg.count, 0), 1);
+  return (
+    <Stack gap="xs">
+      <Group gap={2} style={{ borderRadius: 4, overflow: 'hidden', height: 10 }}>
+        {segments.filter(s => s.count > 0).map(seg => (
+          <div key={seg.label} style={{ flex: seg.count / total, height: '100%', background: `var(--mantine-color-${seg.color}-5)`, minWidth: 4 }} />
+        ))}
+      </Group>
+      <Group gap="sm" wrap="wrap">
+        {segments.map(seg => (
+          <Group key={seg.label} gap={4} wrap="nowrap">
+            <div style={{ width: 10, height: 10, borderRadius: 2, background: `var(--mantine-color-${seg.color}-5)`, flexShrink: 0 }} />
+            <Text size="xs" c="dimmed">{seg.label}:</Text>
+            <Text size="xs" fw={600}>{seg.count}</Text>
+          </Group>
+        ))}
+      </Group>
+    </Stack>
+  );
 }
 
+interface OverdueOrder { id: string; status: string; expected_arrival_date: string | null; ordered_qty: number; unit: string }
+interface BlockedOrder { id: string; order_number: string; status: string; planned_qty: number; unit: string }
+
 export default function PPICDashboard() {
-  const [kpis, setKpis] = useState<KPI[]>([]);
+  const router = useRouter();
+  const [counts, setCounts] = useState<Record<string, number>>({});
+  const [overdueOrders, setOverdueOrders] = useState<OverdueOrder[]>([]);
+  const [blockedOrders, setBlockedOrders] = useState<BlockedOrder[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function fetchKPIs() {
-      setLoading(true);
-      const results: KPI[] = [];
+    const today = new Date().toISOString().slice(0, 10);
 
-      const counts = await fetch('/api/batch-counts', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          counts: [
-            { key: 'ordersWaiting', collection: 'raw_material_orders', filter: { status: { _eq: 'ordered' } } },
-            { key: 'ordersPartial', collection: 'raw_material_orders', filter: { status: { _eq: 'partially_received' } } },
-            { key: 'pendingQC', collection: 'raw_material_orders', filter: { status: { _eq: 'received' } } },
-            { key: 'approved', collection: 'raw_material_orders', filter: { status: { _eq: 'closed' } } },
-            { key: 'onHold', collection: 'raw_material_orders', filter: { status: { _eq: 'draft' } } },
-            { key: 'requestsPending', collection: 'material_requests', filter: { status: { _eq: 'pending' } } },
-            { key: 'prodWaiting', collection: 'production_orders', filter: { status: { _in: ['draft', 'material_checked', 'material_requested', 'waiting_issue'] } } },
-            { key: 'prodInProgress', collection: 'production_orders', filter: { status: { _eq: 'in_production' } } },
-          ],
-        }),
-      }).then(async (res) => (res.ok ? ((await res.json())?.counts ?? {}) : {})).catch(() => ({}));
-      const ordersWaiting = Number(counts.ordersWaiting ?? 0);
-      const ordersPartial = Number(counts.ordersPartial ?? 0);
-      const pendingQC = Number(counts.pendingQC ?? 0);
-      const approved = Number(counts.approved ?? 0);
-      const onHold = Number(counts.onHold ?? 0);
-      const requestsPending = Number(counts.requestsPending ?? 0);
-      const prodWaiting = Number(counts.prodWaiting ?? 0);
-      const prodInProgress = Number(counts.prodInProgress ?? 0);
+    async function load() {
+      const [c, overdue, blocked] = await Promise.all([
+        fetch('/api/batch-counts', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            counts: [
+              { key: 'ordersWaiting', collection: 'raw_material_orders', filter: { status: { _eq: 'ordered' } } },
+              { key: 'ordersPartial', collection: 'raw_material_orders', filter: { status: { _eq: 'partially_received' } } },
+              { key: 'ordersOverdue', collection: 'raw_material_orders', filter: { status: { _in: ['ordered', 'partially_received'] }, expected_arrival_date: { _lt: today } } },
+              { key: 'prodDraft', collection: 'production_orders', filter: { status: { _eq: 'draft' } } },
+              { key: 'prodBlocked', collection: 'production_orders', filter: { status: { _eq: 'waiting_issue' } } },
+              { key: 'prodReady', collection: 'production_orders', filter: { status: { _in: ['ready', 'released'] } } },
+              { key: 'prodActive', collection: 'production_orders', filter: { status: { _eq: 'in_progress' } } },
+              { key: 'requestsPending', collection: 'material_requests', filter: { status: { _eq: 'submitted' } } },
+              { key: 'bomActive', collection: 'boms', filter: { is_active: { _eq: true } } },
+            ],
+          }),
+        }).then(async r => r.ok ? (await r.json())?.counts ?? {} : {}).catch(() => ({})),
 
-      results.push(
-        { label: 'Raw Materials Waiting to Arrive', value: ordersWaiting, icon: IconTruckDelivery, color: 'orange', href: '/ppic/orders' },
-        { label: 'Orders Partially Received', value: ordersPartial, icon: IconShoppingCart, color: 'yellow', href: '/ppic/orders' },
-        { label: 'Materials Waiting for QC', value: pendingQC, icon: IconFlask, color: 'blue', href: '/ppic/readiness' },
-        { label: 'Materials Approved for Storage', value: approved, icon: IconCheck, color: 'green', href: '/ppic/readiness' },
-        { label: 'Materials on Hold', value: onHold, icon: IconAlertTriangle, color: 'red' },
-        { label: 'Requests Waiting for Logistics', value: requestsPending, icon: IconClipboardList, color: 'grape', href: '/ppic/requests' },
-        { label: 'Production Waiting for Materials', value: prodWaiting, icon: IconClock, color: 'indigo', href: '/ppic/production' },
-        { label: 'Production In Progress', value: prodInProgress, icon: IconBuildingFactory, color: 'teal', href: '/ppic/production' },
-      );
+        fetch(`/api/items/raw_material_orders?filter[status][_in]=ordered,partially_received&filter[expected_arrival_date][_lt]=${today}&fields[]=id&fields[]=status&fields[]=expected_arrival_date&fields[]=ordered_qty&fields[]=unit&limit=5&sort[]=expected_arrival_date`)
+          .then(async r => r.ok ? (await r.json())?.data ?? [] : []).catch(() => []),
 
-      setKpis(results);
+        fetch('/api/items/production_orders?filter[status][_eq]=waiting_issue&fields[]=id&fields[]=order_number&fields[]=status&fields[]=planned_qty&fields[]=unit&limit=5&sort[]=-id')
+          .then(async r => r.ok ? (await r.json())?.data ?? [] : []).catch(() => []),
+      ]);
+
+      setCounts(c);
+      setOverdueOrders(overdue);
+      setBlockedOrders(blocked);
       setLoading(false);
     }
-    fetchKPIs();
+    load();
   }, []);
+
+  const n = (k: string) => counts[k] ?? 0;
+  const ordersActive = n('ordersWaiting') + n('ordersPartial');
 
   return (
     <Stack gap="lg">
       <div>
         <Title order={2}>PPIC Planning Dashboard</Title>
-        <Text c="dimmed" size="sm">
-          Plan raw material orders, product formulas, production schedules, and material availability.
-        </Text>
+        <Text c="dimmed" size="sm">Plan orders, monitor formulas, check material availability, and keep production on schedule.</Text>
       </div>
 
-      {loading ? (
-        <Group justify="center" py="xl"><Loader /></Group>
-      ) : (
-        <SimpleGrid cols={{ base: 2, sm: 3, md: 4 }} spacing="md">
-          {kpis.map((kpi) => (
-            <Paper key={kpi.label} p="md" radius="md" withBorder>
+      {loading ? <Group justify="center" py="xl"><Loader /></Group> : (
+        <>
+          {/* ── Priority Cards ─────────────────────────────────────────────── */}
+          <SimpleGrid cols={{ base: 2, sm: 4 }} spacing="md">
+            <Paper p="md" radius="md" withBorder style={{ cursor: 'pointer' }} onClick={() => router.push('/ppic/orders')}>
               <Group justify="space-between" wrap="nowrap">
-                <Stack gap={4}>
-                  <Text size="xs" c="dimmed" tt="uppercase" fw={700} lineClamp={1}>
-                    {kpi.label}
-                  </Text>
-                  <Title order={3}>{kpi.value ?? '—'}</Title>
+                <Stack gap={2}>
+                  <Text size="xs" c="dimmed" fw={600} tt="uppercase">Orders to Follow Up</Text>
+                  <Title order={2} c="blue">{ordersActive}</Title>
+                  <Text size="xs" c="dimmed">Orders ordered or partially received</Text>
                 </Stack>
-                <ThemeIcon size="xl" radius="md" variant="light" color={kpi.color}>
-                  <kpi.icon size={24} />
-                </ThemeIcon>
+                <ThemeIcon size="xl" radius="md" variant="light" color="blue"><IconTruckDelivery size={22} /></ThemeIcon>
               </Group>
-              {kpi.href && (
-                <Anchor href={kpi.href} size="xs" c="dimmed" mt={4} display="block">View details →</Anchor>
+            </Paper>
+
+            <Paper p="md" radius="md" withBorder style={{ cursor: 'pointer', borderColor: n('prodBlocked') > 0 ? 'var(--mantine-color-red-5)' : undefined }} onClick={() => router.push('/ppic/production')}>
+              <Group justify="space-between" wrap="nowrap">
+                <Stack gap={2}>
+                  <Text size="xs" c="dimmed" fw={600} tt="uppercase">Production Blocked</Text>
+                  <Title order={2} c={n('prodBlocked') > 0 ? 'red' : undefined}>{n('prodBlocked')}</Title>
+                  <Text size="xs" c="dimmed">Orders waiting for materials</Text>
+                </Stack>
+                <ThemeIcon size="xl" radius="md" variant={n('prodBlocked') > 0 ? 'filled' : 'light'} color="red"><IconAlertTriangle size={22} /></ThemeIcon>
+              </Group>
+            </Paper>
+
+            <Paper p="md" radius="md" withBorder style={{ cursor: 'pointer', borderColor: n('ordersOverdue') > 0 ? 'var(--mantine-color-orange-5)' : undefined }} onClick={() => router.push('/ppic/orders')}>
+              <Group justify="space-between" wrap="nowrap">
+                <Stack gap={2}>
+                  <Text size="xs" c="dimmed" fw={600} tt="uppercase">Deliveries Overdue</Text>
+                  <Title order={2} c={n('ordersOverdue') > 0 ? 'orange' : undefined}>{n('ordersOverdue')}</Title>
+                  <Text size="xs" c="dimmed">Past expected arrival date</Text>
+                </Stack>
+                <ThemeIcon size="xl" radius="md" variant={n('ordersOverdue') > 0 ? 'filled' : 'light'} color="orange"><IconClock size={22} /></ThemeIcon>
+              </Group>
+            </Paper>
+
+            <Paper p="md" radius="md" withBorder style={{ cursor: 'pointer' }} onClick={() => router.push('/ppic/requests')}>
+              <Group justify="space-between" wrap="nowrap">
+                <Stack gap={2}>
+                  <Text size="xs" c="dimmed" fw={600} tt="uppercase">Requests Waiting</Text>
+                  <Title order={2} c={n('requestsPending') > 0 ? 'grape' : undefined}>{n('requestsPending')}</Title>
+                  <Text size="xs" c="dimmed">Material requests pending logistics</Text>
+                </Stack>
+                <ThemeIcon size="xl" radius="md" variant={n('requestsPending') > 0 ? 'filled' : 'light'} color="grape"><IconClipboardList size={22} /></ThemeIcon>
+              </Group>
+            </Paper>
+          </SimpleGrid>
+
+          {/* ── Status Breakdowns ───────────────────────────────────────────── */}
+          <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
+            <Paper p="md" radius="md" withBorder>
+              <Text fw={600} size="sm" mb="sm">Material Order Status</Text>
+              <StatusBar segments={[
+                { label: 'Ordered', count: n('ordersWaiting'), color: 'blue' },
+                { label: 'Partially received', count: n('ordersPartial'), color: 'yellow' },
+              ]} />
+              <Anchor href="/ppic/orders" size="xs" mt="xs" display="block">Manage orders →</Anchor>
+            </Paper>
+            <Paper p="md" radius="md" withBorder>
+              <Text fw={600} size="sm" mb="sm">Production Readiness</Text>
+              <StatusBar segments={[
+                { label: 'Draft / planning', count: n('prodDraft'), color: 'gray' },
+                { label: 'Waiting for materials', count: n('prodBlocked'), color: 'red' },
+                { label: 'Ready to start', count: n('prodReady'), color: 'lime' },
+                { label: 'Running', count: n('prodActive'), color: 'violet' },
+              ]} />
+              <Anchor href="/ppic/production" size="xs" mt="xs" display="block">View production orders →</Anchor>
+            </Paper>
+          </SimpleGrid>
+
+          {/* ── Exception Queues ────────────────────────────────────────────── */}
+          <Divider label="Exceptions Needing Attention" labelPosition="left" />
+          <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
+            <Paper p="md" radius="md" withBorder>
+              <Group justify="space-between" mb="sm">
+                <Text fw={600} size="sm">Overdue Deliveries</Text>
+                <Anchor href="/ppic/orders" size="xs">View all →</Anchor>
+              </Group>
+              {overdueOrders.length === 0 ? (
+                <Alert color="green" variant="light" icon={<IconCircleCheck size={14} />}>
+                  All deliveries are on schedule.
+                </Alert>
+              ) : (
+                <Table withTableBorder>
+                  <Table.Thead>
+                    <Table.Tr>
+                      <Table.Th>Expected By</Table.Th>
+                      <Table.Th>Qty</Table.Th>
+                      <Table.Th>Status</Table.Th>
+                    </Table.Tr>
+                  </Table.Thead>
+                  <Table.Tbody>
+                    {overdueOrders.map(o => (
+                      <Table.Tr key={o.id}>
+                        <Table.Td><Text size="sm">{o.expected_arrival_date ? new Date(o.expected_arrival_date).toLocaleDateString() : '—'}</Text></Table.Td>
+                        <Table.Td><Text size="sm">{o.ordered_qty} {o.unit}</Text></Table.Td>
+                        <Table.Td><Badge size="xs" color="orange" variant="light">{o.status === 'ordered' ? 'Not yet received' : 'Partial'}</Badge></Table.Td>
+                      </Table.Tr>
+                    ))}
+                  </Table.Tbody>
+                </Table>
               )}
             </Paper>
-          ))}
-        </SimpleGrid>
+
+            <Paper p="md" radius="md" withBorder>
+              <Group justify="space-between" mb="sm">
+                <Text fw={600} size="sm">Production Blocked by Materials</Text>
+                <Anchor href="/ppic/production" size="xs">View all →</Anchor>
+              </Group>
+              {blockedOrders.length === 0 ? (
+                <Alert color="green" variant="light" icon={<IconCircleCheck size={14} />}>
+                  No production orders are blocked right now.
+                </Alert>
+              ) : (
+                <Table withTableBorder>
+                  <Table.Thead>
+                    <Table.Tr>
+                      <Table.Th>Order</Table.Th>
+                      <Table.Th>Quantity</Table.Th>
+                    </Table.Tr>
+                  </Table.Thead>
+                  <Table.Tbody>
+                    {blockedOrders.map(o => (
+                      <Table.Tr key={o.id} style={{ cursor: 'pointer' }} onClick={() => router.push(`/ppic/production/${o.id}`)}>
+                        <Table.Td><Text size="sm" fw={500}>{o.order_number}</Text></Table.Td>
+                        <Table.Td><Text size="sm">{o.planned_qty} {o.unit}</Text></Table.Td>
+                      </Table.Tr>
+                    ))}
+                  </Table.Tbody>
+                </Table>
+              )}
+            </Paper>
+          </SimpleGrid>
+        </>
       )}
     </Stack>
   );

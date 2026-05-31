@@ -12,6 +12,8 @@ import {
   Badge,
   Anchor,
   Loader,
+  Divider,
+  Alert,
 } from '@mantine/core';
 import {
   IconUsers,
@@ -25,6 +27,7 @@ import {
   IconShieldCheck,
   IconFileText,
   IconActivity,
+  IconCircleCheck,
 } from '@tabler/icons-react';
 import { useEffect, useState } from 'react';
 
@@ -224,6 +227,34 @@ export default function AdminDashboard() {
           ))}
         </SimpleGrid>
       </div>
+
+      {/* Setup Exceptions */}
+      <Divider label="Setup Exceptions — Areas Needing Attention" labelPosition="left" />
+      {!loading && (() => {
+        const emptyAreas = STAT_CARDS.filter(c => (counts[c.collection] ?? 0) === 0);
+        return emptyAreas.length === 0 ? (
+          <Alert color="green" variant="light" icon={<IconCircleCheck size={16} />}>
+            All required setup areas have at least one record. Your system is fully configured.
+          </Alert>
+        ) : (
+          <SimpleGrid cols={{ base: 1, sm: 2, md: 3 }} spacing="sm">
+            {emptyAreas.map(area => (
+              <Paper key={area.collection} p="sm" radius="md" withBorder style={{ borderColor: 'var(--mantine-color-orange-4)' }}>
+                <Group justify="space-between" wrap="nowrap">
+                  <Stack gap={2}>
+                    <Text size="sm" fw={600}>{area.label}</Text>
+                    <Text size="xs" c="dimmed">{area.description} — no records yet</Text>
+                  </Stack>
+                  <ThemeIcon size="md" radius="md" variant="light" color="orange">
+                    <area.icon size={16} />
+                  </ThemeIcon>
+                </Group>
+                <Anchor href={area.href} size="xs" mt={4} display="block" c="orange">Set up now →</Anchor>
+              </Paper>
+            ))}
+          </SimpleGrid>
+        );
+      })()}
 
       {/* Quick Links */}
       <Grid>

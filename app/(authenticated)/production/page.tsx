@@ -1,42 +1,90 @@
 'use client';
 
-import { SimpleGrid, Paper, Text, Title, Group, Stack, ThemeIcon, Loader, Anchor } from '@mantine/core';
-import { IconPlayerPlay, IconClock, IconCheck, IconPackage } from '@tabler/icons-react';
+import {
+  SimpleGrid, Paper, Text, Title, Group, Stack, ThemeIcon,
+  Loader, Anchor, Divider, Badge, Alert, Table,
+} from '@mantine/core';
+import {
+  IconPlayerPlay, IconClock, IconCheck, IconPackage,
+  IconAlertTriangle, IconCircleCheck,
+} from '@tabler/icons-react';
 import { useEffect, useState } from 'react';
+import React from 'react';
+import { useRouter } from 'next/navigation';
+
+function StatusBar({ segments }: { segments: { label: string; count: number; color: string }[] }) {
+  const total = Math.max(segments.reduce((s, seg) => s + seg.count, 0), 1);
+  return (
+    <Stack gap="xs">
+      <Group gap={2} style={{ borderRadius: 4, overflow: 'hidden', height: 10 }}>
+        {segments.filter(s => s.count > 0).map(seg => (
+          <div key={seg.label} style={{ flex: seg.count / total, height: '100%', background: `var(--mantine-color-${seg.color}-5)`, minWidth: 4 }} />
+        ))}
+      </Group>
+      <Group gap="sm" wrap="wrap">
+        {segments.map(seg => (
+          <Group key={seg.label} gap={4} wrap="nowrap">
+            <div style={{ width: 10, height: 10, borderRadius: 2, background: `var(--mantine-color-${seg.color}-5)`, flexShrink: 0 }} />
+            <Text size="xs" c="dimmed">{seg.label}:</Text>
+            <Text size="xs" fw={600}>{seg.count}</Text>
+          </Group>
+        ))}
+      </Group>
+    </Stack>
+  );
+}
+
+interface ProductionOrder {
+  id: string;
+  order_number: string;
+  status: string;
+  planned_qty: number;
+  unit: string;
+  due_date: string | null;
+}
 
 export default function ProductionDashboard() {
-  const [kpis, setKpis] = useState<Array<{ label: string; value: number; color: string; icon: typeof IconPlayerPlay; href?: string }>>([]);
+  const router = useRouter();
+  const [counts, setCounts] = useState<Record<string, number>>({});
+  const [readyOrders, setReadyOrders] = useState<ProductionOrder[]>([]);
+  const [activeOrders, setActiveOrders] = useState<ProductionOrder[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function load() {
-      const counts = await fetch('/api/batch-counts', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          counts: [
-            { key: 'ready', collection: 'production_orders', filter: { status: { _in: ['ready', 'released'] } } },
-            { key: 'inProgress', collection: 'production_orders', filter: { status: { _eq: 'in_progress' } } },
-            { key: 'completed', collection: 'production_orders', filter: { status: { _eq: 'completed' } } },
-            { key: 'fgPending', collection: 'batches', filter: { batch_type: { _eq: 'finished_product' }, status: { _eq: 'qc_pending' } } },
-          ],
-        }),
-      }).then(async (res) => (res.ok ? ((await res.json())?.counts ?? {}) : {})).catch(() => ({}));
-      const ready = Number(counts.ready ?? 0);
-      const inProgress = Number(counts.inProgress ?? 0);
-      const completed = Number(counts.completed ?? 0);
-      const fgPending = Number(counts.fgPending ?? 0);
+      const [c, ready, active] = await Promise.all([
+        fetch('/api/batch-counts', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            counts: [
+              { key: 'ready', collection: 'production_orders', filter: { status: { _in: ['ready', 'released'] } } },
+              { key: 'inProgress', collection: 'production_orders', filter: { status: { _eq: 'in_progress' } } },
+              { key: 'blocked', collection: 'production_orders', filter: { status: { _eq: 'waiting_issue' } } },
+              { key: 'completed', collection: 'production_orders', filter: { status: { _eq: 'completed' } } },
+              { key: 'fgWaitingQc', collection: 'batches', filter: { batch_type: { _eq: 'finished_product' }, status: { _eq: 'qc_pending' } } },
+              { key: 'fgApproved', collection: 'batches', filter: { batch_type: { _eq: 'finished_product' }, status: { _eq: 'approved' } } },
+            ],
+          }),
+        }).then(async r => r.ok ? (await r.json())?.counts ?? {} : {}).catch(() => ({})),
 
-      setKpis([
-        { label: 'Ready to Start', value: ready, color: 'green', icon: IconPlayerPlay, href: '/production/orders' },
-        { label: 'Being Produced', value: inProgress, color: 'violet', icon: IconClock, href: '/production/active' },
-        { label: 'Finished Orders', value: completed, color: 'teal', icon: IconCheck, href: '/production/completed' },
-        { label: 'Finished Goods Waiting for QC', value: fgPending, color: 'orange', icon: IconPackage },
+        fetch('/api/items/production_orders?filter[status][_in]=ready,released&fields[]=id&fields[]=order_number&fields[]=status&fields[]=planned_qty&fields[]=unit&fields[]=due_date&limit=6&sort[]=due_date')
+          .then(async r => r.ok ? (await r.json())?.data ?? [] : []).catch(() => []),
+
+        fetch('/api/items/production_orders?filter[status][_eq]=in_progress&fields[]=id&fields[]=order_number&fields[]=status&fields[]=planned_qty&fields[]=unit&fields[]=due_date&limit=6&sort[]=due_date')
+          .then(async r => r.ok ? (await r.json())?.data ?? [] : []).catch(() => []),
       ]);
+
+      setCounts(c);
+      setReadyOrders(ready);
+      setActiveOrders(active);
       setLoading(false);
     }
     load();
   }, []);
+
+  const n = (k: string) => counts[k] ?? 0;
+  const fgWaiting = n('fgWaitingQc') + n('fgApproved');
 
   return (
     <Stack gap="lg">
@@ -44,21 +92,139 @@ export default function ProductionDashboard() {
         <Title order={2}>Production Workbench</Title>
         <Text c="dimmed" size="sm">Start production orders, record materials used, and confirm finished output.</Text>
       </div>
+
       {loading ? <Group justify="center" py="xl"><Loader /></Group> : (
-        <SimpleGrid cols={{ base: 2, sm: 4 }} spacing="md">
-          {kpis.map(k => (
-            <Paper key={k.label} p="md" radius="md" withBorder>
+        <>
+          {/* ── Priority Cards ─────────────────────────────────────────────── */}
+          <SimpleGrid cols={{ base: 2, sm: 4 }} spacing="md">
+            <Paper p="md" radius="md" withBorder style={{ cursor: 'pointer', borderColor: n('ready') > 0 ? 'var(--mantine-color-green-4)' : undefined }} onClick={() => router.push('/production/orders')}>
               <Group justify="space-between" wrap="nowrap">
-                <Stack gap={4}>
-                  <Text size="xs" c="dimmed" tt="uppercase" fw={700}>{k.label}</Text>
-                  <Title order={3}>{k.value}</Title>
+                <Stack gap={2}>
+                  <Text size="xs" c="dimmed" fw={600} tt="uppercase">Ready to Start</Text>
+                  <Title order={2} c={n('ready') > 0 ? 'green' : undefined}>{n('ready')}</Title>
+                  <Text size="xs" c="dimmed">Orders cleared to begin</Text>
                 </Stack>
-                <ThemeIcon size="xl" radius="md" variant="light" color={k.color}><k.icon size={24} /></ThemeIcon>
+                <ThemeIcon size="xl" radius="md" variant={n('ready') > 0 ? 'filled' : 'light'} color="green"><IconPlayerPlay size={22} /></ThemeIcon>
               </Group>
-              {k.href && <Anchor href={k.href} size="xs" c="dimmed" mt={4} display="block">View →</Anchor>}
             </Paper>
-          ))}
-        </SimpleGrid>
+
+            <Paper p="md" radius="md" withBorder style={{ cursor: 'pointer' }} onClick={() => router.push('/production/active')}>
+              <Group justify="space-between" wrap="nowrap">
+                <Stack gap={2}>
+                  <Text size="xs" c="dimmed" fw={600} tt="uppercase">Currently Running</Text>
+                  <Title order={2} c="violet">{n('inProgress')}</Title>
+                  <Text size="xs" c="dimmed">Orders in production</Text>
+                </Stack>
+                <ThemeIcon size="xl" radius="md" variant="light" color="violet"><IconClock size={22} /></ThemeIcon>
+              </Group>
+            </Paper>
+
+            <Paper p="md" radius="md" withBorder style={{ cursor: 'pointer', borderColor: fgWaiting > 0 ? 'var(--mantine-color-orange-4)' : undefined }} onClick={() => router.push('/production/completed')}>
+              <Group justify="space-between" wrap="nowrap">
+                <Stack gap={2}>
+                  <Text size="xs" c="dimmed" fw={600} tt="uppercase">Finished Goods Waiting</Text>
+                  <Title order={2} c={fgWaiting > 0 ? 'orange' : undefined}>{fgWaiting}</Title>
+                  <Text size="xs" c="dimmed">Waiting for QC or storage</Text>
+                </Stack>
+                <ThemeIcon size="xl" radius="md" variant={fgWaiting > 0 ? 'filled' : 'light'} color="orange"><IconPackage size={22} /></ThemeIcon>
+              </Group>
+            </Paper>
+
+            <Paper p="md" radius="md" withBorder style={{ cursor: 'pointer', borderColor: n('blocked') > 0 ? 'var(--mantine-color-red-4)' : undefined }} onClick={() => router.push('/production/orders')}>
+              <Group justify="space-between" wrap="nowrap">
+                <Stack gap={2}>
+                  <Text size="xs" c="dimmed" fw={600} tt="uppercase">Blocked by Materials</Text>
+                  <Title order={2} c={n('blocked') > 0 ? 'red' : undefined}>{n('blocked')}</Title>
+                  <Text size="xs" c="dimmed">Orders waiting for supply</Text>
+                </Stack>
+                <ThemeIcon size="xl" radius="md" variant={n('blocked') > 0 ? 'filled' : 'light'} color="red"><IconAlertTriangle size={22} /></ThemeIcon>
+              </Group>
+            </Paper>
+          </SimpleGrid>
+
+          {/* ── Status Breakdown ────────────────────────────────────────────── */}
+          <Paper p="md" radius="md" withBorder>
+            <Text fw={600} size="sm" mb="sm">Production Order Status</Text>
+            <StatusBar segments={[
+              { label: 'Blocked', count: n('blocked'), color: 'red' },
+              { label: 'Ready to start', count: n('ready'), color: 'lime' },
+              { label: 'Running', count: n('inProgress'), color: 'violet' },
+              { label: 'Completed', count: n('completed'), color: 'green' },
+            ]} />
+          </Paper>
+
+          {/* ── Work Queues ─────────────────────────────────────────────────── */}
+          <Divider label="Work Queue" labelPosition="left" />
+          <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
+            <Paper p="md" radius="md" withBorder>
+              <Group justify="space-between" mb="sm">
+                <Text fw={600} size="sm">Ready to Start</Text>
+                <Anchor href="/production/orders" size="xs">View all →</Anchor>
+              </Group>
+              {readyOrders.length === 0 ? (
+                <Alert color="blue" variant="light" icon={<IconCircleCheck size={14} />}>
+                  No orders are ready to start right now.
+                </Alert>
+              ) : (
+                <Table withTableBorder>
+                  <Table.Thead>
+                    <Table.Tr>
+                      <Table.Th>Order</Table.Th>
+                      <Table.Th>Quantity</Table.Th>
+                      <Table.Th>Due</Table.Th>
+                    </Table.Tr>
+                  </Table.Thead>
+                  <Table.Tbody>
+                    {readyOrders.map(o => (
+                      <Table.Tr key={o.id} style={{ cursor: 'pointer' }} onClick={() => router.push(`/production/orders/${o.id}`)}>
+                        <Table.Td><Text size="sm" fw={500}>{o.order_number}</Text></Table.Td>
+                        <Table.Td><Text size="sm">{o.planned_qty} {o.unit}</Text></Table.Td>
+                        <Table.Td><Text size="sm">{o.due_date ? new Date(o.due_date).toLocaleDateString() : '—'}</Text></Table.Td>
+                      </Table.Tr>
+                    ))}
+                  </Table.Tbody>
+                </Table>
+              )}
+            </Paper>
+
+            <Paper p="md" radius="md" withBorder>
+              <Group justify="space-between" mb="sm">
+                <Text fw={600} size="sm">Currently Running</Text>
+                <Anchor href="/production/active" size="xs">View all →</Anchor>
+              </Group>
+              {activeOrders.length === 0 ? (
+                <Alert color="blue" variant="light" icon={<IconCircleCheck size={14} />}>
+                  No orders are currently in production.
+                </Alert>
+              ) : (
+                <Table withTableBorder>
+                  <Table.Thead>
+                    <Table.Tr>
+                      <Table.Th>Order</Table.Th>
+                      <Table.Th>Quantity</Table.Th>
+                      <Table.Th>Due</Table.Th>
+                    </Table.Tr>
+                  </Table.Thead>
+                  <Table.Tbody>
+                    {activeOrders.map(o => (
+                      <Table.Tr key={o.id} style={{ cursor: 'pointer' }} onClick={() => router.push(`/production/orders/${o.id}`)}>
+                        <Table.Td><Text size="sm" fw={500}>{o.order_number}</Text></Table.Td>
+                        <Table.Td><Text size="sm">{o.planned_qty} {o.unit}</Text></Table.Td>
+                        <Table.Td>
+                          {o.due_date ? (
+                            <Badge size="xs" color={new Date(o.due_date) < new Date() ? 'red' : 'blue'} variant="light">
+                              {new Date(o.due_date).toLocaleDateString()}
+                            </Badge>
+                          ) : <Text size="sm">—</Text>}
+                        </Table.Td>
+                      </Table.Tr>
+                    ))}
+                  </Table.Tbody>
+                </Table>
+              )}
+            </Paper>
+          </SimpleGrid>
+        </>
       )}
     </Stack>
   );

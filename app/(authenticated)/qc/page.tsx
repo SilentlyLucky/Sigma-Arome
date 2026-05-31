@@ -1,70 +1,230 @@
 'use client';
 
-import { SimpleGrid, Paper, Text, Title, Group, Stack, ThemeIcon, Loader, Anchor } from '@mantine/core';
-import { IconFlask, IconEye, IconAlertTriangle, IconCheck, IconX } from '@tabler/icons-react';
+import {
+  SimpleGrid, Paper, Text, Title, Group, Stack, ThemeIcon,
+  Loader, Anchor, Divider, Badge, Alert, Table,
+} from '@mantine/core';
+import { IconFlask, IconEye, IconAlertTriangle, IconCheck, IconX, IconCircleCheck, IconChevronRight } from '@tabler/icons-react';
 import { useEffect, useState } from 'react';
 import React from 'react';
+import { useRouter } from 'next/navigation';
+
+function StatusBar({ segments }: { segments: { label: string; count: number; color: string }[] }) {
+  const total = Math.max(segments.reduce((s, seg) => s + seg.count, 0), 1);
+  return (
+    <Stack gap="xs">
+      <Group gap={2} style={{ borderRadius: 4, overflow: 'hidden', height: 10 }}>
+        {segments.filter(s => s.count > 0).map(seg => (
+          <div key={seg.label} style={{ flex: seg.count / total, height: '100%', background: `var(--mantine-color-${seg.color}-5)`, minWidth: 4 }} />
+        ))}
+      </Group>
+      <Group gap="sm" wrap="wrap">
+        {segments.map(seg => (
+          <Group key={seg.label} gap={4} wrap="nowrap">
+            <div style={{ width: 10, height: 10, borderRadius: 2, background: `var(--mantine-color-${seg.color}-5)`, flexShrink: 0 }} />
+            <Text size="xs" c="dimmed">{seg.label}:</Text>
+            <Text size="xs" fw={600}>{seg.count}</Text>
+          </Group>
+        ))}
+      </Group>
+    </Stack>
+  );
+}
+
+interface QueueBatch {
+  id: string;
+  batch_number: string;
+  status: string;
+  qty: number;
+  unit: string;
+}
 
 export default function QCDashboard() {
-  const [kpis, setKpis] = useState<Array<{ label: string; value: number; color: string; href?: string }>>([]);
+  const router = useRouter();
+  const [counts, setCounts] = useState<Record<string, number>>({});
+  const [queue, setQueue] = useState<QueueBatch[]>([]);
+  const [holds, setHolds] = useState<QueueBatch[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function load() {
-      const counts = await fetch('/api/batch-counts', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          counts: [
-            { key: 'qcPending', collection: 'batches', filter: { status: { _eq: 'qc_pending' } } },
-            { key: 'underQc', collection: 'batches', filter: { status: { _eq: 'under_qc' } } },
-            { key: 'hold', collection: 'batches', filter: { status: { _eq: 'hold' } } },
-            { key: 'rejected', collection: 'batches', filter: { status: { _eq: 'rejected' } } },
-            { key: 'approved', collection: 'qc_inspections', filter: { decision: { _eq: 'approved' } } },
-          ],
-        }),
-      }).then(async (res) => (res.ok ? ((await res.json())?.counts ?? {}) : {})).catch(() => ({}));
-      const qcPending = Number(counts.qcPending ?? 0);
-      const underQc = Number(counts.underQc ?? 0);
-      const hold = Number(counts.hold ?? 0);
-      const rejected = Number(counts.rejected ?? 0);
-      const approved = Number(counts.approved ?? 0);
+      const [c, queueData, holdData] = await Promise.all([
+        fetch('/api/batch-counts', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            counts: [
+              { key: 'qcPending', collection: 'batches', filter: { status: { _eq: 'qc_pending' } } },
+              { key: 'underQc', collection: 'batches', filter: { status: { _eq: 'under_qc' } } },
+              { key: 'hold', collection: 'batches', filter: { status: { _eq: 'hold' } } },
+              { key: 'rejected', collection: 'batches', filter: { status: { _eq: 'rejected' } } },
+              { key: 'approved', collection: 'qc_inspections', filter: { decision: { _eq: 'approved' } } },
+            ],
+          }),
+        }).then(async r => r.ok ? (await r.json())?.counts ?? {} : {}).catch(() => ({})),
 
-      setKpis([
-        { label: 'Waiting for QC', value: qcPending, color: 'orange', href: '/qc/queue' },
-        { label: 'Being Inspected', value: underQc, color: 'blue', href: '/qc/queue' },
-        { label: 'On Hold', value: hold, color: 'yellow', href: '/qc/holds' },
-        { label: 'Rejected', value: rejected, color: 'red', href: '/qc/holds' },
-        { label: 'Approved Inspections', value: approved, color: 'green' },
+        fetch('/api/items/batches?filter[status][_in]=qc_pending,under_qc&fields[]=id&fields[]=batch_number&fields[]=status&fields[]=qty&fields[]=unit&limit=8&sort[]=id')
+          .then(async r => r.ok ? (await r.json())?.data ?? [] : []).catch(() => []),
+
+        fetch('/api/items/batches?filter[status][_eq]=hold&fields[]=id&fields[]=batch_number&fields[]=status&fields[]=qty&fields[]=unit&limit=5&sort[]=-id')
+          .then(async r => r.ok ? (await r.json())?.data ?? [] : []).catch(() => []),
       ]);
+
+      setCounts(c);
+      setQueue(queueData);
+      setHolds(holdData);
       setLoading(false);
     }
     load();
   }, []);
 
-  const icons = [IconFlask, IconEye, IconAlertTriangle, IconX, IconCheck];
+  const n = (k: string) => counts[k] ?? 0;
 
   return (
     <Stack gap="lg">
       <div>
         <Title order={2}>QC Workbench</Title>
-        <Text c="dimmed" size="sm">Inspect raw materials and finished goods, review image check suggestions, and record QC decisions.</Text>
+        <Text c="dimmed" size="sm">Inspect raw materials and finished goods, review AI suggestions, and record your quality decisions.</Text>
       </div>
+
       {loading ? <Group justify="center" py="xl"><Loader /></Group> : (
-        <SimpleGrid cols={{ base: 2, sm: 3, md: 5 }} spacing="md">
-          {kpis.map((k, i) => (
-            <Paper key={k.label} p="md" radius="md" withBorder>
+        <>
+          {/* ── Priority Cards ─────────────────────────────────────────────── */}
+          <SimpleGrid cols={{ base: 2, sm: 4 }} spacing="md">
+            <Paper p="md" radius="md" withBorder style={{ cursor: 'pointer', borderColor: n('qcPending') > 0 ? 'var(--mantine-color-orange-4)' : undefined }} onClick={() => router.push('/qc/queue')}>
               <Group justify="space-between" wrap="nowrap">
-                <Stack gap={4}>
-                  <Text size="xs" c="dimmed" tt="uppercase" fw={700}>{k.label}</Text>
-                  <Title order={3}>{k.value}</Title>
+                <Stack gap={2}>
+                  <Text size="xs" c="dimmed" fw={600} tt="uppercase">Waiting for Inspection</Text>
+                  <Title order={2} c={n('qcPending') > 0 ? 'orange' : undefined}>{n('qcPending')}</Title>
+                  <Text size="xs" c="dimmed">Batches in queue</Text>
                 </Stack>
-                <ThemeIcon size="xl" radius="md" variant="light" color={k.color}>{React.createElement(icons[i] ?? IconFlask, { size: 24 })}</ThemeIcon>
+                <ThemeIcon size="xl" radius="md" variant={n('qcPending') > 0 ? 'filled' : 'light'} color="orange">
+                  <IconFlask size={22} />
+                </ThemeIcon>
               </Group>
-              {k.href && <Anchor href={k.href} size="xs" c="dimmed" mt={4} display="block">View →</Anchor>}
             </Paper>
-          ))}
-        </SimpleGrid>
+
+            <Paper p="md" radius="md" withBorder style={{ cursor: 'pointer' }} onClick={() => router.push('/qc/queue')}>
+              <Group justify="space-between" wrap="nowrap">
+                <Stack gap={2}>
+                  <Text size="xs" c="dimmed" fw={600} tt="uppercase">Being Inspected</Text>
+                  <Title order={2} c="blue">{n('underQc')}</Title>
+                  <Text size="xs" c="dimmed">Inspections in progress</Text>
+                </Stack>
+                <ThemeIcon size="xl" radius="md" variant="light" color="blue">
+                  <IconEye size={22} />
+                </ThemeIcon>
+              </Group>
+            </Paper>
+
+            <Paper p="md" radius="md" withBorder style={{ cursor: 'pointer', borderColor: n('hold') > 0 ? 'var(--mantine-color-yellow-4)' : undefined }} onClick={() => router.push('/qc/holds')}>
+              <Group justify="space-between" wrap="nowrap">
+                <Stack gap={2}>
+                  <Text size="xs" c="dimmed" fw={600} tt="uppercase">On Hold — Decision Needed</Text>
+                  <Title order={2} c={n('hold') > 0 ? 'yellow' : undefined}>{n('hold')}</Title>
+                  <Text size="xs" c="dimmed">Awaiting final review</Text>
+                </Stack>
+                <ThemeIcon size="xl" radius="md" variant={n('hold') > 0 ? 'filled' : 'light'} color="yellow">
+                  <IconAlertTriangle size={22} />
+                </ThemeIcon>
+              </Group>
+            </Paper>
+
+            <Paper p="md" radius="md" withBorder style={{ cursor: 'pointer', borderColor: n('rejected') > 0 ? 'var(--mantine-color-red-4)' : undefined }} onClick={() => router.push('/qc/holds')}>
+              <Group justify="space-between" wrap="nowrap">
+                <Stack gap={2}>
+                  <Text size="xs" c="dimmed" fw={600} tt="uppercase">Rejected</Text>
+                  <Title order={2} c={n('rejected') > 0 ? 'red' : undefined}>{n('rejected')}</Title>
+                  <Text size="xs" c="dimmed">Need follow-up action</Text>
+                </Stack>
+                <ThemeIcon size="xl" radius="md" variant={n('rejected') > 0 ? 'filled' : 'light'} color="red">
+                  <IconX size={22} />
+                </ThemeIcon>
+              </Group>
+            </Paper>
+          </SimpleGrid>
+
+          {/* ── Status Breakdown ────────────────────────────────────────────── */}
+          <Paper p="md" radius="md" withBorder>
+            <Text fw={600} size="sm" mb="sm">Batch Quality Status Breakdown</Text>
+            <StatusBar segments={[
+              { label: 'Waiting', count: n('qcPending'), color: 'orange' },
+              { label: 'In review', count: n('underQc'), color: 'blue' },
+              { label: 'On hold', count: n('hold'), color: 'yellow' },
+              { label: 'Rejected', count: n('rejected'), color: 'red' },
+              { label: 'Approved (total)', count: n('approved'), color: 'green' },
+            ]} />
+          </Paper>
+
+          {/* ── Queue Tables ────────────────────────────────────────────────── */}
+          <Divider label="Inspection Queue" labelPosition="left" />
+
+          <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
+            <Paper p="md" radius="md" withBorder>
+              <Group justify="space-between" mb="sm">
+                <Text fw={600} size="sm">Batches Waiting / In Progress</Text>
+                <Anchor href="/qc/queue" size="xs">Open queue →</Anchor>
+              </Group>
+              {queue.length === 0 ? (
+                <Alert color="green" variant="light" icon={<IconCircleCheck size={14} />}>
+                  No batches waiting for inspection right now.
+                </Alert>
+              ) : (
+                <Table withTableBorder>
+                  <Table.Thead>
+                    <Table.Tr>
+                      <Table.Th>Batch</Table.Th>
+                      <Table.Th>Qty</Table.Th>
+                      <Table.Th>Status</Table.Th>
+                    </Table.Tr>
+                  </Table.Thead>
+                  <Table.Tbody>
+                    {queue.map(b => (
+                      <Table.Tr key={b.id} style={{ cursor: 'pointer' }} onClick={() => router.push(`/qc/inspect/${b.id}`)}>
+                        <Table.Td><Text size="sm" style={{ fontFamily: 'monospace' }}>{b.batch_number}</Text></Table.Td>
+                        <Table.Td><Text size="sm">{b.qty} {b.unit}</Text></Table.Td>
+                        <Table.Td>
+                          <Badge size="xs" color={b.status === 'qc_pending' ? 'orange' : 'blue'} variant="light">
+                            {b.status === 'qc_pending' ? 'Waiting' : 'Being inspected'}
+                          </Badge>
+                        </Table.Td>
+                      </Table.Tr>
+                    ))}
+                  </Table.Tbody>
+                </Table>
+              )}
+            </Paper>
+
+            <Paper p="md" radius="md" withBorder>
+              <Group justify="space-between" mb="sm">
+                <Text fw={600} size="sm">Batches On Hold</Text>
+                <Anchor href="/qc/holds" size="xs">View holds →</Anchor>
+              </Group>
+              {holds.length === 0 ? (
+                <Alert color="green" variant="light" icon={<IconCircleCheck size={14} />}>
+                  No batches currently on hold.
+                </Alert>
+              ) : (
+                <Table withTableBorder>
+                  <Table.Thead>
+                    <Table.Tr>
+                      <Table.Th>Batch</Table.Th>
+                      <Table.Th>Qty</Table.Th>
+                    </Table.Tr>
+                  </Table.Thead>
+                  <Table.Tbody>
+                    {holds.map(b => (
+                      <Table.Tr key={b.id} style={{ cursor: 'pointer' }} onClick={() => router.push(`/qc/inspect/${b.id}`)}>
+                        <Table.Td><Text size="sm" style={{ fontFamily: 'monospace' }}>{b.batch_number}</Text></Table.Td>
+                        <Table.Td><Text size="sm">{b.qty} {b.unit}</Text></Table.Td>
+                      </Table.Tr>
+                    ))}
+                  </Table.Tbody>
+                </Table>
+              )}
+            </Paper>
+          </SimpleGrid>
+        </>
       )}
     </Stack>
   );

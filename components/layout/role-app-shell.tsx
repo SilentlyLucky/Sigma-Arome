@@ -8,66 +8,56 @@ import {
   Burger,
   Divider,
   Group,
-  Indicator,
   Menu,
   NavLink,
   Text,
 } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
-import {
-  Bell,
-  ClipboardCheck,
-  Eye,
-  Factory,
-  FileText,
-  FlaskConical,
-  Home,
-  LockKeyhole,
-  LogOut,
-  MapPin,
-  Package,
-  RadioTower,
-  Settings2,
-  Shield,
-  Sparkles,
-  TriangleAlert,
-  UserCog,
-  Users,
-} from 'lucide-react';
-import type { LucideIcon } from 'lucide-react';
+import { LogOut, Settings } from 'lucide-react';
+import type { CSSProperties, ReactNode } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import type { ReactNode } from 'react';
-import styles from './layout.module.css';
+import { NotificationBell } from '@/components/NotificationBell';
+import styles from './role-app-shell.module.css';
 
-interface NavItem {
+type NavIcon = React.ComponentType<{
+  size?: number;
+  strokeWidth?: number | string;
+  style?: CSSProperties;
+  color?: string;
+}>;
+
+export interface RoleNavItem {
   label: string;
   href: string;
-  icon: LucideIcon;
+  icon: NavIcon;
   section: string;
 }
 
-const NAV_ITEMS: NavItem[] = [
-  { label: 'Dashboard', href: '/admin', icon: Home, section: 'Overview' },
-  { label: 'Users', href: '/admin/users', icon: Users, section: 'Access Control' },
-  { label: 'Roles', href: '/admin/roles', icon: UserCog, section: 'Access Control' },
-  { label: 'Page Access', href: '/admin/permissions', icon: Shield, section: 'Access Control' },
-  { label: 'Visible Fields', href: '/admin/field-visibility', icon: Eye, section: 'Access Control' },
-  { label: 'Allowed Actions', href: '/admin/action-permissions', icon: Settings2, section: 'Access Control' },
-  { label: 'Suppliers', href: '/admin/suppliers', icon: Factory, section: 'Master Data' },
-  { label: 'Raw Materials', href: '/admin/raw-materials', icon: FlaskConical, section: 'Master Data' },
-  { label: 'Products', href: '/admin/products', icon: Package, section: 'Master Data' },
-  { label: 'Warehouse Locations', href: '/admin/warehouse-locations', icon: MapPin, section: 'Master Data' },
-  { label: 'Hazard Classes', href: '/admin/hazard-classes', icon: TriangleAlert, section: 'Master Data' },
-  { label: 'Quality Check Forms', href: '/admin/qc-templates', icon: ClipboardCheck, section: 'Master Data' },
-  { label: 'IoT Sensors', href: '/admin/iot-sensors', icon: RadioTower, section: 'Master Data' },
-  { label: 'Audit Log', href: '/admin/audit-log', icon: FileText, section: 'Audit' },
-];
+interface RoleAppShellProps {
+  avatarLabel: string;
+  basePath: string;
+  children: ReactNode;
+  navItems: RoleNavItem[];
+  notificationRole: string;
+  roleLabel: string;
+  sections: string[];
+  workspaceEyebrow: string;
+  workspaceTitle: string;
+}
 
-const SECTIONS = ['Overview', 'Access Control', 'Master Data', 'Audit'];
-
-export default function AdminLayout({ children }: { children: ReactNode }) {
+export function RoleAppShell({
+  avatarLabel,
+  basePath,
+  children,
+  navItems,
+  notificationRole,
+  roleLabel,
+  sections,
+  workspaceEyebrow,
+  workspaceTitle,
+}: RoleAppShellProps) {
   const [opened, { toggle }] = useDisclosure();
   const pathname = usePathname();
   const router = useRouter();
@@ -113,7 +103,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
                 Sigma Arome
               </Text>
               <Text size="sm" fw={500} style={{ color: '#5F6C7B', lineHeight: 1.25 }}>
-                Admin Panel
+                {roleLabel}
               </Text>
             </Box>
           </Group>
@@ -121,17 +111,17 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
 
         <Box px={18} pb={16}>
           <Text size="xs" fw={800} tt="uppercase" style={{ color: '#6E7B8B', letterSpacing: '0.06em', marginBottom: 10 }}>
-            Control Center
+            {workspaceEyebrow}
           </Text>
           <Text fw={850} size="md" style={{ color: '#102033', marginBottom: 12 }}>
-            Administration
+            {workspaceTitle}
           </Text>
           <Divider color="#E3E9DF" />
         </Box>
 
         <Box px={12} pb={22}>
-          {SECTIONS.map((section) => {
-            const items = NAV_ITEMS.filter((item) => item.section === section);
+          {sections.map((section) => {
+            const items = navItems.filter((item) => item.section === section);
             return (
               <Box key={section} mb={14}>
                 <Text
@@ -150,7 +140,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
                 </Text>
                 <Box>
                   {items.map((item) => {
-                    const active = pathname === item.href;
+                    const active = pathname === item.href || (item.href !== basePath && pathname.startsWith(item.href));
                     const Icon = item.icon;
                     return (
                       <NavLink
@@ -190,18 +180,20 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
           <Group className={styles.topBar} gap={14}>
             <Burger opened={opened} onClick={toggle} hiddenFrom="sm" size="sm" color="#17212F" />
             <Group gap={8}>
-              <Box style={{ width: 38, height: 38, borderRadius: '50%', backgroundColor: '#FFFFFF', border: '1px solid rgba(218,226,214,0.9)', boxShadow: '0 1px 4px rgba(0,0,0,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Indicator color="#16A34A" size={8} offset={5}>
-                  <ActionIcon
-                    variant="subtle"
-                    radius="xl"
-                    size={34}
-                    aria-label="Notifications"
-                    style={{ color: '#17212F' }}
-                  >
-                    <Bell size={19} strokeWidth={2} />
-                  </ActionIcon>
-                </Indicator>
+              <Box
+                style={{
+                  width: 38,
+                  height: 38,
+                  borderRadius: '50%',
+                  backgroundColor: '#FFFFFF',
+                  border: '1px solid rgba(218,226,214,0.9)',
+                  boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <NotificationBell role={notificationRole} />
               </Box>
               <Menu shadow="md" width={200} radius="md" position="bottom-end">
                 <Menu.Target>
@@ -209,13 +201,20 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
                     size={38}
                     radius="xl"
                     color="green"
-                    style={{ cursor: 'pointer', border: '1px solid rgba(218,226,214,0.9)', background: '#FFFFFF', color: '#1F8F3A', fontWeight: 800, boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}
+                    style={{
+                      cursor: 'pointer',
+                      border: '1px solid rgba(218,226,214,0.9)',
+                      background: '#FFFFFF',
+                      color: '#1F8F3A',
+                      fontWeight: 800,
+                      boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
+                    }}
                   >
-                    A
+                    {avatarLabel}
                   </Avatar>
                 </Menu.Target>
                 <Menu.Dropdown>
-                  <Menu.Item leftSection={<Sparkles size={14} />} onClick={() => router.push('/account/settings')}>
+                  <Menu.Item leftSection={<Settings size={14} />} onClick={() => router.push('/account/settings')}>
                     Settings
                   </Menu.Item>
                   <Menu.Divider />

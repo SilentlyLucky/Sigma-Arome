@@ -10,22 +10,22 @@ export default function ProductionDashboard() {
 
   useEffect(() => {
     async function load() {
-      const count = async (collection: string, filter?: Record<string, unknown>) => {
-        try {
-          const params = new URLSearchParams({ 'aggregate[count]': '*' });
-          if (filter) params.set('filter', JSON.stringify(filter));
-          const r = await fetch(`/api/items/${collection}?${params}`);
-          if (!r.ok) return 0;
-          return Number((await r.json())?.data?.[0]?.count ?? 0);
-        } catch { return 0; }
-      };
-
-      const [ready, inProgress, completed, fgPending] = await Promise.all([
-        count('production_orders', { status: { _in: ['ready', 'released'] } }),
-        count('production_orders', { status: { _eq: 'in_progress' } }),
-        count('production_orders', { status: { _eq: 'completed' } }),
-        count('batches', { batch_type: { _eq: 'finished_product' }, status: { _eq: 'qc_pending' } }),
-      ]);
+      const counts = await fetch('/api/batch-counts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          counts: [
+            { key: 'ready', collection: 'production_orders', filter: { status: { _in: ['ready', 'released'] } } },
+            { key: 'inProgress', collection: 'production_orders', filter: { status: { _eq: 'in_progress' } } },
+            { key: 'completed', collection: 'production_orders', filter: { status: { _eq: 'completed' } } },
+            { key: 'fgPending', collection: 'batches', filter: { batch_type: { _eq: 'finished_product' }, status: { _eq: 'qc_pending' } } },
+          ],
+        }),
+      }).then(async (res) => (res.ok ? ((await res.json())?.counts ?? {}) : {})).catch(() => ({}));
+      const ready = Number(counts.ready ?? 0);
+      const inProgress = Number(counts.inProgress ?? 0);
+      const completed = Number(counts.completed ?? 0);
+      const fgPending = Number(counts.fgPending ?? 0);
 
       setKpis([
         { label: 'Ready to Start', value: ready, color: 'green', icon: IconPlayerPlay, href: '/production/orders' },

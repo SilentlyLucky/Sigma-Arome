@@ -78,24 +78,17 @@ export default function AdminDashboard() {
   useEffect(() => {
     async function fetchCounts() {
       setLoading(true);
-      const results: Record<string, number> = {};
-
-      // Fetch master data counts via Next.js proxy (avoids 401 race condition)
-      await Promise.all(
-        STAT_CARDS.map(async (card) => {
-          try {
-            const res = await fetch(
-              `/api/items/${card.collection}?aggregate[count]=*`
-            );
-            if (res.ok) {
-              const data = await res.json();
-              results[card.collection] = data?.data?.[0]?.count ?? 0;
-            }
-          } catch {
-            results[card.collection] = 0;
-          }
-        })
-      );
+      const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+      const results: Record<string, number> = await fetch('/api/batch-counts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          counts: [
+            ...STAT_CARDS.map((card) => ({ key: card.collection, collection: card.collection })),
+            { key: 'audit24h', collection: 'daas_activity', filter: { timestamp: { _gte: since } } },
+          ],
+        }),
+      }).then(async (res) => (res.ok ? ((await res.json())?.counts ?? {}) : {})).catch(() => ({}));
       setCounts(results);
 
       // Fetch user count
@@ -120,19 +113,7 @@ export default function AdminDashboard() {
         setRoleCount(0);
       }
 
-      // Fetch recent audit log count (last 24h)
-      try {
-        const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-        const res = await fetch(
-          `/api/items/daas_activity?aggregate[count]=*&filter[timestamp][_gte]=${encodeURIComponent(since)}`
-        );
-        if (res.ok) {
-          const data = await res.json();
-          setAuditCount(data?.data?.[0]?.count ?? 0);
-        }
-      } catch {
-        setAuditCount(0);
-      }
+      setAuditCount(Number(results.audit24h ?? 0));
 
       setLoading(false);
     }

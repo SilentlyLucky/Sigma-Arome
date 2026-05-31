@@ -11,23 +11,24 @@ export default function QCDashboard() {
 
   useEffect(() => {
     async function load() {
-      const count = async (collection: string, filter?: Record<string, unknown>) => {
-        try {
-          const params = new URLSearchParams({ 'aggregate[count]': '*' });
-          if (filter) params.set('filter', JSON.stringify(filter));
-          const r = await fetch(`/api/items/${collection}?${params}`);
-          if (!r.ok) return 0;
-          return Number((await r.json())?.data?.[0]?.count ?? 0);
-        } catch { return 0; }
-      };
-
-      const [qcPending, underQc, hold, rejected, approved] = await Promise.all([
-        count('batches', { status: { _eq: 'qc_pending' } }),
-        count('batches', { status: { _eq: 'under_qc' } }),
-        count('batches', { status: { _eq: 'hold' } }),
-        count('batches', { status: { _eq: 'rejected' } }),
-        count('qc_inspections', { decision: { _eq: 'approved' } }),
-      ]);
+      const counts = await fetch('/api/batch-counts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          counts: [
+            { key: 'qcPending', collection: 'batches', filter: { status: { _eq: 'qc_pending' } } },
+            { key: 'underQc', collection: 'batches', filter: { status: { _eq: 'under_qc' } } },
+            { key: 'hold', collection: 'batches', filter: { status: { _eq: 'hold' } } },
+            { key: 'rejected', collection: 'batches', filter: { status: { _eq: 'rejected' } } },
+            { key: 'approved', collection: 'qc_inspections', filter: { decision: { _eq: 'approved' } } },
+          ],
+        }),
+      }).then(async (res) => (res.ok ? ((await res.json())?.counts ?? {}) : {})).catch(() => ({}));
+      const qcPending = Number(counts.qcPending ?? 0);
+      const underQc = Number(counts.underQc ?? 0);
+      const hold = Number(counts.hold ?? 0);
+      const rejected = Number(counts.rejected ?? 0);
+      const approved = Number(counts.approved ?? 0);
 
       setKpis([
         { label: 'Waiting for QC', value: qcPending, color: 'orange', href: '/qc/queue' },

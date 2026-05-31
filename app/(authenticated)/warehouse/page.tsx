@@ -43,24 +43,24 @@ export default function WarehouseDashboard() {
   // ── KPI counts ──────────────────────────────────────────────────────────────
   useEffect(() => {
     async function load() {
-      const count = async (collection: string, filter?: Record<string, unknown>) => {
-        try {
-          const params = new URLSearchParams({ 'aggregate[count]': '*' });
-          if (filter) params.set('filter', JSON.stringify(filter));
-          const r = await fetch(`/api/items/${collection}?${params}`);
-          if (!r.ok) return 0;
-          const d = await r.json();
-          return Number(d?.data?.[0]?.count ?? 0);
-        } catch { return 0; }
-      };
-
-      const [incoming, receivedToday, qcPending, approvedWaiting, pickPending] = await Promise.all([
-        count('raw_material_orders', { status: { _eq: 'ordered' } }),
-        count('raw_material_receipts'),
-        count('batches', { status: { _eq: 'qc_pending' } }),
-        count('batches', { status: { _eq: 'approved' } }),
-        count('material_request_items', { issued_qty: { _eq: 0 } }),
-      ]);
+      const counts = await fetch('/api/batch-counts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          counts: [
+            { key: 'incoming', collection: 'raw_material_orders', filter: { status: { _eq: 'ordered' } } },
+            { key: 'receivedToday', collection: 'raw_material_receipts' },
+            { key: 'qcPending', collection: 'batches', filter: { status: { _eq: 'qc_pending' } } },
+            { key: 'approvedWaiting', collection: 'batches', filter: { status: { _eq: 'approved' } } },
+            { key: 'pickPending', collection: 'material_request_items', filter: { issued_qty: { _eq: 0 } } },
+          ],
+        }),
+      }).then(async (res) => (res.ok ? ((await res.json())?.counts ?? {}) : {})).catch(() => ({}));
+      const incoming = Number(counts.incoming ?? 0);
+      const receivedToday = Number(counts.receivedToday ?? 0);
+      const qcPending = Number(counts.qcPending ?? 0);
+      const approvedWaiting = Number(counts.approvedWaiting ?? 0);
+      const pickPending = Number(counts.pickPending ?? 0);
 
       setKpis([
         { label: 'Expected Raw Material Deliveries', value: incoming, icon: IconTruckDelivery, color: 'blue', href: '/warehouse/incoming' },

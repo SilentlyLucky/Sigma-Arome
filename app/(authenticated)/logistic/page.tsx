@@ -10,22 +10,22 @@ export default function LogisticDashboard() {
 
   useEffect(() => {
     async function load() {
-      const count = async (collection: string, filter?: Record<string, unknown>) => {
-        try {
-          const params = new URLSearchParams({ 'aggregate[count]': '*' });
-          if (filter) params.set('filter', JSON.stringify(filter));
-          const r = await fetch(`/api/items/${collection}?${params}`);
-          if (!r.ok) return 0;
-          return Number((await r.json())?.data?.[0]?.count ?? 0);
-        } catch { return 0; }
-      };
-
-      const [submitted, approved, issued, storedAvailable] = await Promise.all([
-        count('material_requests', { status: { _eq: 'submitted' } }),
-        count('material_requests', { status: { _eq: 'approved' } }),
-        count('material_requests', { status: { _in: ['partially_issued', 'issued'] } }),
-        count('batches', { status: { _eq: 'stored_available' } }),
-      ]);
+      const counts = await fetch('/api/batch-counts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          counts: [
+            { key: 'submitted', collection: 'material_requests', filter: { status: { _eq: 'submitted' } } },
+            { key: 'approved', collection: 'material_requests', filter: { status: { _eq: 'approved' } } },
+            { key: 'issued', collection: 'material_requests', filter: { status: { _in: ['partially_issued', 'issued'] } } },
+            { key: 'storedAvailable', collection: 'batches', filter: { status: { _eq: 'stored_available' } } },
+          ],
+        }),
+      }).then(async (res) => (res.ok ? ((await res.json())?.counts ?? {}) : {})).catch(() => ({}));
+      const submitted = Number(counts.submitted ?? 0);
+      const approved = Number(counts.approved ?? 0);
+      const issued = Number(counts.issued ?? 0);
+      const storedAvailable = Number(counts.storedAvailable ?? 0);
 
       setKpis([
         { label: 'Requests Waiting for Review', value: submitted, color: 'orange', icon: IconClipboardList, href: '/logistic/requests' },

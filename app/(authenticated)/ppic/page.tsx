@@ -47,28 +47,30 @@ export default function PPICDashboard() {
       setLoading(true);
       const results: KPI[] = [];
 
-      // Helper to count items with filter
-      const countItems = async (collection: string, filter?: Record<string, unknown>): Promise<number> => {
-        try {
-          const params = new URLSearchParams({ 'aggregate[count]': '*' });
-          if (filter) params.set('filter', JSON.stringify(filter));
-          const res = await fetch(`/api/items/${collection}?${params.toString()}`);
-          if (!res.ok) return 0;
-          const data = await res.json();
-          return Number(data?.data?.[0]?.count ?? 0);
-        } catch { return 0; }
-      };
-
-      const [ordersWaiting, ordersPartial, pendingQC, approved, onHold, requestsPending, prodWaiting, prodInProgress] = await Promise.all([
-        countItems('raw_material_orders', { status: { _eq: 'ordered' } }),
-        countItems('raw_material_orders', { status: { _eq: 'partially_received' } }),
-        countItems('raw_material_orders', { status: { _eq: 'received' } }), // proxy for QC pending
-        countItems('raw_material_orders', { status: { _eq: 'closed' } }), // proxy for approved
-        countItems('raw_material_orders', { status: { _eq: 'draft' } }), // placeholder
-        countItems('material_requests', { status: { _eq: 'pending' } }),
-        countItems('production_orders', { status: { _in: ['draft', 'material_checked', 'material_requested', 'waiting_issue'] } }),
-        countItems('production_orders', { status: { _eq: 'in_production' } }),
-      ]);
+      const counts = await fetch('/api/batch-counts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          counts: [
+            { key: 'ordersWaiting', collection: 'raw_material_orders', filter: { status: { _eq: 'ordered' } } },
+            { key: 'ordersPartial', collection: 'raw_material_orders', filter: { status: { _eq: 'partially_received' } } },
+            { key: 'pendingQC', collection: 'raw_material_orders', filter: { status: { _eq: 'received' } } },
+            { key: 'approved', collection: 'raw_material_orders', filter: { status: { _eq: 'closed' } } },
+            { key: 'onHold', collection: 'raw_material_orders', filter: { status: { _eq: 'draft' } } },
+            { key: 'requestsPending', collection: 'material_requests', filter: { status: { _eq: 'pending' } } },
+            { key: 'prodWaiting', collection: 'production_orders', filter: { status: { _in: ['draft', 'material_checked', 'material_requested', 'waiting_issue'] } } },
+            { key: 'prodInProgress', collection: 'production_orders', filter: { status: { _eq: 'in_production' } } },
+          ],
+        }),
+      }).then(async (res) => (res.ok ? ((await res.json())?.counts ?? {}) : {})).catch(() => ({}));
+      const ordersWaiting = Number(counts.ordersWaiting ?? 0);
+      const ordersPartial = Number(counts.ordersPartial ?? 0);
+      const pendingQC = Number(counts.pendingQC ?? 0);
+      const approved = Number(counts.approved ?? 0);
+      const onHold = Number(counts.onHold ?? 0);
+      const requestsPending = Number(counts.requestsPending ?? 0);
+      const prodWaiting = Number(counts.prodWaiting ?? 0);
+      const prodInProgress = Number(counts.prodInProgress ?? 0);
 
       results.push(
         { label: 'Raw Materials Waiting to Arrive', value: ordersWaiting, icon: IconTruckDelivery, color: 'orange', href: '/ppic/orders' },

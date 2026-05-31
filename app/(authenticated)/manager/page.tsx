@@ -10,24 +10,26 @@ export default function ManagerDashboard() {
 
   useEffect(() => {
     async function load() {
-      const count = async (collection: string, filter?: Record<string, unknown>) => {
-        try {
-          const params = new URLSearchParams({ 'aggregate[count]': '*' });
-          if (filter) params.set('filter', JSON.stringify(filter));
-          const r = await fetch(`/api/items/${collection}?${params}`);
-          if (!r.ok) return 0;
-          return Number((await r.json())?.data?.[0]?.count ?? 0);
-        } catch { return 0; }
-      };
-
-      const [ordersActive, qcPending, qcHold, storedAvailable, prodInProgress, prodCompleted] = await Promise.all([
-        count('raw_material_orders', { status: { _in: ['ordered', 'partially_received'] } }),
-        count('batches', { status: { _in: ['qc_pending', 'under_qc'] } }),
-        count('batches', { status: { _eq: 'hold' } }),
-        count('batches', { status: { _eq: 'stored_available' } }),
-        count('production_orders', { status: { _eq: 'in_progress' } }),
-        count('production_orders', { status: { _eq: 'completed' } }),
-      ]);
+      const counts = await fetch('/api/batch-counts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          counts: [
+            { key: 'ordersActive', collection: 'raw_material_orders', filter: { status: { _in: ['ordered', 'partially_received'] } } },
+            { key: 'qcPending', collection: 'batches', filter: { status: { _in: ['qc_pending', 'under_qc'] } } },
+            { key: 'qcHold', collection: 'batches', filter: { status: { _eq: 'hold' } } },
+            { key: 'storedAvailable', collection: 'batches', filter: { status: { _eq: 'stored_available' } } },
+            { key: 'prodInProgress', collection: 'production_orders', filter: { status: { _eq: 'in_progress' } } },
+            { key: 'prodCompleted', collection: 'production_orders', filter: { status: { _eq: 'completed' } } },
+          ],
+        }),
+      }).then(async (res) => (res.ok ? ((await res.json())?.counts ?? {}) : {})).catch(() => ({}));
+      const ordersActive = Number(counts.ordersActive ?? 0);
+      const qcPending = Number(counts.qcPending ?? 0);
+      const qcHold = Number(counts.qcHold ?? 0);
+      const storedAvailable = Number(counts.storedAvailable ?? 0);
+      const prodInProgress = Number(counts.prodInProgress ?? 0);
+      const prodCompleted = Number(counts.prodCompleted ?? 0);
 
       setKpis([
         { label: 'Raw Material Orders in Progress', value: ordersActive, color: 'blue', icon: IconShoppingCart },

@@ -511,6 +511,15 @@ export const CollectionList: React.FC<CollectionListProps> = ({
   // =========================================================================
   // Load items (page data only — counts are fetched separately)
   // =========================================================================
+  const isFiltered = useMemo(() => {
+    return (
+      search.trim().length > 0 ||
+      (filter && Object.keys(filter).length > 0) ||
+      (internalFilter && Object.keys(internalFilter).length > 0) ||
+      (archiveField && archiveFilterMode !== "all")
+    );
+  }, [search, filter, internalFilter, archiveField, archiveFilterMode]);
+
   const loadItems = useCallback(async () => {
     if (visibleFieldKeys.length === 0) return;
     try {
@@ -575,13 +584,17 @@ export const CollectionList: React.FC<CollectionListProps> = ({
       if (Array.isArray(rawResponse)) {
         setItems(rawResponse);
         setFilterCount(rawResponse.length);
+        if (!isFiltered) setTotalCount(rawResponse.length);
       } else {
         setItems(rawResponse.data || []);
         // DaaS returns meta.total = total matching rows (ignoring pagination)
         if (rawResponse.meta?.total != null) {
           setFilterCount(rawResponse.meta.total);
+          if (!isFiltered) setTotalCount(rawResponse.meta.total);
         } else {
-          setFilterCount(rawResponse.data?.length ?? 0);
+          const count = rawResponse.data?.length ?? 0;
+          setFilterCount(count);
+          if (!isFiltered) setTotalCount(count);
         }
       }
     } catch (err) {
@@ -604,6 +617,7 @@ export const CollectionList: React.FC<CollectionListProps> = ({
     archiveField,
     archiveFilterMode,
     archiveValue,
+    isFiltered,
   ]);
 
   // =========================================================================
@@ -631,10 +645,13 @@ export const CollectionList: React.FC<CollectionListProps> = ({
     }
   }, [loadItems, visibleFieldKeys.length]);
 
-  // Fetch total count when collection changes
+  // Fetch total count only when the current table is filtered. For unfiltered
+  // tables, loadItems already receives the same total from DaaS meta.total.
   useEffect(() => {
-    getTotalCount();
-  }, [getTotalCount]);
+    if (isFiltered) {
+      getTotalCount();
+    }
+  }, [getTotalCount, isFiltered]);
 
   // Reset page on search/filter change
   useEffect(() => {
@@ -1005,7 +1022,9 @@ export const CollectionList: React.FC<CollectionListProps> = ({
       onDeleteSuccess?.(deletingIds);
       // Refresh list and counts (loadItems also updates filterCount via meta.total)
       loadItems();
-      getTotalCount();
+      if (isFiltered) {
+        getTotalCount();
+      }
     } catch (err) {
       console.error("Error deleting items:", err);
       setError(err instanceof Error ? err.message : "We could not delete the selected records.");
@@ -1013,7 +1032,7 @@ export const CollectionList: React.FC<CollectionListProps> = ({
     } finally {
       setDeleteLoading(false);
     }
-  }, [deletingIds, collection, primaryKeyField, loadItems, getTotalCount, onDeleteSuccess]);
+  }, [deletingIds, collection, primaryKeyField, loadItems, getTotalCount, isFiltered, onDeleteSuccess]);
 
   const handleDeleteCancel = useCallback(() => {
     setDeleteConfirmOpen(false);
@@ -1027,15 +1046,6 @@ export const CollectionList: React.FC<CollectionListProps> = ({
   //   currentItems = filterCount (filtered result set)
   //   totalItems   = totalCount  (all records in collection)
   //   isFiltered   = true when a user filter/search narrows the set
-  const isFiltered = useMemo(() => {
-    return (
-      search.trim().length > 0 ||
-      (filter && Object.keys(filter).length > 0) ||
-      (internalFilter && Object.keys(internalFilter).length > 0) ||
-      (archiveField && archiveFilterMode !== "all")
-    );
-  }, [search, filter, internalFilter, archiveField, archiveFilterMode]);
-
   const itemCountDisplay = useMemo(() => {
     if (loading) return "Loading...";
     if (filterCount === 0) return "No records";

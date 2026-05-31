@@ -617,27 +617,58 @@ export const VTable: React.FC<VTableProps> = ({
 
         {/* Data Rows */}
         {items.length > 0 && (
-          <SortableContext
-            items={itemIds}
-            strategy={verticalListSortingStrategy}
-          >
+          showManualSort ? (
+            // Manual sort active — use dnd-kit SortableContext + SortableTableRow
+            <SortableContext
+              items={itemIds}
+              strategy={verticalListSortingStrategy}
+            >
+              <tbody role="rowgroup">
+                {items.map((item) => {
+                  const id = getItemKey(item);
+                  return (
+                    <SortableTableRow
+                      key={id}
+                      id={id}
+                      item={item}
+                      headers={internalHeaders}
+                      showSelect={disabled ? "none" : showSelect}
+                      showManualSort={!disabled && showManualSort}
+                      isSelected={isItemSelected(item)}
+                      subdued={loading || reordering}
+                      sortedManually={internalSort.by === manualSortKey}
+                      hasClickListener={!disabled && clickable}
+                      rowHeight={rowHeight}
+                      disabled={disabled || internalSort.by !== manualSortKey}
+                      renderCell={renderCell}
+                      renderAppend={renderRowAppend}
+                      hasAppendColumn={!!(renderRowAppend || renderHeaderAppend)}
+                      onClick={(e) => handleRowClick(item, e)}
+                      onSelect={() =>
+                        handleItemSelected(item, !isItemSelected(item))
+                      }
+                    />
+                  );
+                })}
+              </tbody>
+            </SortableContext>
+          ) : (
+            // No manual sort — plain tbody with TableRow, no dnd-kit hooks
             <tbody role="rowgroup">
               {items.map((item) => {
                 const id = getItemKey(item);
                 return (
-                  <SortableTableRow
+                  <TableRow
                     key={id}
-                    id={id}
                     item={item}
                     headers={internalHeaders}
                     showSelect={disabled ? "none" : showSelect}
-                    showManualSort={!disabled && showManualSort}
+                    showManualSort={false}
                     isSelected={isItemSelected(item)}
                     subdued={loading || reordering}
-                    sortedManually={internalSort.by === manualSortKey}
+                    sortedManually={false}
                     hasClickListener={!disabled && clickable}
-                    rowHeight={rowHeight}
-                    disabled={disabled || internalSort.by !== manualSortKey}
+                    height={rowHeight}
                     renderCell={renderCell}
                     renderAppend={renderRowAppend}
                     hasAppendColumn={!!(renderRowAppend || renderHeaderAppend)}
@@ -649,7 +680,7 @@ export const VTable: React.FC<VTableProps> = ({
                 );
               })}
             </tbody>
-          </SortableContext>
+          )
         )}
       </table>
 

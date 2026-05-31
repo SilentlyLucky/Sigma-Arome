@@ -20,15 +20,49 @@ interface NotificationBellProps {
   role: string;
 }
 
+// Full paths from DB triggers — used as fallback when link field is empty.
+const TYPE_TO_PATH: Record<string, string> = {
+  material_order_created:          '/warehouse/incoming',
+  batch_received_qc:               '/qc/queue',
+  material_order_received:         '/ppic/orders',
+  batch_qc_approved:               '/warehouse/putaway',
+  batch_qc_rejected:               '/warehouse/batches',
+  batch_qc_rejected_ppic:          '/ppic/orders',
+  batch_on_hold:                   '/warehouse/batches',
+  batch_on_hold_ppic:              '/ppic/orders',
+  production_order_released:       '/warehouse/production',
+  production_order_started:        '/production/orders',
+  production_order_completed_wh:   '/warehouse/batches',
+  production_order_completed_ppic: '/ppic/production',
+  material_request_submitted:      '/logistic/requests',
+  material_request_coordinated:    '/warehouse/issue',
+};
+
+const ROLE_DASHBOARD: Record<string, string> = {
+  warehouse:  '/warehouse',
+  qc:         '/qc',
+  ppic:       '/ppic',
+  logistic:   '/logistic',
+  production: '/production',
+  manager:    '/manager',
+  admin:      '/admin',
+};
+
 export function NotificationBell({ role }: NotificationBellProps) {
   const [opened, { toggle, close }] = useDisclosure(false);
   const router = useRouter();
   const { notifications, unreadCount, markRead, markAllRead } = useNotifications(role);
 
-  const handleClick = async (id: string, link: string) => {
-    await markRead(id);
+  const handleClick = (id: string, link: string, type: string) => {
+    // Resolve destination: prefer stored link → type map → role dashboard
+    const destination =
+      (link && link.length > 1)
+        ? link
+        : (TYPE_TO_PATH[type] ?? ROLE_DASHBOARD[role] ?? '/');
+
+    markRead(id); // fire-and-forget — don't block navigation
     close();
-    router.push(link);
+    router.push(destination);
   };
 
   const formatTime = (iso: string) => {
@@ -100,7 +134,7 @@ export function NotificationBell({ role }: NotificationBellProps) {
               {notifications.map((notif) => (
                 <UnstyledButton
                   key={notif.id}
-                  onClick={() => handleClick(notif.id, notif.link)}
+                  onClick={() => handleClick(notif.id, notif.link, notif.type)}
                   style={{
                     display: 'block',
                     width: '100%',

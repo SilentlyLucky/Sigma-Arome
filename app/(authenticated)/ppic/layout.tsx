@@ -12,6 +12,7 @@ import {
   Avatar,
   Divider,
 } from '@mantine/core';
+import { NotificationBell } from '@/components/NotificationBell';
 import { useDisclosure } from '@mantine/hooks';
 import {
   IconDashboard,
@@ -60,18 +61,21 @@ export default function PPICLayout({ children }: { children: ReactNode }) {
             <Title order={4} c="teal">Sigma Arome</Title>
             <Text size="xs" c="dimmed" visibleFrom="sm">PPIC Planning</Text>
           </Group>
-          <Menu shadow="md" width={200}>
-            <Menu.Target>
-              <ActionIcon variant="subtle" size="lg" radius="xl">
-                <Avatar size="sm" color="teal">P</Avatar>
-              </ActionIcon>
-            </Menu.Target>
-            <Menu.Dropdown>
-              <Menu.Item leftSection={<IconSettings size={14} />}>Settings</Menu.Item>
-              <Menu.Divider />
-              <Menu.Item leftSection={<IconLogout size={14} />} color="red" onClick={handleLogout}>Logout</Menu.Item>
-            </Menu.Dropdown>
-          </Menu>
+          <Group gap="xs">
+            <NotificationBell role="ppic" />
+            <Menu shadow="md" width={200}>
+              <Menu.Target>
+                <ActionIcon variant="subtle" size="lg" radius="xl">
+                  <Avatar size="sm" color="teal">P</Avatar>
+                </ActionIcon>
+              </Menu.Target>
+              <Menu.Dropdown>
+                <Menu.Item leftSection={<IconSettings size={14} />}>Settings</Menu.Item>
+                <Menu.Divider />
+                <Menu.Item leftSection={<IconLogout size={14} />} color="red" onClick={handleLogout}>Logout</Menu.Item>
+              </Menu.Dropdown>
+            </Menu>
+          </Group>
         </Group>
       </AppShell.Header>
 

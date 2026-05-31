@@ -1,6 +1,7 @@
 'use client';
 
 import { AppShell, Burger, Group, NavLink, Text, Title, ActionIcon, Menu, Avatar, Divider } from '@mantine/core';
+import { NotificationBell } from '@/components/NotificationBell';
 import { useDisclosure } from '@mantine/hooks';
 import { IconDashboard, IconFlask, IconClipboardCheck, IconAlertTriangle, IconLogout, IconSettings } from '@tabler/icons-react';
 import Link from 'next/link';
@@ -30,14 +31,17 @@ export default function QCLayout({ children }: { children: ReactNode }) {
             <Title order={4} c="grape">Sigma Arome</Title>
             <Text size="xs" c="dimmed" visibleFrom="sm">QC Workbench</Text>
           </Group>
-          <Menu shadow="md" width={200}>
-            <Menu.Target><ActionIcon variant="subtle" size="lg" radius="xl"><Avatar size="sm" color="grape">Q</Avatar></ActionIcon></Menu.Target>
-            <Menu.Dropdown>
-              <Menu.Item leftSection={<IconSettings size={14} />}>Settings</Menu.Item>
-              <Menu.Divider />
-              <Menu.Item leftSection={<IconLogout size={14} />} color="red" onClick={async () => { await fetch('/api/auth/logout', { method: 'POST' }); router.push('/login'); }}>Logout</Menu.Item>
-            </Menu.Dropdown>
-          </Menu>
+          <Group gap="xs">
+            <NotificationBell role="qc" />
+            <Menu shadow="md" width={200}>
+              <Menu.Target><ActionIcon variant="subtle" size="lg" radius="xl"><Avatar size="sm" color="grape">Q</Avatar></ActionIcon></Menu.Target>
+              <Menu.Dropdown>
+                <Menu.Item leftSection={<IconSettings size={14} />}>Settings</Menu.Item>
+                <Menu.Divider />
+                <Menu.Item leftSection={<IconLogout size={14} />} color="red" onClick={async () => { await fetch('/api/auth/logout', { method: 'POST' }); router.push('/login'); }}>Logout</Menu.Item>
+              </Menu.Dropdown>
+            </Menu>
+          </Group>
         </Group>
       </AppShell.Header>
       <AppShell.Navbar p="xs" style={{ overflowY: 'auto' }}>

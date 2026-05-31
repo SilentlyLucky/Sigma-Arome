@@ -34,6 +34,10 @@ export function useNotifications(role: string) {
   useEffect(() => {
     fetchUnread();
 
+    // Poll every 5s for near-live updates. Self-hosted Supabase often doesn't
+    // expose the supabase_realtime publication, so polling is the safe default.
+    const pollInterval = setInterval(fetchUnread, 5000);
+
     const supabase = createClient();
     const channel = supabase
       .channel(`notifications:${role}`)
@@ -47,7 +51,10 @@ export function useNotifications(role: string) {
         },
         (payload) => {
           const newNotif = payload.new as AppNotification;
-          setNotifications((prev) => [newNotif, ...prev].slice(0, 20));
+          // Avoid duplicates if the poll already picked this up
+          setNotifications((prev) =>
+            prev.some((n) => n.id === newNotif.id) ? prev : [newNotif, ...prev].slice(0, 20)
+          );
         }
       )
       .subscribe();
@@ -55,6 +62,7 @@ export function useNotifications(role: string) {
     channelRef.current = channel;
 
     return () => {
+      clearInterval(pollInterval);
       supabase.removeChannel(channel);
     };
   }, [role, fetchUnread]);

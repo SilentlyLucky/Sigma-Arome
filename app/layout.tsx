@@ -30,8 +30,8 @@ export default function RootLayout({
     <html lang="en" {...mantineHtmlProps}>
       <head>
         <ColorSchemeScript defaultColorScheme="light" />
-        <link rel="icon" type="image/png" href="/Sigma_Arome_Logo.png" />
-        <link rel="apple-touch-icon" href="/Sigma_Arome_Logo.png" />
+        <link rel="icon" type="image/png" href="/SIGMA_AROME_LOGO_ONLY.png" />
+        <link rel="apple-touch-icon" href="/SIGMA_AROME_LOGO_ONLY.png" />
         <meta
           name="viewport"
           content="minimum-scale=1, initial-scale=1, width=device-width, user-scalable=no"

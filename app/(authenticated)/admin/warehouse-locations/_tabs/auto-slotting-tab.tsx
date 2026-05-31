@@ -120,10 +120,8 @@ export function AutoSlottingTab() {
   return (
     <Stack gap="md">
       <Alert icon={<IconInfoCircle size={16} />} color="blue" variant="light">
-        Rule-based engine (no AI/LLM). Locations are scored on{' '}
-        <strong>Temperature 40% · Hazard 30% · Capacity 15% · Occupancy 15%</strong>. Any location
-        that is hazard-incompatible, temperature-incompatible, or lacks capacity is eliminated
-        outright. The top recommendation and its reasoning are saved when a batch is QC-released.
+        Storage suggestions compare each bin by temperature fit, safety rules, available space, and current use.
+        Bins that are unsafe, unsuitable, or full are not recommended.
       </Alert>
 
       <Group align="flex-end" gap="sm">
@@ -132,8 +130,8 @@ export function AutoSlottingTab() {
         ) : batchChoices.length > 0 ? (
           <Box style={{ flex: 1, maxWidth: 560 }}>
             <SelectDropdown
-              label="Select a QC-released batch"
-              placeholder="Choose a batch to slot"
+              label="Select a batch ready for storage"
+              placeholder="Choose a batch to place"
               choices={batchChoices}
               value={selectedBatch}
               onChange={(v) => setSelectedBatch(String(v ?? ''))}
@@ -144,7 +142,7 @@ export function AutoSlottingTab() {
           <Input
             label="Batch"
             value=""
-            placeholder="No approved batches available"
+            placeholder="No batches ready for storage"
             disabled
             onChange={() => {}}
           />
@@ -155,7 +153,7 @@ export function AutoSlottingTab() {
           disabled={!selectedBatch || computing}
           loading={computing}
         >
-          Compute Recommendations
+          Suggest Storage Locations
         </Button>
       </Group>
 
@@ -183,7 +181,7 @@ export function AutoSlottingTab() {
 
           {result.candidates.length === 0 ? (
             <Alert color="orange" variant="light" icon={<IconInfoCircle size={16} />}>
-              No compatible location found. All candidate bins were eliminated (see below).
+              No suitable location found. The bins below are not recommended.
             </Alert>
           ) : (
             <Stack gap="sm">
@@ -249,7 +247,7 @@ export function AutoSlottingTab() {
               <Group gap="xs" mb="sm">
                 <IconBan size={16} color="var(--mantine-color-red-6)" />
                 <Text fw={600} size="sm">
-                  Eliminated locations ({result.eliminated.length})
+                  Locations not recommended ({result.eliminated.length})
                 </Text>
               </Group>
               <ScrollArea.Autosize mah={240}>

@@ -29,9 +29,9 @@ export default function ProductionDashboard() {
 
       setKpis([
         { label: 'Ready to Start', value: ready, color: 'green', icon: IconPlayerPlay, href: '/production/orders' },
-        { label: 'In Progress', value: inProgress, color: 'violet', icon: IconClock, href: '/production/active' },
-        { label: 'Completed', value: completed, color: 'teal', icon: IconCheck, href: '/production/completed' },
-        { label: 'FG Awaiting QC', value: fgPending, color: 'orange', icon: IconPackage },
+        { label: 'Being Produced', value: inProgress, color: 'violet', icon: IconClock, href: '/production/active' },
+        { label: 'Finished Orders', value: completed, color: 'teal', icon: IconCheck, href: '/production/completed' },
+        { label: 'Finished Goods Waiting for QC', value: fgPending, color: 'orange', icon: IconPackage },
       ]);
       setLoading(false);
     }
@@ -41,8 +41,8 @@ export default function ProductionDashboard() {
   return (
     <Stack gap="lg">
       <div>
-        <Title order={2}>Production Execution Board</Title>
-        <Text c="dimmed" size="sm">Execute production orders — confirm material receipt, record consumption, yield, and output.</Text>
+        <Title order={2}>Production Workbench</Title>
+        <Text c="dimmed" size="sm">Start production orders, record materials used, and confirm finished output.</Text>
       </div>
       {loading ? <Group justify="center" py="xl"><Loader /></Group> : (
         <SimpleGrid cols={{ base: 2, sm: 4 }} spacing="md">

@@ -80,7 +80,7 @@ export default function EditHazardClassPage() {
     <Stack gap="md">
       <div>
         <Title order={2}>Edit Hazard Class</Title>
-        <Text c="dimmed" size="sm">Update hazard class details and co-location rules.</Text>
+        <Text c="dimmed" size="sm">Update hazard details and choose which materials should not be stored together.</Text>
       </div>
 
       <CollectionForm
@@ -94,11 +94,9 @@ export default function EditHazardClassPage() {
       <Paper p="md" withBorder>
         <Stack gap="sm">
           <div>
-            <Text fw={600}>Unsuitable With (Co-location Rules)</Text>
+            <Text fw={600}>Cannot Be Stored With</Text>
             <Text c="dimmed" size="xs">
-              Hazard classes that cannot be stored next to this one. The slotting engine
-              will block any location currently holding a material from one of these
-              classes.
+              Choose hazard classes that should not be placed near this one. Storage suggestions will avoid bins that already contain those materials.
             </Text>
           </div>
 
@@ -106,7 +104,7 @@ export default function EditHazardClassPage() {
             <Loader size="sm" />
           ) : (
             <SelectMultipleDropdown
-              label="Cannot be co-located with"
+              label="Cannot be stored with"
               placeholder="Select one or more hazard classes"
               choices={otherChoices}
               value={unsuitable}
@@ -121,7 +119,7 @@ export default function EditHazardClassPage() {
 
           <Group justify="flex-end">
             <Button onClick={saveUnsuitable} loading={saving} disabled={loading}>
-              Save Co-location Rules
+              Save Storage Rules
             </Button>
           </Group>
         </Stack>

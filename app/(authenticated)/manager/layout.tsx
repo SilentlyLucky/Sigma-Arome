@@ -9,11 +9,11 @@ import type { ReactNode } from 'react';
 
 const NAV_ITEMS = [
   { label: 'Dashboard', href: '/manager', icon: IconDashboard, section: 'Overview' },
-  { label: 'PPIC Orders', href: '/manager/orders', icon: IconShoppingCart, section: 'Operations' },
-  { label: 'QC Status', href: '/manager/qc', icon: IconFlask, section: 'Operations' },
+  { label: 'Raw Material Orders', href: '/manager/orders', icon: IconShoppingCart, section: 'Operations' },
+  { label: 'Quality Checks', href: '/manager/qc', icon: IconFlask, section: 'Operations' },
   { label: 'Inventory', href: '/manager/inventory', icon: IconPackage, section: 'Operations' },
   { label: 'Production', href: '/manager/production', icon: IconBuildingFactory, section: 'Operations' },
-  { label: 'Batch Traceability', href: '/manager/traceability', icon: IconRoute, section: 'Traceability' },
+  { label: 'Batch History', href: '/manager/traceability', icon: IconRoute, section: 'Traceability' },
 ];
 const SECTIONS = ['Overview', 'Operations', 'Traceability'];
 

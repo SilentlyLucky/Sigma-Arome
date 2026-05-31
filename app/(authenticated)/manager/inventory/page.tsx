@@ -10,8 +10,8 @@ export default function ManagerInventoryPage() {
   return (
     <Stack gap="md">
       <div>
-        <Title order={2}>Inventory — All Batches</Title>
-        <Text c="dimmed" size="sm">All batches across the factory — raw material and finished product.</Text>
+        <Title order={2}>Inventory - All Batches</Title>
+        <Text c="dimmed" size="sm">Raw material and finished goods batches across the factory.</Text>
       </div>
       <CollectionList
         collection="batches"

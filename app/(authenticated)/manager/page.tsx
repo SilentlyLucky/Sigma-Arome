@@ -30,12 +30,12 @@ export default function ManagerDashboard() {
       ]);
 
       setKpis([
-        { label: 'Active RM Orders', value: ordersActive, color: 'blue', icon: IconShoppingCart },
-        { label: 'QC Pending / Under QC', value: qcPending, color: 'orange', icon: IconFlask },
-        { label: 'QC Hold', value: qcHold, color: 'red', icon: IconAlertTriangle },
-        { label: 'Available Stock (batches)', value: storedAvailable, color: 'green', icon: IconPackage },
-        { label: 'Production In Progress', value: prodInProgress, color: 'violet', icon: IconBuildingFactory },
-        { label: 'Production Completed', value: prodCompleted, color: 'teal', icon: IconCheck },
+        { label: 'Raw Material Orders in Progress', value: ordersActive, color: 'blue', icon: IconShoppingCart },
+        { label: 'Batches Waiting for QC', value: qcPending, color: 'orange', icon: IconFlask },
+        { label: 'Batches on Hold', value: qcHold, color: 'red', icon: IconAlertTriangle },
+        { label: 'Batches Ready for Use', value: storedAvailable, color: 'green', icon: IconPackage },
+        { label: 'Production Running', value: prodInProgress, color: 'violet', icon: IconBuildingFactory },
+        { label: 'Finished Production Orders', value: prodCompleted, color: 'teal', icon: IconCheck },
       ]);
       setLoading(false);
     }
@@ -45,8 +45,8 @@ export default function ManagerDashboard() {
   return (
     <Stack gap="lg">
       <div>
-        <Title order={2}>Executive Operations Dashboard</Title>
-        <Text c="dimmed" size="sm">Cross-functional factory overview — PPIC, QC, Warehouse, Logistic, Production status at a glance.</Text>
+        <Title order={2}>Operations Overview</Title>
+        <Text c="dimmed" size="sm">A quick view of purchasing, quality checks, warehouse stock, logistics, and production.</Text>
       </div>
       {loading ? <Group justify="center" py="xl"><Loader /></Group> : (
         <SimpleGrid cols={{ base: 2, sm: 3, md: 6 }} spacing="md">

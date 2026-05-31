@@ -9,11 +9,11 @@ import type { ReactNode } from 'react';
 
 const NAV_ITEMS = [
   { label: 'Dashboard', href: '/production', icon: IconDashboard, section: 'Overview' },
-  { label: 'Production Orders', href: '/production/orders', icon: IconListDetails, section: 'Execution' },
-  { label: 'Active Production', href: '/production/active', icon: IconPlayerPlay, section: 'Execution' },
-  { label: 'Completed', href: '/production/completed', icon: IconPackage, section: 'Records' },
+  { label: 'Orders to Make', href: '/production/orders', icon: IconListDetails, section: 'Production' },
+  { label: 'Work in Progress', href: '/production/active', icon: IconPlayerPlay, section: 'Production' },
+  { label: 'Finished Orders', href: '/production/completed', icon: IconPackage, section: 'Records' },
 ];
-const SECTIONS = ['Overview', 'Execution', 'Records'];
+const SECTIONS = ['Overview', 'Production', 'Records'];
 
 export default function ProductionLayout({ children }: { children: ReactNode }) {
   const [opened, { toggle }] = useDisclosure();
@@ -27,7 +27,7 @@ export default function ProductionLayout({ children }: { children: ReactNode }) 
           <Group>
             <Burger opened={opened} onClick={toggle} hiddenFrom="sm" size="sm" />
             <Title order={4} c="violet">Sigma Arome</Title>
-            <Text size="xs" c="dimmed" visibleFrom="sm">Production Execution</Text>
+            <Text size="xs" c="dimmed" visibleFrom="sm">Production Workbench</Text>
           </Group>
           <Menu shadow="md" width={200}>
             <Menu.Target><ActionIcon variant="subtle" size="lg" radius="xl"><Avatar size="sm" color="violet">P</Avatar></ActionIcon></Menu.Target>

@@ -50,21 +50,21 @@ interface StatCard {
 }
 
 const STAT_CARDS: StatCard[] = [
-  { label: 'Suppliers', icon: IconBuildingFactory2, collection: 'suppliers', color: 'blue', href: '/admin/suppliers', description: 'Supplier master records' },
-  { label: 'Raw Materials', icon: IconFlask, collection: 'raw_materials', color: 'green', href: '/admin/raw-materials', description: 'Raw material master records' },
-  { label: 'Products', icon: IconPackage, collection: 'products', color: 'violet', href: '/admin/products', description: 'Finished product master records' },
-  { label: 'Warehouse Locations', icon: IconMapPin, collection: 'warehouse_locations', color: 'orange', href: '/admin/warehouse-locations', description: 'Storage locations configured' },
-  { label: 'Hazard Classes', icon: IconAlertTriangle, collection: 'hazard_classes', color: 'red', href: '/admin/hazard-classes', description: 'Hazard classification rules' },
-  { label: 'QC Templates', icon: IconChecklist, collection: 'qc_templates', color: 'teal', href: '/admin/qc-templates', description: 'QC parameter templates' },
-  { label: 'IoT Sensors', icon: IconDeviceDesktopAnalytics, collection: 'iot_sensors', color: 'cyan', href: '/admin/iot-sensors', description: 'Simulated/real sensors' },
+  { label: 'Suppliers', icon: IconBuildingFactory2, collection: 'suppliers', color: 'blue', href: '/admin/suppliers', description: 'Supplier list' },
+  { label: 'Raw Materials', icon: IconFlask, collection: 'raw_materials', color: 'green', href: '/admin/raw-materials', description: 'Materials you buy and store' },
+  { label: 'Products', icon: IconPackage, collection: 'products', color: 'violet', href: '/admin/products', description: 'Finished goods you produce' },
+  { label: 'Warehouse Locations', icon: IconMapPin, collection: 'warehouse_locations', color: 'orange', href: '/admin/warehouse-locations', description: 'Storage areas and bins' },
+  { label: 'Hazard Classes', icon: IconAlertTriangle, collection: 'hazard_classes', color: 'red', href: '/admin/hazard-classes', description: 'Storage safety groups' },
+  { label: 'Quality Check Forms', icon: IconChecklist, collection: 'qc_templates', color: 'teal', href: '/admin/qc-templates', description: 'Inspection forms and limits' },
+  { label: 'IoT Sensors', icon: IconDeviceDesktopAnalytics, collection: 'iot_sensors', color: 'cyan', href: '/admin/iot-sensors', description: 'Warehouse monitoring sensors' },
 ];
 
 const QUICK_LINKS = [
-  { label: 'User Management', href: '/admin/users', icon: IconUsers, description: 'Create users and assign roles' },
-  { label: 'Role Management', href: '/admin/roles', icon: IconShieldCheck, description: 'View and manage system roles' },
-  { label: 'Module Permissions', href: '/admin/permissions', icon: IconShieldCheck, description: 'Configure role-based module access' },
-  { label: 'Field Visibility', href: '/admin/field-visibility', icon: IconShieldCheck, description: 'Configure field-level visibility per role' },
-  { label: 'Action Permissions', href: '/admin/action-permissions', icon: IconShieldCheck, description: 'Configure action/button permissions per role' },
+  { label: 'Users', href: '/admin/users', icon: IconUsers, description: 'Create users and assign roles' },
+  { label: 'Roles', href: '/admin/roles', icon: IconShieldCheck, description: 'Review each role' },
+  { label: 'Page Access', href: '/admin/permissions', icon: IconShieldCheck, description: 'Choose which pages each role can open' },
+  { label: 'Visible Fields', href: '/admin/field-visibility', icon: IconShieldCheck, description: 'Choose which fields each role can see' },
+  { label: 'Allowed Actions', href: '/admin/action-permissions', icon: IconShieldCheck, description: 'Choose which buttons each role can use' },
   { label: 'Audit Log', href: '/admin/audit-log', icon: IconFileText, description: 'View all system activity' },
 ];
 
@@ -148,7 +148,7 @@ export default function AdminDashboard() {
         <div>
           <Title order={2}>Admin Control Center</Title>
           <Text c="dimmed" size="sm">
-            System configuration overview — manage users, roles, master data, and permissions.
+            Manage users, roles, factory setup data, and access settings.
           </Text>
         </div>
         {loading && <Loader size="sm" />}
@@ -185,7 +185,7 @@ export default function AdminDashboard() {
         <Paper p="md" radius="md" withBorder>
           <Group justify="space-between">
             <Stack gap={4}>
-              <Text size="xs" c="dimmed" tt="uppercase" fw={700}>Master Data</Text>
+              <Text size="xs" c="dimmed" tt="uppercase" fw={700}>Setup Data</Text>
               <Group gap={4} align="center">
                 <Title order={3}>{STAT_CARDS.filter((c) => (counts[c.collection] ?? 0) > 0).length}/{STAT_CARDS.length}</Title>
                 <Badge size="xs" color={masterDataComplete ? 'green' : 'orange'} variant="light">
@@ -197,7 +197,7 @@ export default function AdminDashboard() {
               <IconActivity size={24} />
             </ThemeIcon>
           </Group>
-          <Text size="xs" c="dimmed" mt={4}>Collections with at least 1 record</Text>
+          <Text size="xs" c="dimmed" mt={4}>Setup areas with at least one record</Text>
         </Paper>
 
         <Paper p="md" radius="md" withBorder>
@@ -216,7 +216,7 @@ export default function AdminDashboard() {
 
       {/* Master Data Counts */}
       <div>
-        <Text fw={600} size="sm" mb="sm">Master Data Overview</Text>
+        <Text fw={600} size="sm" mb="sm">Factory Setup Overview</Text>
         <SimpleGrid cols={{ base: 2, sm: 3, md: 4 }} spacing="sm">
           {STAT_CARDS.map((card) => (
             <Paper key={card.collection} p="sm" radius="md" withBorder>
@@ -274,7 +274,7 @@ export default function AdminDashboard() {
                 { label: 'Raw materials added', done: (counts['raw_materials'] ?? 0) > 0 },
                 { label: 'Products added', done: (counts['products'] ?? 0) > 0 },
                 { label: 'Warehouse locations added', done: (counts['warehouse_locations'] ?? 0) > 0 },
-                { label: 'QC templates added', done: (counts['qc_templates'] ?? 0) > 0 },
+                { label: 'Quality check forms added', done: (counts['qc_templates'] ?? 0) > 0 },
                 { label: 'IoT sensors configured', done: (counts['iot_sensors'] ?? 0) > 0 },
               ].map((item) => (
                 <Group key={item.label} gap="xs">

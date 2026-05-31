@@ -12,8 +12,8 @@ export default function EditQCTemplatePage() {
   return (
     <Stack gap="md">
       <div>
-        <Title order={2}>Edit QC Template</Title>
-        <Text c="dimmed" size="sm">Update QC parameter template.</Text>
+        <Title order={2}>Edit Quality Check Form</Title>
+        <Text c="dimmed" size="sm">Update the checks and limits inspectors should use.</Text>
       </div>
       <CollectionForm
         collection="qc_templates"

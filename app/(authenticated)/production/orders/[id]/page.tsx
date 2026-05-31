@@ -42,7 +42,7 @@ export default function ProductionOrderDetailPage() {
       <Group justify="space-between">
         <div>
           <Title order={2}>Production Order</Title>
-          <Text c="dimmed" size="sm">Execute production — start, record progress, complete.</Text>
+          <Text c="dimmed" size="sm">Start the order, record production details, and mark it finished when work is complete.</Text>
         </div>
         {status && <Badge size="lg" color={STATUS_COLORS[status] ?? 'gray'} variant="light">{STATUS_LABELS[status] ?? status}</Badge>}
       </Group>
@@ -54,13 +54,13 @@ export default function ProductionOrderDetailPage() {
       )}
 
       {status === 'in_progress' && (
-        <Button leftSection={<IconCheck size={16} />} color="teal" loading={acting} onClick={() => updateStatus('completed', 'Production completed — FG batch will be created')}>
-          Complete Production
+        <Button leftSection={<IconCheck size={16} />} color="teal" loading={acting} onClick={() => updateStatus('completed', 'Production completed. A finished goods batch will be created.')}>
+          Mark as Finished
         </Button>
       )}
 
       {status === 'completed' && (
-        <Alert color="teal" variant="light">Production completed. Finished product batch should be created for QC.</Alert>
+        <Alert color="teal" variant="light">Production is finished. The finished goods batch can now move to QC.</Alert>
       )}
 
       <CollectionForm collection="production_orders" mode="edit" id={orderId} onSuccess={() => router.push('/production/orders')} onCancel={() => router.push('/production/orders')} />

@@ -183,7 +183,7 @@ export function BinsTab() {
                   <Text fw={600}>Allowed Hazard Classes</Text>
                   <Text c="dimmed" size="xs">
                     Materials with these hazard classifications may be stored in this bin. Manage
-                    hazard classes and their co-location rules in{' '}
+                    hazard classes and storage safety rules in{' '}
                     <strong>Master Data → Hazard Classes</strong>.
                   </Text>
                 </div>

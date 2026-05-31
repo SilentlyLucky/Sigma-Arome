@@ -11,11 +11,11 @@ export default function TraceabilityPage() {
   return (
     <Stack gap="md">
       <div>
-        <Title order={2}>Batch Traceability</Title>
-        <Text c="dimmed" size="sm">Trace batch genealogy — from raw material order to finished product.</Text>
+        <Title order={2}>Batch History</Title>
+        <Text c="dimmed" size="sm">Follow a batch from raw material order through inspection, storage, production, and finished goods.</Text>
       </div>
       <Alert icon={<IconInfoCircle size={16} />} color="indigo" variant="light">
-        Click a batch to view its full history: order → receipt → QC → storage → production → FG.
+        Select a batch to view its full journey: order, receipt, quality check, storage, production, and finished goods.
       </Alert>
       <CollectionList
         collection="batches"

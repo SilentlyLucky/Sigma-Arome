@@ -13,8 +13,8 @@ export default function QCTemplatesPage() {
   return (
     <Stack gap="md">
       <div>
-        <Title order={2}>QC Templates</Title>
-        <Text c="dimmed" size="sm">Manage QC parameter templates for raw materials and finished products.</Text>
+        <Title order={2}>Quality Check Forms</Title>
+        <Text c="dimmed" size="sm">Manage inspection forms and acceptable limits for raw materials and finished products.</Text>
         <Text c="dimmed" size="xs" mt={4}>💡 Right-click column header to sort, align, or hide. Drag the ⋮⋮ grip to reorder columns. Drag edges to resize.</Text>
       </div>
       <CollectionList

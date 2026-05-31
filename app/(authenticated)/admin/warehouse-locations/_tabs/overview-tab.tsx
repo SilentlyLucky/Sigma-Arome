@@ -140,9 +140,9 @@ export function OverviewTab() {
         </Text>
         <SimpleGrid cols={{ base: 1, sm: 2, md: 4 }}>
           <StatCard label="Total Capacity" value={`${fmt(metrics.totalCapacityKg)} kg`} />
-          <StatCard label="Occupancy" value={`${fmt(metrics.occupancyKg)} kg`} />
-          <StatCard label="Available" value={`${fmt(availableKg)} kg`} />
-          <StatCard label="Utilization" value={`${utilizationKg}%`} />
+          <StatCard label="Used Space" value={`${fmt(metrics.occupancyKg)} kg`} />
+          <StatCard label="Space Still Available" value={`${fmt(availableKg)} kg`} />
+          <StatCard label="Space Used" value={`${utilizationKg}%`} />
         </SimpleGrid>
         <Progress
           value={utilizationKg}
@@ -160,12 +160,12 @@ export function OverviewTab() {
           </Text>
           <SimpleGrid cols={{ base: 1, sm: 2, md: 4 }}>
             <StatCard label="Total Capacity" value={`${fmt(metrics.totalCapacityPcs)} pcs`} />
-            <StatCard label="Occupancy" value={`${fmt(metrics.occupancyPcs)} pcs`} />
+            <StatCard label="Used Space" value={`${fmt(metrics.occupancyPcs)} pcs`} />
             <StatCard
-              label="Available"
+              label="Space Still Available"
               value={`${fmt(Math.max(0, metrics.totalCapacityPcs - metrics.occupancyPcs))} pcs`}
             />
-            <StatCard label="Utilization" value={`${utilizationPcs}%`} />
+            <StatCard label="Space Used" value={`${utilizationPcs}%`} />
           </SimpleGrid>
         </div>
       )}
@@ -176,9 +176,9 @@ export function OverviewTab() {
         </Text>
         <SimpleGrid cols={{ base: 1, sm: 2, md: 4 }}>
           <StatCard label="Active Bins" value={fmt(metrics.binCount)} />
-          <StatCard label="Inventory Count" value={fmt(metrics.inventoryCount)} sub="batches in a bin" />
-          <StatCard label="Released Inventory" value={fmt(metrics.released)} />
-          <StatCard label="Hold Inventory" value={fmt(metrics.hold)} />
+          <StatCard label="Stored Batches" value={fmt(metrics.inventoryCount)} sub="batches currently in bins" />
+          <StatCard label="Ready to Use" value={fmt(metrics.released)} />
+          <StatCard label="Waiting or On Hold" value={fmt(metrics.hold)} />
         </SimpleGrid>
       </div>
     </Stack>

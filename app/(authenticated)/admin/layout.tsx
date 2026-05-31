@@ -47,11 +47,11 @@ const NAV_ITEMS: NavItem[] = [
   { label: 'Dashboard', href: '/admin', icon: IconDashboard, section: 'Overview' },
 
   // Access Control
-  { label: 'User Management', href: '/admin/users', icon: IconUsers, section: 'Access Control' },
-  { label: 'Role Management', href: '/admin/roles', icon: IconUserShield, section: 'Access Control' },
-  { label: 'Module Permissions', href: '/admin/permissions', icon: IconShieldCheck, section: 'Access Control' },
-  { label: 'Field Visibility', href: '/admin/field-visibility', icon: IconEye, section: 'Access Control' },
-  { label: 'Action Permissions', href: '/admin/action-permissions', icon: IconClick, section: 'Access Control' },
+  { label: 'Users', href: '/admin/users', icon: IconUsers, section: 'Access Control' },
+  { label: 'Roles', href: '/admin/roles', icon: IconUserShield, section: 'Access Control' },
+  { label: 'Page Access', href: '/admin/permissions', icon: IconShieldCheck, section: 'Access Control' },
+  { label: 'Visible Fields', href: '/admin/field-visibility', icon: IconEye, section: 'Access Control' },
+  { label: 'Allowed Actions', href: '/admin/action-permissions', icon: IconClick, section: 'Access Control' },
 
   // Master Data
   { label: 'Suppliers', href: '/admin/suppliers', icon: IconBuildingFactory2, section: 'Master Data' },
@@ -59,7 +59,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: 'Products', href: '/admin/products', icon: IconPackage, section: 'Master Data' },
   { label: 'Warehouse Locations', href: '/admin/warehouse-locations', icon: IconMapPin, section: 'Master Data' },
   { label: 'Hazard Classes', href: '/admin/hazard-classes', icon: IconAlertTriangle, section: 'Master Data' },
-  { label: 'QC Templates', href: '/admin/qc-templates', icon: IconChecklist, section: 'Master Data' },
+  { label: 'Quality Check Forms', href: '/admin/qc-templates', icon: IconChecklist, section: 'Master Data' },
   { label: 'IoT Sensors', href: '/admin/iot-sensors', icon: IconDeviceDesktopAnalytics, section: 'Master Data' },
 
   // Audit

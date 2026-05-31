@@ -10,8 +10,8 @@ export default function CreateQCTemplatePage() {
   return (
     <Stack gap="md">
       <div>
-        <Title order={2}>Create QC Template</Title>
-        <Text c="dimmed" size="sm">Define a new QC parameter template.</Text>
+        <Title order={2}>Create Quality Check Form</Title>
+        <Text c="dimmed" size="sm">Create an inspection form with the checks and limits inspectors should use.</Text>
       </div>
       <CollectionForm
         collection="qc_templates"

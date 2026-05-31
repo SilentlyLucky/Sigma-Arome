@@ -195,12 +195,12 @@ export function InventoryViewTab() {
           onChange={(v) => setHazardFilter(String(v ?? ''))}
         />
         <SelectDropdown
-          label="QC Status"
+          label="Quality Status"
           placeholder="All"
           choices={[
             { text: 'All', value: '' },
-            { text: 'Released', value: 'released' },
-            { text: 'Hold', value: 'hold' },
+            { text: 'Ready to use', value: 'released' },
+            { text: 'Waiting or on hold', value: 'hold' },
           ]}
           value={qcFilter}
           onChange={(v) => setQcFilter(String(v ?? ''))}
@@ -230,11 +230,11 @@ export function InventoryViewTab() {
                 <Table.Th>Material</Table.Th>
                 <Table.Th>Batch</Table.Th>
                 <Table.Th>Qty</Table.Th>
-                <Table.Th>Full Path</Table.Th>
+                <Table.Th>Storage Location</Table.Th>
                 <Table.Th>Hazard</Table.Th>
-                <Table.Th>QC</Table.Th>
+                <Table.Th>Quality</Table.Th>
                 <Table.Th>Storage Status</Table.Th>
-                <Table.Th>Last Movement</Table.Th>
+                <Table.Th>Last Updated</Table.Th>
               </Table.Tr>
             </Table.Thead>
             <Table.Tbody>
@@ -270,7 +270,7 @@ export function InventoryViewTab() {
                         variant="light"
                         color={bucket === 'released' ? 'green' : bucket === 'hold' ? 'orange' : 'gray'}
                       >
-                        {bucket}
+                        {bucket === 'released' ? 'ready to use' : bucket === 'hold' ? 'waiting or on hold' : 'other'}
                       </Badge>
                     </Table.Td>
                     <Table.Td>

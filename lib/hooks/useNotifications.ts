@@ -14,29 +14,36 @@ export interface AppNotification {
   created_at: string;
 }
 
+/** Show at most this many recent notifications in the bell, mixing read + unread. */
+const MAX_VISIBLE = 7;
+
 export function useNotifications(role: string) {
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const channelRef = useRef<ReturnType<ReturnType<typeof createClient>['channel']> | null>(null);
 
-  const fetchUnread = useCallback(async () => {
+  /**
+   * Fetch the most recent notifications for this role, capped at MAX_VISIBLE.
+   * Includes both read and unread — once a user reads something we still want
+   * to show it for context, until it scrolls off the cap.
+   */
+  const fetchRecent = useCallback(async () => {
     const params = new URLSearchParams({
       'filter[recipient_role][_eq]': role,
-      'filter[read][_eq]': 'false',
       'sort[]': '-created_at',
-      'limit': '20',
+      'limit': String(MAX_VISIBLE),
     });
     const res = await fetch(`/api/items/notifications?${params}`);
     if (!res.ok) return;
     const json = await res.json();
-    setNotifications(json.data ?? []);
+    setNotifications((json.data ?? []).slice(0, MAX_VISIBLE));
   }, [role]);
 
   useEffect(() => {
-    fetchUnread();
+    fetchRecent();
 
     // Poll every 5s for near-live updates. Self-hosted Supabase often doesn't
     // expose the supabase_realtime publication, so polling is the safe default.
-    const pollInterval = setInterval(fetchUnread, 5000);
+    const pollInterval = setInterval(fetchRecent, 5000);
 
     const supabase = createClient();
     const channel = supabase
@@ -53,7 +60,9 @@ export function useNotifications(role: string) {
           const newNotif = payload.new as AppNotification;
           // Avoid duplicates if the poll already picked this up
           setNotifications((prev) =>
-            prev.some((n) => n.id === newNotif.id) ? prev : [newNotif, ...prev].slice(0, 20)
+            prev.some((n) => n.id === newNotif.id)
+              ? prev
+              : [newNotif, ...prev].slice(0, MAX_VISIBLE)
           );
         }
       )
@@ -65,7 +74,7 @@ export function useNotifications(role: string) {
       clearInterval(pollInterval);
       supabase.removeChannel(channel);
     };
-  }, [role, fetchUnread]);
+  }, [role, fetchRecent]);
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 

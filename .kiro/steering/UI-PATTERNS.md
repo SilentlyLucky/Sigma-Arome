@@ -137,3 +137,34 @@ if (context === 'create' && field.meta?.readonly) {
 5. Pad to 4 digits
 
 Never use random numbers for business document numbers.
+
+---
+
+## 11. Production Order State Machine
+
+### States
+
+    draft → planned → released → in_progress → completed
+                      └─ waiting_issue (auto-blocked on material shortage)
+
+    Off-ramps: any active state → on_hold (resumable) or cancelled (terminal)
+
+Removed states (kept in DB for audit): `material_check`, `ready`
+
+### Role Authority
+
+| Role               | Allowed transitions                                   |
+|--------------------|-------------------------------------------------------|
+| PPIC               | draft→planned, planned→released                       |
+| System (auto)      | planned→released / waiting_issue, waiting→released    |
+| Warehouse Operator | released→in_progress (after full material issue)      |
+| Production         | in_progress→completed                                 |
+| Any                | *→on_hold, *→cancelled                                |
+
+### Key Rules
+
+- PPIC releases; Extension B auto-runs the stock check. If any material is short, status becomes `waiting_issue` automatically.
+- Extension C watches for batches becoming `stored_available` and re-runs the check; orders auto-release when all shortages clear.
+- Extension A (validator) enforces both the transition map AND role authority for every status change.
+- Warehouse Operator: `released → in_progress` is blocked until all `material_request_items.issued_qty >= requested_qty`.
+- Production: only `in_progress → completed`. Cannot start production (WO does that).

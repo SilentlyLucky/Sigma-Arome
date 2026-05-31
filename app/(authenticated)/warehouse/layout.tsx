@@ -2,7 +2,7 @@
 
 import { AppShell, Burger, Group, NavLink, Text, Title, ActionIcon, Menu, Avatar, Divider } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
-import { IconDashboard, IconTruckDelivery, IconBarcode, IconMapPin, IconHistory, IconLogout, IconSettings, IconMap, IconWand } from '@tabler/icons-react';
+import { IconDashboard, IconTruckDelivery, IconBarcode, IconMapPin, IconHistory, IconLogout, IconSettings, IconMap, IconWand, IconPlayerPlay } from '@tabler/icons-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import type { ReactNode } from 'react';
@@ -14,12 +14,13 @@ const NAV_ITEMS = [
   { label: 'Warehouse Floor Plan', href: '/warehouse/map', icon: IconMap, section: 'Overview' },
   { label: 'Expected Raw Material Deliveries', href: '/warehouse/incoming', icon: IconTruckDelivery, section: 'Raw Material Receiving' },
   { label: 'Receive Raw Materials', href: '/warehouse/receive', icon: IconTruckDelivery, section: 'Raw Material Receiving' },
+  { label: 'Production Orders', href: '/warehouse/production', icon: IconPlayerPlay, section: 'Production Issuing' },
   { label: 'Batch Inventory', href: '/warehouse/batches', icon: IconBarcode, section: 'Inventory' },
   { label: 'Put Away Approved Batches', href: '/warehouse/putaway', icon: IconMapPin, section: 'Inventory' },
   { label: 'Storage Suggestions', href: '/warehouse/slotting', icon: IconWand, section: 'Inventory' },
   { label: 'Inventory Movement History', href: '/warehouse/movements', icon: IconHistory, section: 'History' },
 ];
-const SECTIONS = ['Overview', 'Raw Material Receiving', 'Inventory', 'History'];
+const SECTIONS = ['Overview', 'Raw Material Receiving', 'Production Issuing', 'Inventory', 'History'];
 
 export default function WarehouseLayout({ children }: { children: ReactNode }) {
   const [opened, { toggle }] = useDisclosure();

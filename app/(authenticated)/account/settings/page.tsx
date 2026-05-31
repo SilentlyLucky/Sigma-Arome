@@ -359,7 +359,20 @@ export default function AccountSettingsPage() {
                 setConfirmError(null);
               }}
               placeholder="Repeat new password"
-              error={confirmError ?? undefined}
+              error={
+                confirmError ??
+                (confirmPassword.length > 0 && confirmPassword !== newPassword
+                  ? 'Passwords do not match.'
+                  : undefined)
+              }
+              description={
+                confirmPassword.length > 0 && confirmPassword === newPassword
+                  ? '✓ Passwords match'
+                  : undefined
+              }
+              styles={{
+                description: { color: '#16A34A', fontWeight: 500 },
+              }}
             />
 
             {passwordError && (newPassword.length === 0 || newPassword.length >= 8) && (

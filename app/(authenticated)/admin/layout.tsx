@@ -1,64 +1,68 @@
 'use client';
 
 import {
+  ActionIcon,
   AppShell,
+  Avatar,
   Box,
   Burger,
   Divider,
   Group,
+  Indicator,
   Menu,
   NavLink,
   Text,
-  Title,
-  ActionIcon,
-  Avatar,
 } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import {
-  IconDashboard,
-  IconUsers,
-  IconBuildingFactory2,
-  IconFlask,
-  IconPackage,
-  IconMapPin,
-  IconAlertTriangle,
-  IconChecklist,
-  IconDeviceDesktopAnalytics,
-  IconFileText,
-  IconLogout,
-  IconSettings,
-  IconShieldCheck,
-  IconEye,
-  IconClick,
-  IconUserShield,
-  IconLeaf,
-} from '@tabler/icons-react';
+  Bell,
+  ClipboardCheck,
+  Eye,
+  Factory,
+  FileText,
+  FlaskConical,
+  Home,
+  LockKeyhole,
+  LogOut,
+  MapPin,
+  Package,
+  RadioTower,
+  Settings2,
+  Shield,
+  Sparkles,
+  TriangleAlert,
+  UserCog,
+  Users,
+} from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import type { ReactNode } from 'react';
+import styles from './layout.module.css';
 
 interface NavItem {
   label: string;
   href: string;
-  icon: typeof IconDashboard;
-  section?: string;
+  icon: LucideIcon;
+  section: string;
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { label: 'Dashboard', href: '/admin', icon: IconDashboard, section: 'Overview' },
-  { label: 'Users', href: '/admin/users', icon: IconUsers, section: 'Access Control' },
-  { label: 'Roles', href: '/admin/roles', icon: IconUserShield, section: 'Access Control' },
-  { label: 'Page Access', href: '/admin/permissions', icon: IconShieldCheck, section: 'Access Control' },
-  { label: 'Visible Fields', href: '/admin/field-visibility', icon: IconEye, section: 'Access Control' },
-  { label: 'Allowed Actions', href: '/admin/action-permissions', icon: IconClick, section: 'Access Control' },
-  { label: 'Suppliers', href: '/admin/suppliers', icon: IconBuildingFactory2, section: 'Master Data' },
-  { label: 'Raw Materials', href: '/admin/raw-materials', icon: IconFlask, section: 'Master Data' },
-  { label: 'Products', href: '/admin/products', icon: IconPackage, section: 'Master Data' },
-  { label: 'Warehouse Locations', href: '/admin/warehouse-locations', icon: IconMapPin, section: 'Master Data' },
-  { label: 'Hazard Classes', href: '/admin/hazard-classes', icon: IconAlertTriangle, section: 'Master Data' },
-  { label: 'Quality Check Forms', href: '/admin/qc-templates', icon: IconChecklist, section: 'Master Data' },
-  { label: 'IoT Sensors', href: '/admin/iot-sensors', icon: IconDeviceDesktopAnalytics, section: 'Master Data' },
-  { label: 'Audit Log', href: '/admin/audit-log', icon: IconFileText, section: 'Audit' },
+  { label: 'Dashboard', href: '/admin', icon: Home, section: 'Overview' },
+  { label: 'Users', href: '/admin/users', icon: Users, section: 'Access Control' },
+  { label: 'Roles', href: '/admin/roles', icon: UserCog, section: 'Access Control' },
+  { label: 'Page Access', href: '/admin/permissions', icon: Shield, section: 'Access Control' },
+  { label: 'Visible Fields', href: '/admin/field-visibility', icon: Eye, section: 'Access Control' },
+  { label: 'Allowed Actions', href: '/admin/action-permissions', icon: Settings2, section: 'Access Control' },
+  { label: 'Suppliers', href: '/admin/suppliers', icon: Factory, section: 'Master Data' },
+  { label: 'Raw Materials', href: '/admin/raw-materials', icon: FlaskConical, section: 'Master Data' },
+  { label: 'Products', href: '/admin/products', icon: Package, section: 'Master Data' },
+  { label: 'Warehouse Locations', href: '/admin/warehouse-locations', icon: MapPin, section: 'Master Data' },
+  { label: 'Hazard Classes', href: '/admin/hazard-classes', icon: TriangleAlert, section: 'Master Data' },
+  { label: 'Quality Check Forms', href: '/admin/qc-templates', icon: ClipboardCheck, section: 'Master Data' },
+  { label: 'IoT Sensors', href: '/admin/iot-sensors', icon: RadioTower, section: 'Master Data' },
+  { label: 'Audit Log', href: '/admin/audit-log', icon: FileText, section: 'Audit' },
 ];
 
 const SECTIONS = ['Overview', 'Access Control', 'Master Data', 'Audit'];
@@ -75,136 +79,154 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
 
   return (
     <AppShell
-      header={{ height: 64 }}
       navbar={{ width: 268, breakpoint: 'sm', collapsed: { mobile: !opened } }}
-      padding="xl"
+      padding={0}
       styles={{
-        header: {
-          backgroundColor: '#FFFFFF',
-          borderBottom: '1px solid #DCE5DD',
-          boxShadow: '0 1px 4px rgba(0,0,0,0.03)',
-        },
         navbar: {
-          backgroundColor: '#FFFFFF',
-          borderRight: '1px solid #DCE5DD',
+          top: 0,
+          height: '100dvh',
+          background: 'rgba(255, 255, 255, 0.92)',
+          borderRight: '1px solid rgba(218, 226, 214, 0.9)',
+          boxShadow: '12px 0 38px rgba(16, 24, 40, 0.035)',
+          backdropFilter: 'blur(16px)',
         },
         main: {
-          background:
-            'radial-gradient(circle at top left, rgba(46, 125, 50, 0.10), transparent 34%), linear-gradient(180deg, #FBFEFC 0%, #F4F8F5 48%, #EEF5F0 100%)',
           minHeight: '100vh',
+          background:
+            'radial-gradient(circle at 72% 0%, rgba(13,74,31,0.12) 0%, rgba(13,74,31,0.05) 28%, transparent 52%), radial-gradient(circle at 18% 18%, rgba(26,107,46,0.10) 0%, transparent 34%), linear-gradient(180deg, #f9fdf9 0%, #f0f6f0 48%, #eaf3ea 100%)',
         },
       }}
     >
-      {/* ── Header ─────────────────────────────────────────── */}
-      <AppShell.Header>
-        <Group h="100%" px={20} justify="space-between">
-          <Group gap={12}>
-            <Burger opened={opened} onClick={toggle} hiddenFrom="sm" size="sm" color="#4B5563" />
-            <Group gap={8}>
-              <Box
-                style={{
-                  width: 32, height: 32, borderRadius: 8,
-                  backgroundColor: '#2E7D32',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  flexShrink: 0,
-                }}
-              >
-                <IconLeaf size={16} color="white" strokeWidth={2} />
-              </Box>
-              <div>
-                <Text fw={700} size="sm" style={{ color: '#0F172A', lineHeight: 1.1 }}>Sigma Arome</Text>
-                <Text size="xs" style={{ color: '#9CA3AF', lineHeight: 1.1 }} visibleFrom="sm">Admin Panel</Text>
-              </div>
-            </Group>
-          </Group>
-
-          <Menu shadow="md" width={200} radius="md">
-            <Menu.Target>
-              <ActionIcon variant="subtle" size="lg" radius="xl" style={{ color: '#4B5563' }}>
-                <Avatar size={32} color="primary" radius="xl" style={{ cursor: 'pointer' }}>A</Avatar>
-              </ActionIcon>
-            </Menu.Target>
-            <Menu.Dropdown>
-              <Menu.Item
-                leftSection={<IconSettings size={14} />}
-                style={{ color: '#4B5563' }}
-                onClick={() => router.push('/account/settings')}
-              >
-                Settings
-              </Menu.Item>
-              <Menu.Divider />
-              <Menu.Item leftSection={<IconLogout size={14} />} color="red" onClick={handleLogout}>
-                Logout
-              </Menu.Item>
-            </Menu.Dropdown>
-          </Menu>
-        </Group>
-      </AppShell.Header>
-
-      {/* ── Sidebar ────────────────────────────────────────── */}
       <AppShell.Navbar style={{ overflowY: 'auto' }}>
-        {/* Brand block */}
-        <Box px={20} py={20} style={{ borderBottom: '1px solid #E4EDE5' }}>
-          <Text fw={600} size="xs" style={{ color: '#9CA3AF', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 4 }}>
-            Control Center
-          </Text>
-          <Title order={5} style={{ color: '#0F172A', fontWeight: 700 }}>Administration</Title>
+        <Box px={20} py={22}>
+          <Group gap={12} wrap="nowrap" align="center">
+            <Image
+              src="/SIGMA_AROME_LOGO_ONLY.png"
+              alt="Sigma Arome logo"
+              width={46}
+              height={46}
+              style={{ objectFit: 'contain' }}
+              priority
+            />
+            <Box style={{ minWidth: 0 }}>
+              <Text fw={850} size="lg" style={{ color: '#102033', letterSpacing: '-0.025em', lineHeight: 1.05 }}>
+                Sigma Arome
+              </Text>
+              <Text size="sm" fw={500} style={{ color: '#5F6C7B', lineHeight: 1.25 }}>
+                Admin Panel
+              </Text>
+            </Box>
+          </Group>
         </Box>
 
-        {/* Nav sections */}
-        <Box px={12} py={12}>
-          {SECTIONS.map((section, sectionIdx) => {
+        <Box px={18} pb={16}>
+          <Text size="xs" fw={800} tt="uppercase" style={{ color: '#6E7B8B', letterSpacing: '0.06em', marginBottom: 10 }}>
+            Control Center
+          </Text>
+          <Text fw={850} size="md" style={{ color: '#102033', marginBottom: 12 }}>
+            Administration
+          </Text>
+          <Divider color="#E3E9DF" />
+        </Box>
+
+        <Box px={12} pb={22}>
+          {SECTIONS.map((section) => {
             const items = NAV_ITEMS.filter((item) => item.section === section);
             return (
-              <Box key={section} mb={4}>
-                {sectionIdx > 0 && (
-                  <Divider my={8} color="#E4EDE5" />
-                )}
+              <Box key={section} mb={14}>
                 <Text
                   size="xs"
-                  fw={600}
+                  fw={800}
                   tt="uppercase"
-                  px={8}
+                  px={12}
                   style={{
-                    color: '#9CA3AF',
+                    color: '#6E7B8B',
                     letterSpacing: '0.06em',
-                    lineHeight: 1,
-                    paddingTop: 6,
+                    paddingTop: 2,
                     paddingBottom: 8,
-                    display: 'block',
                   }}
                 >
                   {section}
                 </Text>
-                {items.map((item) => (
-                  <NavLink
-                    key={item.href}
-                    component={Link}
-                    href={item.href}
-                    label={item.label}
-                    leftSection={
-                      <item.icon
-                        size={16}
-                        strokeWidth={1.75}
-                        style={{ color: pathname === item.href ? '#1B5E20' : '#6B7280' }}
+                <Box>
+                  {items.map((item) => {
+                    const active = pathname === item.href;
+                    const Icon = item.icon;
+                    return (
+                      <NavLink
+                        key={item.href}
+                        component={Link}
+                        href={item.href}
+                        label={item.label}
+                        leftSection={<Icon size={17} strokeWidth={2} color={active ? '#1F8F3A' : '#536273'} />}
+                        active={active}
+                        variant="light"
+                        color="green"
+                        styles={{
+                          root: {
+                            borderRadius: 10,
+                            marginBottom: 4,
+                            color: active ? '#1F8F3A' : '#243246',
+                            fontWeight: active ? 800 : 600,
+                            backgroundColor: active ? '#EAF6EC' : 'transparent',
+                            borderLeft: active ? '3px solid #1F8F3A' : '3px solid transparent',
+                          },
+                          label: {
+                            fontSize: 14,
+                          },
+                        }}
                       />
-                    }
-                    active={pathname === item.href}
-                    variant="light"
-                    color="primary"
-                    style={{
-                      color: pathname === item.href ? '#1B5E20' : '#4B5563',
-                      fontWeight: pathname === item.href ? 600 : 500,
-                    }}
-                  />
-                ))}
+                    );
+                  })}
+                </Box>
               </Box>
             );
           })}
         </Box>
       </AppShell.Navbar>
 
-      <AppShell.Main>{children}</AppShell.Main>
+      <AppShell.Main>
+        <Box className={styles.pageFrame}>
+          <Group className={styles.topBar} gap={14}>
+            <Burger opened={opened} onClick={toggle} hiddenFrom="sm" size="sm" color="#17212F" />
+            <Group gap={14}>
+              <Indicator color="#16A34A" size={8} offset={5}>
+                <ActionIcon
+                  variant="subtle"
+                  radius="xl"
+                  size={38}
+                  aria-label="Notifications"
+                  style={{ color: '#17212F' }}
+                >
+                  <Bell size={19} strokeWidth={2} />
+                </ActionIcon>
+              </Indicator>
+              <Menu shadow="md" width={200} radius="md" position="bottom-end">
+                <Menu.Target>
+                  <Avatar
+                    size={38}
+                    radius="xl"
+                    color="green"
+                    style={{ cursor: 'pointer', border: '1px solid #CFE7D2', background: '#EAF6EC', color: '#1F8F3A', fontWeight: 800 }}
+                  >
+                    A
+                  </Avatar>
+                </Menu.Target>
+                <Menu.Dropdown>
+                  <Menu.Item leftSection={<Sparkles size={14} />} onClick={() => router.push('/account/settings')}>
+                    Settings
+                  </Menu.Item>
+                  <Menu.Divider />
+                  <Menu.Item leftSection={<LogOut size={14} />} color="red" onClick={handleLogout}>
+                    Logout
+                  </Menu.Item>
+                </Menu.Dropdown>
+              </Menu>
+            </Group>
+          </Group>
+          {children}
+        </Box>
+      </AppShell.Main>
     </AppShell>
   );
 }

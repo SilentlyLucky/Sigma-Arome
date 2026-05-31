@@ -30,7 +30,7 @@ export default function QCLayout({ children }: { children: ReactNode }) {
       styles={{
         header: { backgroundColor: '#FFFFFF', borderBottom: '1px solid #DCE5DD', boxShadow: '0 1px 4px rgba(0,0,0,0.03)' },
         navbar: { backgroundColor: '#FFFFFF', borderRight: '1px solid #DCE5DD' },
-        main:   { backgroundColor: '#F4F7F5', minHeight: '100vh' },
+        main:   { background: 'radial-gradient(circle at 72% 0%, rgba(13,74,31,0.12) 0%, rgba(13,74,31,0.05) 28%, transparent 52%), radial-gradient(circle at 18% 18%, rgba(26,107,46,0.10) 0%, transparent 34%), linear-gradient(180deg, #f9fdf9 0%, #f0f6f0 48%, #eaf3ea 100%)', minHeight: '100vh' },
       }}
     >
       <AppShell.Header>

@@ -184,7 +184,7 @@ export default function AccountSettingsPage() {
           <Box
             style={{
               height: 80,
-              background: 'linear-gradient(135deg, #2E7D32 0%, #1B5E20 100%)',
+              background: 'linear-gradient(135deg, #1a6b2e 0%, #0d4a1f 60%, #0a3d1a 100%)',
             }}
           />
 
@@ -289,7 +289,7 @@ export default function AccountSettingsPage() {
           <Box
             style={{
               height: 5,
-              background: 'linear-gradient(90deg, #1B5E20, #4CAF50, #1B5E20)',
+              background: 'linear-gradient(90deg, #0d4a1f, #2d9e45, #52c977, #2d9e45, #0d4a1f)',
             }}
           />
 

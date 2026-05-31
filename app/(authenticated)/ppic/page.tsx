@@ -38,7 +38,7 @@ export default function PPICDashboard() {
               { key: 'ordersOverdue', collection: 'raw_material_orders', filter: { status: { _in: ['ordered', 'partially_received'] }, expected_arrival_date: { _lt: today } } },
               { key: 'prodDraft', collection: 'production_orders', filter: { status: { _eq: 'draft' } } },
               { key: 'prodBlocked', collection: 'production_orders', filter: { status: { _eq: 'waiting_issue' } } },
-              { key: 'prodReady', collection: 'production_orders', filter: { status: { _in: ['ready', 'released'] } } },
+              { key: 'prodReady', collection: 'production_orders', filter: { status: { _eq: 'released' } } },
               { key: 'prodActive', collection: 'production_orders', filter: { status: { _eq: 'in_progress' } } },
               { key: 'requestsPending', collection: 'material_requests', filter: { status: { _eq: 'submitted' } } },
             ],

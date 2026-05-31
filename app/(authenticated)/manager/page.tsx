@@ -46,7 +46,7 @@ export default function ManagerDashboard() {
               { key: 'batchesRejected', collection: 'batches', filter: { status: { _eq: 'rejected' } } },
               { key: 'batchesStored', collection: 'batches', filter: { status: { _eq: 'stored_available' } } },
               { key: 'prodBlocked', collection: 'production_orders', filter: { status: { _eq: 'waiting_issue' } } },
-              { key: 'prodReady', collection: 'production_orders', filter: { status: { _in: ['ready', 'released'] } } },
+              { key: 'prodReady', collection: 'production_orders', filter: { status: { _eq: 'released' } } },
               { key: 'prodActive', collection: 'production_orders', filter: { status: { _eq: 'in_progress' } } },
               { key: 'prodCompleted', collection: 'production_orders', filter: { status: { _eq: 'completed' } } },
             ],

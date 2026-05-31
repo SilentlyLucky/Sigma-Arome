@@ -4,38 +4,13 @@ import {
   SimpleGrid, Paper, Text, Title, Group, Stack, ThemeIcon,
   Loader, Anchor, Divider, Badge, Alert, Table,
 } from '@mantine/core';
+import { BarChart } from '@mantine/charts';
 import {
   IconClipboardList, IconTransferOut, IconClock, IconPackage,
   IconAlertTriangle, IconCircleCheck, IconChevronRight,
 } from '@tabler/icons-react';
 import { useEffect, useState } from 'react';
-import React from 'react';
 import { useRouter } from 'next/navigation';
-
-function Pipeline({ stages }: { stages: { label: string; count: number; color: string }[] }) {
-  return (
-    <div style={{ display: 'flex', gap: 4, alignItems: 'stretch', overflowX: 'auto', paddingBottom: 4 }}>
-      {stages.map((s, i) => (
-        <React.Fragment key={s.label}>
-          <div style={{
-            flex: '1 1 0', minWidth: 70, textAlign: 'center', padding: '10px 6px',
-            background: `var(--mantine-color-${s.color}-0)`,
-            border: `1px solid var(--mantine-color-${s.color}-3)`,
-            borderRadius: 8,
-          }}>
-            <Text size="xl" fw={700} c={s.count > 0 ? s.color : 'dimmed'}>{s.count}</Text>
-            <Text size="xs" c="dimmed" lineClamp={2}>{s.label}</Text>
-          </div>
-          {i < stages.length - 1 && (
-            <div style={{ display: 'flex', alignItems: 'center', color: 'var(--mantine-color-gray-4)', padding: '0 2px' }}>
-              <IconChevronRight size={14} />
-            </div>
-          )}
-        </React.Fragment>
-      ))}
-    </div>
-  );
-}
 
 interface MaterialRequest { id: string; request_number: string; status: string; production_order_id: string | null }
 
@@ -140,12 +115,18 @@ export default function LogisticDashboard() {
           {/* ── Request Pipeline ─────────────────────────────────────────────── */}
           <Paper p="md" radius="md" withBorder>
             <Text fw={600} size="sm" mb="sm">Material Request Pipeline</Text>
-            <Pipeline stages={[
-              { label: 'Submitted', count: n('submitted'), color: 'orange' },
-              { label: 'Approved', count: n('approved'), color: 'blue' },
-              { label: 'Being Sent', count: n('partialIssued'), color: 'cyan' },
-              { label: 'Completed', count: n('issued'), color: 'green' },
-            ]} />
+            <BarChart
+              h={180}
+              data={[
+                { stage: 'Submitted', count: n('submitted') },
+                { stage: 'Approved', count: n('approved') },
+                { stage: 'Being Sent', count: n('partialIssued') },
+                { stage: 'Completed', count: n('issued') },
+              ]}
+              dataKey="stage"
+              series={[{ name: 'count', label: 'Count', color: 'orange.6' }]}
+              withLegend={false}
+            />
           </Paper>
 
           {/* ── Request Queues ───────────────────────────────────────────────── */}

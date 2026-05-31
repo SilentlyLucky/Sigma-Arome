@@ -11,11 +11,12 @@ import {
   Button,
   Modal,
   Loader,
-  Divider,
   Box,
+  SimpleGrid,
+  ScrollArea,
+  TextInput,
 } from '@mantine/core';
 import { CollectionList } from '@/components/ui/collection-list';
-import { SelectDropdown } from '@/components/ui/select-dropdown';
 import { IconInfoCircle, IconMapPin, IconCheck, IconTrophy, IconWand, IconAlertTriangle } from '@tabler/icons-react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
@@ -58,43 +59,82 @@ interface Candidate {
   };
 }
 
-interface Eliminated {
-  location_id: string;
+interface WarehouseLocation {
+  id: string;
   location_code: string;
   zone: string;
-  reason: string;
+  temperature_min: number | null;
+  temperature_max: number | null;
+  allowed_hazard_classes: string[] | null;
+  capacity_kg: number | null;
+  current_occupancy_kg: number;
+  capacity_pcs: number | null;
+  current_occupancy_pcs: number;
+  current_material_name: string | null;
+  status: string;
 }
 
-const RANK_COLORS = ['yellow', 'gray', 'orange'];
+const RANK_COLORS = ['yellow', 'gray', 'orange', 'blue', 'grape'];
+
+function formatZone(zone: string) {
+  return zone.replace(/_/g, ' ');
+}
+
+function formatTemperature(location: WarehouseLocation) {
+  const min = location.temperature_min ?? 15;
+  const max = location.temperature_max ?? 30;
+  return `${min}-${max}°C`;
+}
+
+function formatCapacity(location: WarehouseLocation) {
+  if (location.capacity_kg) {
+    return `${location.current_occupancy_kg ?? 0} / ${location.capacity_kg} kg`;
+  }
+  if (location.capacity_pcs) {
+    return `${location.current_occupancy_pcs ?? 0} / ${location.capacity_pcs} pcs`;
+  }
+  return 'No limit set';
+}
 
 export default function PutawayPage() {
   const router = useRouter();
   const [selectedBatch, setSelectedBatch] = useState<Batch | null>(null);
   const [candidates, setCandidates] = useState<Candidate[]>([]);
-  const [eliminated, setEliminated] = useState<Eliminated[]>([]);
+  const [locations, setLocations] = useState<WarehouseLocation[]>([]);
   const [selectedLocation, setSelectedLocation] = useState<string>('');
+  const [locationSearch, setLocationSearch] = useState('');
   const [confirming, setConfirming] = useState(false);
   const [loadingSlots, setLoadingSlots] = useState(false);
+  const [loadingLocations, setLoadingLocations] = useState(false);
   const [opened, { open, close }] = useDisclosure(false);
 
   const openPutaway = async (batch: Batch) => {
     setSelectedBatch(batch);
     setSelectedLocation('');
     setCandidates([]);
-    setEliminated([]);
+    setLocations([]);
+    setLocationSearch('');
     setLoadingSlots(true);
+    setLoadingLocations(true);
     open();
 
     try {
-      const res = await fetch(`/api/warehouse/smart-slots?batch_id=${batch.id}&limit=3`, {
-        cache: 'no-store',
-      });
-      const data = await res.json();
-      if (res.ok) {
+      const [slotRes, locationsRes] = await Promise.all([
+        fetch(`/api/warehouse/smart-slots?batch_id=${batch.id}&limit=5`, { cache: 'no-store' }),
+        fetch(
+          '/api/items/warehouse_locations?filter[is_active][_eq]=true' +
+            '&fields[]=id&fields[]=location_code&fields[]=zone&fields[]=temperature_min&fields[]=temperature_max' +
+            '&fields[]=allowed_hazard_classes&fields[]=capacity_kg&fields[]=current_occupancy_kg' +
+            '&fields[]=capacity_pcs&fields[]=current_occupancy_pcs&fields[]=current_material_name&fields[]=status' +
+            '&sort[]=location_code&limit=500',
+          { cache: 'no-store' }
+        ),
+      ]);
+
+      const data = await slotRes.json();
+      if (slotRes.ok) {
         const cands: Candidate[] = data?.candidates ?? [];
-        const elim: Eliminated[] = data?.eliminated ?? [];
         setCandidates(cands);
-        setEliminated(elim);
         if (cands.length > 0) setSelectedLocation(cands[0].location_id);
       } else {
         notifications.show({
@@ -103,10 +143,14 @@ export default function PutawayPage() {
           color: 'red',
         });
       }
+
+      const locationData = locationsRes.ok ? (await locationsRes.json())?.data ?? [] : [];
+      setLocations(locationData);
     } catch {
       notifications.show({ title: 'Error', message: 'Could not load storage suggestions', color: 'red' });
     } finally {
       setLoadingSlots(false);
+      setLoadingLocations(false);
     }
   };
 
@@ -140,32 +184,20 @@ export default function PutawayPage() {
     }
   };
 
-  // Sort eliminated locations by concern severity (least severe first = most viable for manual override)
-  // Priority: capacity > single-material > hazard > temperature > zone mismatch
-  const concernSeverity = (reason: string): number => {
-    if (reason.includes('Capacity insufficient')) return 1;
-    if (reason.includes('single-material')) return 2;
-    if (reason.includes('Hazard') || reason.includes('hazard')) return 3;
-    if (reason.includes('Temperature')) return 4;
-    if (reason.includes('Zone')) return 5;
-    return 3;
-  };
-
-  const sortedEliminated = [...eliminated].sort(
-    (a, b) => concernSeverity(a.reason) - concernSeverity(b.reason)
-  );
-
-  const sortedEliminatedChoices = sortedEliminated.map((e) => ({
-    text: `${e.location_code} — ${e.zone.replace(/_/g, ' ')} ⚠ ${e.reason.slice(0, 60)}${e.reason.length > 60 ? '…' : ''}`,
-    value: e.location_id,
-  }));
-
-  const selectedConcern = eliminated.find((e) => e.location_id === selectedLocation) ?? null;
-
-  const locationChoices = candidates.map((c) => ({
-    text: `#${c.rank} ${c.location_code} — score ${c.score} · ${c.zone.replace(/_/g, ' ')}`,
-    value: c.location_id,
-  }));
+  const selectedRecommended = candidates.find((c) => c.location_id === selectedLocation) ?? null;
+  const selectedManualLocation = !selectedRecommended
+    ? locations.find((location) => location.id === selectedLocation) ?? null
+    : null;
+  const normalizedLocationSearch = locationSearch.trim().toLowerCase();
+  const filteredLocations = locations.filter((location) => {
+    if (!normalizedLocationSearch) return true;
+    return [
+      location.location_code,
+      formatZone(location.zone),
+      location.status,
+      location.current_material_name ?? '',
+    ].some((value) => value.toLowerCase().includes(normalizedLocationSearch));
+  });
 
   return (
     <Stack gap="md">
@@ -191,7 +223,7 @@ export default function PutawayPage() {
         onItemClick={(item) => openPutaway(item as unknown as Batch)}
       />
 
-      <Modal opened={opened} onClose={close} title={`Store batch: ${selectedBatch?.batch_number}`} size="lg">
+      <Modal opened={opened} onClose={close} title={`Store batch: ${selectedBatch?.batch_number}`} size="xl">
         {loadingSlots ? (
           <Group justify="center" py="xl">
             <Loader />
@@ -212,128 +244,157 @@ export default function PutawayPage() {
               </Group>
             </Paper>
 
-            {candidates.length === 0 ? (
-              <Stack gap="sm">
-                <Alert color="orange" variant="light" icon={<IconInfoCircle size={16} />}>
-                  No fully suitable location was found. You can choose a location manually, but
-                  review the warning before confirming.
-                </Alert>
-
-                {eliminated.length > 0 && (
-                  <>
-                    <Text size="sm" fw={600}>
-                      Manual selection (sorted by least concern)
-                    </Text>
-                    <SelectDropdown
-                      label="Storage Location (manual override)"
-                      placeholder="Select a location — review concerns"
-                      choices={sortedEliminatedChoices}
-                      value={selectedLocation}
-                      onChange={(v) => setSelectedLocation(String(v ?? ''))}
-                      searchable
-                    />
-                    {selectedLocation && selectedConcern && (
-                      <Alert color="red" variant="light" icon={<IconAlertTriangle size={16} />}>
-                        <Text size="sm" fw={600}>
-                          Concern for {selectedConcern.location_code}:
-                        </Text>
-                        <Text size="sm">{selectedConcern.reason}</Text>
-                      </Alert>
-                    )}
-                  </>
-                )}
-              </Stack>
-            ) : (
-              <Stack gap="xs">
-                <Group gap={6}>
+            <SimpleGrid cols={{ base: 1, md: 2 }} spacing="md">
+              <Paper p="sm" radius="sm" withBorder>
+                <Group gap={6} mb="sm">
                   <IconWand size={15} color="var(--mantine-color-teal-6)" />
-                  <Text size="sm" fw={600}>
-                    Suggested storage locations
-                  </Text>
+                  <Text size="sm" fw={700}>Top 5 Recommendations</Text>
                 </Group>
-                {candidates.map((c) => {
-                  const isSel = selectedLocation === c.location_id;
-                  const cmp = c.comparison;
-                  return (
-                    <Paper
-                      key={c.location_id}
-                      p="sm"
-                      radius="sm"
-                      withBorder
-                      onClick={() => setSelectedLocation(c.location_id)}
-                      style={{
-                        cursor: 'pointer',
-                        borderColor: isSel ? 'var(--mantine-color-teal-5)' : undefined,
-                        borderWidth: isSel ? 2 : 1,
-                      }}
-                    >
-                      <Group justify="space-between" wrap="nowrap" align="flex-start">
-                        <Group gap="sm" wrap="nowrap">
-                          <Badge
-                            color={RANK_COLORS[c.rank - 1] ?? 'gray'}
-                            leftSection={c.rank === 1 ? <IconTrophy size={11} /> : undefined}
+
+                {candidates.length === 0 ? (
+                  <Alert color="orange" variant="light" icon={<IconInfoCircle size={16} />}>
+                    No fully suitable location was found. You can still choose from the location list on the right.
+                  </Alert>
+                ) : (
+                  <ScrollArea h={470}>
+                    <Stack gap="xs">
+                      {candidates.map((c) => {
+                        const isSel = selectedLocation === c.location_id;
+                        const cmp = c.comparison;
+                        return (
+                          <Paper
+                            key={c.location_id}
+                            p="sm"
+                            radius="sm"
+                            withBorder
+                            onClick={() => setSelectedLocation(c.location_id)}
+                            style={{
+                              cursor: 'pointer',
+                              borderColor: isSel ? 'var(--mantine-color-teal-5)' : undefined,
+                              borderWidth: isSel ? 2 : 1,
+                            }}
                           >
-                            #{c.rank}
-                          </Badge>
-                          <div>
-                            <Text fw={700} size="sm" style={{ fontFamily: 'monospace' }}>
-                              {c.location_code}
-                            </Text>
-                            <Text size="xs" c="dimmed">
-                              {c.zone.replace(/_/g, ' ')} ·{' '}
-                              {c.slot_state === 'same_material' ? 'same material' : 'empty'}
-                            </Text>
-                          </div>
-                        </Group>
-                        <Box style={{ textAlign: 'right', minWidth: 60 }}>
-                          <Text fw={700} size="lg" c={isSel ? 'teal' : undefined}>
-                            {c.score}
-                          </Text>
-                          <Text size="xs" c="dimmed">/ 100</Text>
-                        </Box>
-                      </Group>
+                            <Group justify="space-between" wrap="nowrap" align="flex-start">
+                              <Group gap="sm" wrap="nowrap">
+                                <Badge
+                                  color={RANK_COLORS[c.rank - 1] ?? 'gray'}
+                                  leftSection={c.rank === 1 ? <IconTrophy size={11} /> : undefined}
+                                >
+                                  #{c.rank}
+                                </Badge>
+                                <div>
+                                  <Text fw={700} size="sm" style={{ fontFamily: 'monospace' }}>
+                                    {c.location_code}
+                                  </Text>
+                                  <Text size="xs" c="dimmed">
+                                    {formatZone(c.zone)} - {c.slot_state === 'same_material' ? 'same material' : 'empty'}
+                                  </Text>
+                                </div>
+                              </Group>
+                              <Box style={{ textAlign: 'right', minWidth: 60 }}>
+                                <Text fw={700} size="lg" c={isSel ? 'teal' : undefined}>
+                                  {c.score}
+                                </Text>
+                                <Text size="xs" c="dimmed">/ 100</Text>
+                              </Box>
+                            </Group>
 
-                      <Stack gap={4} mt="sm" ml={4}>
-                        <Group gap={6} wrap="nowrap">
-                          <Badge size="xs" color={cmp?.temp_ok ? 'teal' : 'red'} variant="dot" />
-                          <Text size="xs">
-                            <strong>Temperature:</strong> Material needs {cmp?.material_temp} → Location accepts {cmp?.location_temp}
-                          </Text>
-                        </Group>
-                        <Group gap={6} wrap="nowrap">
-                          <Badge size="xs" color={cmp?.hazard_allowed ? 'teal' : 'red'} variant="dot" />
-                          <Text size="xs">
-                            <strong>Hazard Class:</strong> {cmp?.material_hazard} — {cmp?.hazard_allowed ? 'Safe for this bin' : 'Not suitable for this bin'}
-                          </Text>
-                        </Group>
-                        <Group gap={6} wrap="nowrap">
-                          <Badge size="xs" color={cmp?.capacity_ok ? 'teal' : 'red'} variant="dot" />
-                          <Text size="xs">
-                            <strong>Capacity:</strong> Batch {cmp?.material_weight} → {cmp?.location_available}
-                          </Text>
-                        </Group>
-                        <Group gap={6} wrap="nowrap">
-                          <Badge size="xs" color={cmp?.after_occupancy_pct && cmp.after_occupancy_pct > 90 ? 'orange' : 'teal'} variant="dot" />
-                          <Text size="xs">
-                            <strong>Occupancy:</strong> {cmp?.current_occupancy_pct}% now → {cmp?.after_occupancy_pct}% after storage
-                          </Text>
-                        </Group>
-                      </Stack>
-                    </Paper>
-                  );
-                })}
+                            <Stack gap={4} mt="sm" ml={4}>
+                              <Group gap={6} wrap="nowrap">
+                                <Badge size="xs" color={cmp?.temp_ok ? 'teal' : 'red'} variant="dot" />
+                                <Text size="xs"><strong>Temp:</strong> {cmp?.material_temp} needed - bin {cmp?.location_temp}</Text>
+                              </Group>
+                              <Group gap={6} wrap="nowrap">
+                                <Badge size="xs" color={cmp?.hazard_allowed ? 'teal' : 'red'} variant="dot" />
+                                <Text size="xs"><strong>Hazard:</strong> {cmp?.material_hazard} - {cmp?.hazard_allowed ? 'allowed' : 'not suitable'}</Text>
+                              </Group>
+                              <Group gap={6} wrap="nowrap">
+                                <Badge size="xs" color={cmp?.capacity_ok ? 'teal' : 'red'} variant="dot" />
+                                <Text size="xs"><strong>Capacity:</strong> {cmp?.material_weight} batch - {cmp?.location_available}</Text>
+                              </Group>
+                              <Group gap={6} wrap="nowrap">
+                                <Badge size="xs" color={cmp?.after_occupancy_pct && cmp.after_occupancy_pct > 90 ? 'orange' : 'teal'} variant="dot" />
+                                <Text size="xs"><strong>Occupancy:</strong> {cmp?.current_occupancy_pct}% now - {cmp?.after_occupancy_pct}% after</Text>
+                              </Group>
+                            </Stack>
+                          </Paper>
+                        );
+                      })}
+                    </Stack>
+                  </ScrollArea>
+                )}
+              </Paper>
 
-                <Divider my="xs" label="Or pick manually" labelPosition="center" />
+              <Paper p="sm" radius="sm" withBorder>
+                <Group justify="space-between" align="flex-start" mb="sm">
+                  <div>
+                    <Text size="sm" fw={700}>Pick Any Location</Text>
+                    <Text size="xs" c="dimmed">Manual list is searchable and not rule-ranked.</Text>
+                  </div>
+                  <Badge variant="light" color="gray">{filteredLocations.length}</Badge>
+                </Group>
 
-                <SelectDropdown
-                  label="Storage Location"
-                  placeholder="Select storage location"
-                  choices={locationChoices}
-                  value={selectedLocation}
-                  onChange={(v) => setSelectedLocation(String(v ?? ''))}
-                  searchable
+                <TextInput
+                  placeholder="Search code, zone, status, or current material"
+                  value={locationSearch}
+                  onChange={(event) => setLocationSearch(event.currentTarget.value)}
+                  mb="sm"
                 />
-              </Stack>
+
+                {loadingLocations ? (
+                  <Group justify="center" py="xl"><Loader size="sm" /></Group>
+                ) : (
+                  <ScrollArea h={420}>
+                    <Stack gap="xs">
+                      {filteredLocations.map((location) => {
+                        const isSel = selectedLocation === location.id;
+                        const isSmartOption = candidates.some((c) => c.location_id === location.id);
+                        return (
+                          <Paper
+                            key={location.id}
+                            p="sm"
+                            radius="sm"
+                            withBorder
+                            onClick={() => setSelectedLocation(location.id)}
+                            style={{
+                              cursor: 'pointer',
+                              borderColor: isSel ? 'var(--mantine-color-blue-5)' : undefined,
+                              borderWidth: isSel ? 2 : 1,
+                            }}
+                          >
+                            <Group justify="space-between" wrap="nowrap" align="flex-start">
+                              <div>
+                                <Group gap="xs">
+                                  <Text fw={700} size="sm" style={{ fontFamily: 'monospace' }}>{location.location_code}</Text>
+                                  {isSmartOption && <Badge size="xs" color="teal" variant="light">recommended list</Badge>}
+                                </Group>
+                                <Text size="xs" c="dimmed">{formatZone(location.zone)} - {location.status}</Text>
+                              </div>
+                              <Badge size="xs" color={location.current_material_name ? 'blue' : 'gray'} variant="light">
+                                {location.current_material_name ? 'occupied' : 'empty'}
+                              </Badge>
+                            </Group>
+
+                            <SimpleGrid cols={{ base: 1, sm: 2 }} spacing={4} mt="xs">
+                              <Text size="xs"><strong>Temp:</strong> {formatTemperature(location)}</Text>
+                              <Text size="xs"><strong>Capacity:</strong> {formatCapacity(location)}</Text>
+                              <Text size="xs"><strong>Hazard rules:</strong> {location.allowed_hazard_classes?.length ? String(location.allowed_hazard_classes.length) + ' allowed' : 'No restriction set'}</Text>
+                              <Text size="xs"><strong>Current material:</strong> {location.current_material_name ?? 'None'}</Text>
+                            </SimpleGrid>
+                          </Paper>
+                        );
+                      })}
+                    </Stack>
+                  </ScrollArea>
+                )}
+              </Paper>
+            </SimpleGrid>
+
+            {selectedManualLocation && (
+              <Alert color="orange" variant="light" icon={<IconAlertTriangle size={16} />}>
+                <Text size="sm" fw={700}>Manual location selected: {selectedManualLocation.location_code}</Text>
+                <Text size="sm">This location was not selected from the Top 5 recommendations. Review temperature, hazard rules, capacity, and current material before confirming.</Text>
+              </Alert>
             )}
 
             <Group justify="flex-end">

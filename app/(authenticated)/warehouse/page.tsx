@@ -2,12 +2,11 @@
 
 import {
   SimpleGrid, Paper, Text, Title, Group, Stack, ThemeIcon, Loader, Anchor,
-  Divider, Badge, Alert, Table, Button,
+  Divider, Badge, Table, Button, Box,
 } from '@mantine/core';
-import { BarChart } from '@mantine/charts';
 import {
-  IconTruckDelivery, IconBarcode, IconMapPin, IconBuildingFactory,
-  IconAlertTriangle, IconCheck, IconCircleCheck, IconChevronRight, IconPackage,
+  IconTruckDelivery, IconBarcode, IconMapPin,
+  IconAlertTriangle, IconCheck, IconCircleCheck, IconPackage,
 } from '@tabler/icons-react';
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
@@ -37,6 +36,83 @@ interface PutawayBatch {
   qty: number;
   unit: string;
   material_id: string;
+}
+
+interface MetricCardProps {
+  label: string;
+  value: number;
+  description: string;
+  color: string;
+  icon: typeof IconTruckDelivery;
+  active?: boolean;
+  onClick: () => void;
+}
+
+function MetricCard({ label, value, description, color, icon: Icon, active, onClick }: MetricCardProps) {
+  return (
+    <Paper
+      p="md"
+      radius="md"
+      withBorder
+      style={{
+        cursor: 'pointer',
+        minHeight: 136,
+        borderColor: active ? `var(--mantine-color-${color}-4)` : undefined,
+      }}
+      onClick={onClick}
+    >
+      <Group justify="space-between" align="flex-start" wrap="nowrap">
+        <Stack gap={8}>
+          <Text size="xs" c="dimmed" fw={700} tt="uppercase">
+            {label}
+          </Text>
+          <Group gap="xs" align="flex-end">
+            <Text
+              fw={800}
+              lh={1}
+              c={active ? color : 'dimmed'}
+              style={{ fontSize: 38, fontVariantNumeric: 'tabular-nums' }}
+            >
+              {value}
+            </Text>
+            <Badge size="xs" color={active ? color : 'gray'} variant="light" mb={4}>
+              {active ? 'Action' : 'Clear'}
+            </Badge>
+          </Group>
+          <Text size="sm" c="dimmed">
+            {description}
+          </Text>
+        </Stack>
+        <ThemeIcon size={56} radius="md" variant={active ? 'filled' : 'light'} color={color}>
+          <Icon size={24} />
+        </ThemeIcon>
+      </Group>
+    </Paper>
+  );
+}
+
+function EmptyQueueState({
+  title,
+  description,
+  icon: Icon = IconCircleCheck,
+}: {
+  title: string;
+  description: string;
+  icon?: typeof IconCircleCheck;
+}) {
+  return (
+    <Paper p="lg" radius="md" withBorder bg="var(--mantine-color-green-light)">
+      <Group gap="md" align="center" wrap="nowrap">
+        <ThemeIcon size={48} radius="xl" color="green" variant="filled">
+          <Icon size={24} />
+        </ThemeIcon>
+        <Stack gap={2}>
+          <Text fw={700}>{title}</Text>
+          <Text size="sm" c="dimmed">{description}</Text>
+        </Stack>
+      </Group>
+    </Paper>
+  );
 }
 
 export default function WarehouseDashboard() {
@@ -220,6 +296,14 @@ export default function WarehouseDashboard() {
   const n = (k: string) => counts[k] ?? 0;
   const pendingTasks = pickTasks.filter(t => t.available_batch_id);
   const blockedTasks = pickTasks.filter(t => !t.available_batch_id);
+  const warehouseFlow = [
+    { stage: 'Deliveries Due', count: n('incoming'), color: 'blue', description: 'Supplier orders expected' },
+    { stage: 'Waiting QC', count: n('qcPending'), color: 'orange', description: 'Received batches to inspect' },
+    { stage: 'Approved to Store', count: n('approvedWaiting'), color: 'teal', description: 'Cleared batches needing bins' },
+    { stage: 'Stored & Ready', count: n('stored'), color: 'green', description: 'Available for production' },
+  ];
+  const maxFlowCount = Math.max(...warehouseFlow.map(item => item.count), 1);
+  const totalOpenFlow = n('incoming') + n('qcPending') + n('approvedWaiting');
 
   return (
     <Stack gap="lg">
@@ -232,76 +316,94 @@ export default function WarehouseDashboard() {
         <>
           {/* ── Priority Cards ─────────────────────────────────────────────── */}
           <SimpleGrid cols={{ base: 2, sm: 4 }} spacing="md">
-            <Paper p="md" radius="md" withBorder style={{ cursor: 'pointer', borderColor: n('incoming') > 0 ? 'var(--mantine-color-blue-4)' : undefined }} onClick={() => router.push('/warehouse/incoming')}>
-              <Group justify="space-between" wrap="nowrap">
-                <Stack gap={2}>
-                  <Text size="xs" c="dimmed" fw={600} tt="uppercase">Deliveries Expected</Text>
-                  <Title order={2} c="blue">{n('incoming')}</Title>
-                  <Text size="xs" c="dimmed">Orders on the way</Text>
-                </Stack>
-                <ThemeIcon size="xl" radius="md" variant="light" color="blue"><IconTruckDelivery size={22} /></ThemeIcon>
-              </Group>
-            </Paper>
+            <MetricCard
+              label="Deliveries Expected"
+              value={n('incoming')}
+              description="Raw material orders on the way"
+              color="blue"
+              icon={IconTruckDelivery}
+              active={n('incoming') > 0}
+              onClick={() => router.push('/warehouse/incoming')}
+            />
 
-            <Paper p="md" radius="md" withBorder style={{ cursor: 'pointer', borderColor: n('qcPending') > 0 ? 'var(--mantine-color-orange-4)' : undefined }} onClick={() => router.push('/warehouse/batches')}>
-              <Group justify="space-between" wrap="nowrap">
-                <Stack gap={2}>
-                  <Text size="xs" c="dimmed" fw={600} tt="uppercase">Waiting for QC</Text>
-                  <Title order={2} c={n('qcPending') > 0 ? 'orange' : undefined}>{n('qcPending')}</Title>
-                  <Text size="xs" c="dimmed">Received batches in queue</Text>
-                </Stack>
-                <ThemeIcon size="xl" radius="md" variant={n('qcPending') > 0 ? 'filled' : 'light'} color="orange"><IconBarcode size={22} /></ThemeIcon>
-              </Group>
-            </Paper>
+            <MetricCard
+              label="Waiting for QC"
+              value={n('qcPending')}
+              description="Received batches waiting for inspection"
+              color="orange"
+              icon={IconBarcode}
+              active={n('qcPending') > 0}
+              onClick={() => router.push('/warehouse/batches')}
+            />
 
-            <Paper p="md" radius="md" withBorder style={{ cursor: 'pointer', borderColor: n('approvedWaiting') > 0 ? 'var(--mantine-color-teal-4)' : undefined }} onClick={() => router.push('/warehouse/putaway')}>
-              <Group justify="space-between" wrap="nowrap">
-                <Stack gap={2}>
-                  <Text size="xs" c="dimmed" fw={600} tt="uppercase">Approved — Needs Storage</Text>
-                  <Title order={2} c={n('approvedWaiting') > 0 ? 'teal' : undefined}>{n('approvedWaiting')}</Title>
-                  <Text size="xs" c="dimmed">Cleared for putaway</Text>
-                </Stack>
-                <ThemeIcon size="xl" radius="md" variant={n('approvedWaiting') > 0 ? 'filled' : 'light'} color="teal"><IconMapPin size={22} /></ThemeIcon>
-              </Group>
-            </Paper>
+            <MetricCard
+              label="Approved - Needs Storage"
+              value={n('approvedWaiting')}
+              description="QC-approved batches needing a bin"
+              color="teal"
+              icon={IconMapPin}
+              active={n('approvedWaiting') > 0}
+              onClick={() => router.push('/warehouse/putaway')}
+            />
 
-            <Paper p="md" radius="md" withBorder style={{ cursor: 'pointer' }} onClick={() => router.push('/warehouse/batches')}>
-              <Group justify="space-between" wrap="nowrap">
-                <Stack gap={2}>
-                  <Text size="xs" c="dimmed" fw={600} tt="uppercase">Stored & Ready</Text>
-                  <Title order={2} c="green">{n('stored')}</Title>
-                  <Text size="xs" c="dimmed">Available for production</Text>
-                </Stack>
-                <ThemeIcon size="xl" radius="md" variant="light" color="green"><IconPackage size={22} /></ThemeIcon>
-              </Group>
-            </Paper>
+            <MetricCard
+              label="Stored & Ready"
+              value={n('stored')}
+              description="Batches available for production"
+              color="green"
+              icon={IconPackage}
+              active={n('stored') > 0}
+              onClick={() => router.push('/warehouse/batches')}
+            />
           </SimpleGrid>
 
           {/* ── Warehouse Flow Pipeline ─────────────────────────────────────── */}
           <Paper p="md" radius="md" withBorder>
-            <Text fw={600} size="sm" mb="sm">Warehouse Flow</Text>
-            <BarChart
-              h={180}
-              data={[
-                { stage: 'Deliveries Due', count: n('incoming') },
-                { stage: 'Waiting QC', count: n('qcPending') },
-                { stage: 'Approved→Store', count: n('approvedWaiting') },
-                { stage: 'Stored & Ready', count: n('stored') },
-              ]}
-              dataKey="stage"
-              series={[{ name: 'count', label: 'Count', color: 'teal.6' }]}
-              withLegend={false}
-            />
-          </Paper>
+            <Group justify="space-between" align="flex-start" mb="md">
+              <div>
+                <Text fw={700} size="sm">Warehouse Flow</Text>
+                <Text size="xs" c="dimmed">A quick view of where work is currently sitting.</Text>
+              </div>
+              <Badge color={totalOpenFlow > 0 ? 'teal' : 'green'} variant="light">
+                {totalOpenFlow > 0 ? `${totalOpenFlow} open actions` : 'No bottlenecks'}
+              </Badge>
+            </Group>
 
+            <SimpleGrid cols={{ base: 1, sm: 2, lg: 4 }} spacing="sm">
+              {warehouseFlow.map((item) => {
+                const width = item.count === 0 ? 0 : Math.max(12, Math.round((item.count / maxFlowCount) * 100));
+                return (
+                  <Paper key={item.stage} p="sm" radius="sm" withBorder>
+                    <Group justify="space-between" mb="xs" wrap="nowrap">
+                      <Text size="xs" c="dimmed" fw={700} tt="uppercase">{item.stage}</Text>
+                      <Text fw={800} c={item.count > 0 ? item.color : 'dimmed'} style={{ fontVariantNumeric: 'tabular-nums' }}>
+                        {item.count}
+                      </Text>
+                    </Group>
+                    <Box h={10} bg="var(--mantine-color-dark-5)" style={{ borderRadius: 999, overflow: 'hidden' }}>
+                      <Box
+                        h="100%"
+                        w={`${width}%`}
+                        bg={item.count > 0 ? `var(--mantine-color-${item.color}-6)` : 'transparent'}
+                        style={{ borderRadius: 999, transition: 'width 180ms ease' }}
+                      />
+                    </Box>
+                    <Text size="xs" c="dimmed" mt="xs">{item.description}</Text>
+                  </Paper>
+                );
+              })}
+            </SimpleGrid>
+          </Paper>
           {/* ── Putaway Queue ───────────────────────────────────────────────── */}
           <Divider label="Putaway Queue — Batches Needing a Bin" labelPosition="left" />
           {loadingPutaway ? (
             <Group justify="center" py="sm"><Loader size="sm" /></Group>
           ) : putawayBatches.length === 0 ? (
-            <Alert color="green" variant="light" icon={<IconCircleCheck size={16} />}>
-              No batches are waiting for putaway right now.
-            </Alert>
+            <EmptyQueueState
+              title="All approved batches have a storage plan."
+              description="Nothing needs putaway right now. New QC-approved batches will appear here when they need a bin."
+              icon={IconMapPin}
+            />
           ) : (
             <Paper p="md" radius="md" withBorder>
               <Group justify="space-between" mb="sm">
@@ -340,9 +442,11 @@ export default function WarehouseDashboard() {
           {loadingPick ? (
             <Group justify="center" py="md"><Loader size="sm" /></Group>
           ) : pickTasks.length === 0 ? (
-            <Alert color="green" variant="light" icon={<IconCheck size={16} />}>
-              No materials need to be sent right now.
-            </Alert>
+            <EmptyQueueState
+              title="No materials need to be sent right now."
+              description="Production has no open material requests waiting on the warehouse. New requests will appear here when production orders are released."
+              icon={IconCheck}
+            />
           ) : (
             <Stack gap="md">
               {pendingTasks.length > 0 && (

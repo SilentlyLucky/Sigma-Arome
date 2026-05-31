@@ -1,6 +1,6 @@
 'use client';
 
-import { Stack, Title, Text, Alert, Paper, Group, Button, Badge, Grid, Divider, Progress, ScrollArea } from '@mantine/core';
+import { Stack, Title, Text, Alert, Paper, Group, Button, Badge, Progress, ScrollArea, Tabs } from '@mantine/core';
 import { CollectionList } from '@/components/ui/collection-list';
 import { IconInfoCircle, IconAlertTriangle } from '@tabler/icons-react';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -212,10 +212,8 @@ function ReceiveForm() {
   };
 
   return (
-    <Grid gutter="md">
-      {/* ── Left: Receive Form ── */}
-      <Grid.Col span={{ base: 12, md: 7 }}>
-        <Paper p="md" radius="md" withBorder>
+    <Stack gap="md">
+      <Paper p="md" radius="md" withBorder>
           <Stack gap="sm">
             {loadingData ? (
               <Input label="PPIC Order" placeholder="Loading orders..." disabled onChange={() => {}} />
@@ -351,36 +349,63 @@ function ReceiveForm() {
               </Button>
             </Group>
           </Stack>
-        </Paper>
-      </Grid.Col>
+      </Paper>
 
       {/* ── Right: Receiving History Sidebar ── */}
-      <Grid.Col span={{ base: 12, md: 5 }}>
-        <Paper p="md" radius="md" withBorder h="100%">
-          <Text fw={600} size="sm" mb="sm">Recent Receiving History</Text>
-          <Divider mb="sm" />
-          <ScrollArea h={600}>
-            <CollectionList
-              key={historyKey}
-              collection="raw_material_receipts"
-              enableSearch
-              enableSort
-              enableHeaderMenu
-              enableResize
-              fields={['receipt_number', 'material_id', 'received_qty', 'unit', 'packaging_condition', 'date_created']}
-              onItemClick={(item) => router.push(`/warehouse/receive/${item.id}`)}
-              renderCell={(item, header) => {
-                if (header.value === 'material_id') {
-                  const name = materialNameMap.get(String(item.material_id ?? ''));
-                  return name ? <span style={{ fontSize: 'var(--mantine-font-size-sm)' }}>{name}</span> : null;
-                }
-                return null;
-              }}
-            />
-          </ScrollArea>
-        </Paper>
-      </Grid.Col>
-    </Grid>
+      <Paper p="md" radius="md" withBorder>
+        <Group justify="space-between" mb="sm">
+          <div>
+            <Text fw={700} size="sm">Recent History</Text>
+            <Text size="xs" c="dimmed">Raw material receipts and finished product storage are kept separate.</Text>
+          </div>
+        </Group>
+
+        <Tabs defaultValue="raw-materials" keepMounted={false}>
+          <Tabs.List>
+            <Tabs.Tab value="raw-materials">Raw Material Receipts</Tabs.Tab>
+            <Tabs.Tab value="finished-products">Finished Product History</Tabs.Tab>
+          </Tabs.List>
+
+          <Tabs.Panel value="raw-materials" pt="sm">
+            <ScrollArea h={420}>
+              <CollectionList
+                key={`raw-${historyKey}`}
+                collection="raw_material_receipts"
+                enableSearch
+                enableSort
+                enableHeaderMenu
+                enableResize
+                fields={['receipt_number', 'material_id', 'received_qty', 'unit', 'packaging_condition', 'date_created']}
+                onItemClick={(item) => router.push(`/warehouse/receive/${item.id}`)}
+                renderCell={(item, header) => {
+                  if (header.value === 'material_id') {
+                    const name = materialNameMap.get(String(item.material_id ?? ''));
+                    return name ? <span style={{ fontSize: 'var(--mantine-font-size-sm)' }}>{name}</span> : null;
+                  }
+                  return null;
+                }}
+              />
+            </ScrollArea>
+          </Tabs.Panel>
+
+          <Tabs.Panel value="finished-products" pt="sm">
+            <ScrollArea h={420}>
+              <CollectionList
+                key={`fg-${historyKey}`}
+                collection="batches"
+                enableSearch
+                enableSort
+                enableHeaderMenu
+                enableResize
+                filter={{ batch_type: { _eq: 'finished_product' } }}
+                fields={['batch_number', 'qty', 'unit', 'status', 'current_location_id', 'date_created']}
+                onItemClick={(item) => router.push(`/warehouse/batches/${item.id}`)}
+              />
+            </ScrollArea>
+          </Tabs.Panel>
+        </Tabs>
+      </Paper>
+    </Stack>
   );
 }
 

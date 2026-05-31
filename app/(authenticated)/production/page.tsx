@@ -4,35 +4,13 @@ import {
   SimpleGrid, Paper, Text, Title, Group, Stack, ThemeIcon,
   Loader, Anchor, Divider, Badge, Alert, Table,
 } from '@mantine/core';
+import { DonutChart } from '@mantine/charts';
 import {
   IconPlayerPlay, IconClock, IconCheck, IconPackage,
   IconAlertTriangle, IconCircleCheck,
 } from '@tabler/icons-react';
 import { useEffect, useState } from 'react';
-import React from 'react';
 import { useRouter } from 'next/navigation';
-
-function StatusBar({ segments }: { segments: { label: string; count: number; color: string }[] }) {
-  const total = Math.max(segments.reduce((s, seg) => s + seg.count, 0), 1);
-  return (
-    <Stack gap="xs">
-      <Group gap={2} style={{ borderRadius: 4, overflow: 'hidden', height: 10 }}>
-        {segments.filter(s => s.count > 0).map(seg => (
-          <div key={seg.label} style={{ flex: seg.count / total, height: '100%', background: `var(--mantine-color-${seg.color}-5)`, minWidth: 4 }} />
-        ))}
-      </Group>
-      <Group gap="sm" wrap="wrap">
-        {segments.map(seg => (
-          <Group key={seg.label} gap={4} wrap="nowrap">
-            <div style={{ width: 10, height: 10, borderRadius: 2, background: `var(--mantine-color-${seg.color}-5)`, flexShrink: 0 }} />
-            <Text size="xs" c="dimmed">{seg.label}:</Text>
-            <Text size="xs" fw={600}>{seg.count}</Text>
-          </Group>
-        ))}
-      </Group>
-    </Stack>
-  );
-}
 
 interface ProductionOrder {
   id: string;
@@ -145,12 +123,18 @@ export default function ProductionDashboard() {
           {/* ── Status Breakdown ────────────────────────────────────────────── */}
           <Paper p="md" radius="md" withBorder>
             <Text fw={600} size="sm" mb="sm">Production Order Status</Text>
-            <StatusBar segments={[
-              { label: 'Blocked', count: n('blocked'), color: 'red' },
-              { label: 'Ready to start', count: n('ready'), color: 'lime' },
-              { label: 'Running', count: n('inProgress'), color: 'violet' },
-              { label: 'Completed', count: n('completed'), color: 'green' },
-            ]} />
+            <DonutChart
+              data={[
+                { name: 'Blocked', value: n('blocked'), color: 'red.5' },
+                { name: 'Ready to start', value: n('ready'), color: 'lime.5' },
+                { name: 'Running', value: n('inProgress'), color: 'violet.5' },
+                { name: 'Completed', value: n('completed'), color: 'green.5' },
+              ]}
+              size={160}
+              thickness={30}
+              withLabels
+              withLabelsLine={false}
+            />
           </Paper>
 
           {/* ── Work Queues ─────────────────────────────────────────────────── */}

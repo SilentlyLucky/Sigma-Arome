@@ -208,8 +208,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
                   <Avatar
                     size={38}
                     radius="xl"
-                    color="green"
-                    style={{ cursor: 'pointer', border: '1px solid rgba(218,226,214,0.9)', background: '#FFFFFF', color: '#1F8F3A', fontWeight: 800, boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}
+                    styles={{ root: { cursor: 'pointer', border: '1px solid rgba(218,226,214,0.9)', background: '#FFFFFF', color: '#1F8F3A', fontWeight: 800, boxShadow: '0 1px 4px rgba(0,0,0,0.06)' } }}
                   >
                     A
                   </Avatar>

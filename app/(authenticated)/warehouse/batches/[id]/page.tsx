@@ -382,7 +382,7 @@ export default function BatchDetailPage() {
             <Text size="xs" c="dimmed" mt={4}>{overrideLocation?.incompatibility_reason}</Text>
           </Alert>
           <Select
-            label="Override Reason *"
+            label="Override Reason"
             placeholder="Select a reason"
             data={OVERRIDE_REASONS}
             value={overrideReason}
@@ -390,7 +390,7 @@ export default function BatchDetailPage() {
             required
           />
           <Textarea
-            label="Override Notes *"
+            label="Override Notes"
             placeholder="Explain why this override is necessary. This will be recorded in the audit trail."
             value={overrideNotes}
             onChange={(e) => setOverrideNotes(e.currentTarget.value)}

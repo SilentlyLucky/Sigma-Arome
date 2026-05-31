@@ -40,6 +40,23 @@ function qcBucket(status: string): 'released' | 'hold' | 'other' {
   return 'other';
 }
 
+function statusLabel(status: string): string {
+  const labels: Record<string, string> = {
+    draft: 'Draft',
+    ordered: 'Ordered',
+    received: 'Received',
+    qc_pending: 'Waiting for QC',
+    under_qc: 'Being inspected',
+    approved: 'Approved, ready to store',
+    storage_assigned: 'Storage assigned',
+    stored_available: 'Stored and available for production',
+    hold: 'On hold',
+    rejected: 'Rejected',
+    issued: 'Sent to production',
+  };
+  return labels[status] ?? status.replace(/_/g, ' ');
+}
+
 export function InventoryViewTab() {
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
@@ -93,13 +110,14 @@ export function InventoryViewTab() {
           });
         }
 
-        // Fetch batches currently in a bin
+        // Fetch all batches by default. Location details are filled in when a
+        // batch has already been stored in a bin.
         const batchRes = await fetch(
-          '/api/items/batches?filter[current_location_id][_nnull]=true' +
-            '&fields[]=id&fields[]=batch_number&fields[]=qty&fields[]=unit&fields[]=weight_kg&fields[]=status' +
+          '/api/items/batches?' +
+            'fields[]=id&fields[]=batch_number&fields[]=qty&fields[]=unit&fields[]=weight_kg&fields[]=status' +
             '&fields[]=current_location_id&fields[]=date_updated' +
             '&fields[]=material_id.name&fields[]=material_id.code&fields[]=material_id.hazard_class_id' +
-            '&sort[]=-date_updated&limit=1000',
+            '&sort[]=-date_updated&limit=-1',
           { cache: 'no-store' }
         );
         const batches = (await batchRes.json())?.data ?? [];
@@ -151,7 +169,11 @@ export function InventoryViewTab() {
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return rows.filter((r) => {
-      if (q && !r.material_name.toLowerCase().includes(q) && !r.batch_number.toLowerCase().includes(q)) {
+      const matchesSearch = !q
+        || r.material_name.toLowerCase().includes(q)
+        || r.material_code.toLowerCase().includes(q)
+        || r.batch_number.toLowerCase().includes(q);
+      if (!matchesSearch) {
         return false;
       }
       if (warehouseFilter && r.warehouse_code !== warehouseFilter) return false;
@@ -172,10 +194,15 @@ export function InventoryViewTab() {
 
   return (
     <Stack gap="md">
+      <Alert icon={<IconInfoCircle size={16} />} color="blue" variant="light">
+        This view shows every batch by default, including items that have not been put into a bin yet.
+        Use search or filters to narrow the list by material, batch, warehouse, hazard, quality, or storage status.
+      </Alert>
+
       <Group align="flex-end" gap="sm" grow wrap="wrap">
         <TextInput
           label="Search"
-          placeholder="Material or batch number"
+          placeholder="Material name, code, or batch number"
           leftSection={<IconSearch size={14} />}
           value={search}
           onChange={(e) => setSearch(e.currentTarget.value)}
@@ -215,7 +242,7 @@ export function InventoryViewTab() {
       </Group>
 
       <Text size="xs" c="dimmed">
-        {filtered.length} of {rows.length} inventory record{rows.length !== 1 ? 's' : ''}
+        Showing {filtered.length} of {rows.length} batch{rows.length !== 1 ? 'es' : ''}
       </Text>
 
       {filtered.length === 0 ? (
@@ -259,7 +286,7 @@ export function InventoryViewTab() {
                       {r.qty} {r.unit}
                     </Table.Td>
                     <Table.Td style={{ fontFamily: 'monospace', fontSize: '0.78rem' }}>
-                      {r.full_path}
+                      {r.full_path === '—' ? 'Not stored yet' : r.full_path}
                     </Table.Td>
                     <Table.Td>
                       <Text size="sm">{r.hazard_name}</Text>
@@ -270,12 +297,12 @@ export function InventoryViewTab() {
                         variant="light"
                         color={bucket === 'released' ? 'green' : bucket === 'hold' ? 'orange' : 'gray'}
                       >
-                        {bucket === 'released' ? 'ready to use' : bucket === 'hold' ? 'waiting or on hold' : 'other'}
+                        {bucket === 'released' ? 'ready for production' : bucket === 'hold' ? 'waiting or on hold' : 'other'}
                       </Badge>
                     </Table.Td>
                     <Table.Td>
                       <Badge size="sm" variant="outline">
-                        {r.status.replace(/_/g, ' ')}
+                        {statusLabel(r.status)}
                       </Badge>
                     </Table.Td>
                     <Table.Td>

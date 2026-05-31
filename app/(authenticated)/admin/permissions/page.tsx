@@ -258,7 +258,7 @@ export default function PermissionsPage() {
         <div>
           <Title order={2}>Permission Configuration</Title>
           <Text c="dimmed" size="sm">
-            Manage DaaS policies, collection permissions, and role assignments. Changes take effect immediately at the backend.
+            Manage which roles can open app areas and work with each type of data. Changes apply immediately.
           </Text>
         </div>
         <Tooltip label="Refresh">
@@ -271,7 +271,8 @@ export default function PermissionsPage() {
       {error && <Alert icon={<IconAlertCircle size={16} />} color="red" title="Error">{error}</Alert>}
 
       <Alert icon={<IconInfoCircle size={16} />} color="blue" variant="light">
-        Permissions are enforced server-side by DaaS. The <strong>Administrator</strong> role has admin_access=true and bypasses all permission checks. Other roles use policies with explicit collection-level permissions.
+        <strong>Administrator</strong> always has full access. Other roles need assigned policies that
+        define what they can view, create, edit, or delete.
       </Alert>
 
       <Tabs defaultValue="roles">

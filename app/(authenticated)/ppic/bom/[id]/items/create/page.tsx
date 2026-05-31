@@ -9,8 +9,8 @@ import { Input } from '@/components/ui/input';
 import { SelectDropdown } from '@/components/ui/select-dropdown';
 
 /**
- * Add Material to BOM — custom form.
- * - BOM field is pre-filled from the URL param (the BOM the user came from).
+ * Add Material to Product Formula — custom form.
+ * - Formula field is pre-filled from the URL param (the formula the user came from).
  * - When a material is selected, the Unit is auto-filled from the material's metadata.
  * - Scrap percentage is removed.
  */
@@ -35,7 +35,7 @@ export default function CreateBOMItemPage() {
     unit: '',
   });
 
-  // Fetch materials and BOMs on mount
+  // Fetch materials and product formulas on mount
   useEffect(() => {
     Promise.all([
       fetch('/api/items/raw_materials?fields[]=id&fields[]=name&fields[]=code&fields[]=unit&filter[status][_eq]=active&limit=200')

@@ -31,7 +31,7 @@ const NAV_ITEMS = [
   { label: 'Raw Material Orders', href: '/ppic/orders', icon: IconShoppingCart, section: 'Ordering' },
   { label: 'Product Formulas', href: '/ppic/bom', icon: IconClipboardList, section: 'Planning' },
   { label: 'Production Orders', href: '/ppic/production', icon: IconBuildingFactory, section: 'Planning' },
-  // Material Requests removed — auto-generated from BOM when a Production Order is created
+  // Material requests are created from product formulas when a production order is submitted.
   { label: 'Materials Ready for Production', href: '/ppic/readiness', icon: IconPackageExport, section: 'Monitoring' },
 ];
 

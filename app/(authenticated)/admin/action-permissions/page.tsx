@@ -165,7 +165,8 @@ export default function ActionPermissionsPage() {
       </Group>
 
       <Alert icon={<IconInfoCircle size={16} />} color="blue" variant="light">
-        <strong>Administrator</strong> has admin_access=true and bypasses all checks. For other roles, click a cell to grant or revoke the action on the selected collection. Changes apply immediately at the DaaS backend.
+        <strong>Administrator</strong> is always allowed to make changes. For other roles, click a cell
+        to allow or block creating, editing, or deleting records in the selected area.
       </Alert>
 
       {error && <Alert icon={<IconAlertCircle size={16} />} color="red" title="Error">{error}</Alert>}

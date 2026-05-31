@@ -187,7 +187,7 @@ export default function FieldVisibilityPage() {
         <div>
           <Title order={2}>Field Visibility Configuration</Title>
           <Text c="dimmed" size="sm">
-            Configure which fields each role can read per collection. Changes update DaaS policy permissions immediately.
+            Choose which information each role can see on every data screen. Changes apply immediately.
           </Text>
         </div>
         <Tooltip label="Refresh">
@@ -198,7 +198,8 @@ export default function FieldVisibilityPage() {
       </Group>
 
       <Alert icon={<IconInfoCircle size={16} />} color="blue" variant="light">
-        Field visibility is enforced at the DaaS backend. <strong>Administrator</strong> always sees all fields (admin bypass). For other roles, edit the visible fields on their read permission. Select &quot;All fields&quot; for full access, or pick specific field names to restrict what the role can see.
+        <strong>Administrator</strong> always sees everything. For other roles, select &quot;All fields&quot;
+        for full visibility or pick specific fields to limit what they can view.
       </Alert>
 
       {error && <Alert icon={<IconAlertCircle size={16} />} color="red" title="Error">{error}</Alert>}
@@ -300,7 +301,7 @@ export default function FieldVisibilityPage() {
               searchable
             />
             <Alert color="yellow" variant="light" icon={<IconInfoCircle size={14} />}>
-              Removing a field here means that role cannot read that field from the API. The UI will also hide it automatically.
+              Removing a field hides that information from this role throughout the app.
             </Alert>
             <Group justify="flex-end">
               <Button variant="subtle" onClick={closeEdit} disabled={saving}>Cancel</Button>

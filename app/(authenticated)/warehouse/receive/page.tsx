@@ -296,7 +296,7 @@ export default function ReceiveMaterialPage() {
                     <Input label="Material" placeholder="Loading..." disabled onChange={() => {}} />
                   ) : materialChoices.length > 0 ? (
                     <SelectDropdown
-                      label="Material *"
+                      label="Material"
                       placeholder="Select material"
                       choices={materialChoices}
                       value={form.material_id || null}
@@ -308,7 +308,7 @@ export default function ReceiveMaterialPage() {
                 )}
 
                 <Input
-                  label="Received Quantity *"
+                  label="Received Quantity"
                   placeholder={remainingQty !== null ? `Max: ${remainingQty} ${selectedOrder?.unit}` : 'e.g. 50'}
                   type="float"
                   value={form.received_qty || null}
@@ -330,7 +330,7 @@ export default function ReceiveMaterialPage() {
                   />
                 ) : (
                   <SelectDropdown
-                    label="Unit *"
+                    label="Unit"
                     choices={[
                       { text: 'kg', value: 'kg' },
                       { text: 'liter', value: 'liter' },
@@ -344,7 +344,7 @@ export default function ReceiveMaterialPage() {
                 )}
 
                 <SelectDropdown
-                  label="Packaging Condition *"
+                  label="Packaging Condition"
                   choices={[
                     { text: 'Good', value: 'good' },
                     { text: 'Acceptable (notes required)', value: 'acceptable' },

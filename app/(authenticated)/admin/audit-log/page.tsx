@@ -105,7 +105,7 @@ export default function AuditLogPage() {
         <div>
           <Title order={2}>Audit Log</Title>
           <Text c="dimmed" size="sm">
-            System activity log — all critical actions are recorded automatically by DaaS.
+            System activity log — all critical actions are recorded automatically.
             This log is read-only and cannot be modified or deleted.
           </Text>
         </div>
@@ -115,9 +115,9 @@ export default function AuditLogPage() {
       </Group>
 
       <Alert icon={<IconInfoCircle size={16} />} color="blue" variant="light">
-        The DaaS platform automatically records all item create, update, and delete operations in the activity log.
-        This includes all admin changes, PPIC orders, QC decisions, warehouse operations, and production events.
-        Records include: user, action, collection, item ID, and timestamp.
+        The app records creates, edits, and deletes so admins can review what changed, who did it,
+        and when it happened. This includes admin changes, PPIC orders, QC decisions, warehouse
+        operations, and production events.
       </Alert>
 
       <CollectionList

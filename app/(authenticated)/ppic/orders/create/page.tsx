@@ -154,10 +154,10 @@ export default function CreateRawMaterialOrderPage() {
         <Stack gap="sm">
           {/* Material — drives unit auto-fill */}
           {loading ? (
-            <Input label="Material *" placeholder="Loading materials..." disabled onChange={() => {}} />
+            <Input label="Material" placeholder="Loading materials..." disabled onChange={() => {}} />
           ) : materialChoices.length > 0 ? (
             <SelectDropdown
-              label="Material *"
+              label="Material"
               placeholder="Select raw material to order..."
               choices={materialChoices}
               value={form.material_id || null}
@@ -165,7 +165,7 @@ export default function CreateRawMaterialOrderPage() {
               required
             />
           ) : (
-            <Input label="Material *" value="" placeholder="No active materials available" disabled onChange={() => {}} />
+            <Input label="Material" value="" placeholder="No active materials available" disabled onChange={() => {}} />
           )}
 
           {/* Supplier (optional) */}
@@ -186,7 +186,7 @@ export default function CreateRawMaterialOrderPage() {
 
           <Group grow align="flex-start">
             <Input
-              label="Quantity *"
+              label="Quantity"
               placeholder="e.g. 50"
               type="float"
               value={form.ordered_qty || null}
@@ -211,7 +211,7 @@ export default function CreateRawMaterialOrderPage() {
 
           <Group grow align="flex-start">
             <SelectDropdown
-              label="Priority *"
+              label="Priority"
               placeholder="Select priority..."
               choices={[
                 { text: 'Low', value: 'low' },

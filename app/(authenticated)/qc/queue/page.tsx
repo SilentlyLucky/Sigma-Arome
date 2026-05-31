@@ -1,8 +1,8 @@
 'use client';
 
-import { Stack, Title, Text, Alert, ActionIcon, Tooltip } from '@mantine/core';
+import { Stack, Title, Text, ActionIcon, Tooltip } from '@mantine/core';
 import { CollectionList } from '@/components/ui/collection-list';
-import { IconInfoCircle, IconMicroscope } from '@tabler/icons-react';
+import { IconMicroscope } from '@tabler/icons-react';
 import { useRouter } from 'next/navigation';
 import { useNameLookup } from '@/lib/hooks/useNameLookup';
 
@@ -15,12 +15,9 @@ export default function QCQueuePage() {
       <div>
         <Title order={2}>Batches Waiting for Inspection</Title>
         <Text c="dimmed" size="sm">
-          Batches that need QC review. Select a batch to start or continue the inspection.
+          Batches that need QC review. Select a batch to start or continue the inspection. The AI image check is a suggestion only — you make the final call.
         </Text>
       </div>
-      <Alert icon={<IconInfoCircle size={16} />} color="grape" variant="light">
-        The image quality check gives a suggestion only. Review it, enter your QC findings, then make the final decision.
-      </Alert>
       <CollectionList
         collection="batches"
         enableSearch

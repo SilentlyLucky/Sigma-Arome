@@ -1,8 +1,7 @@
 'use client';
 
-import { Stack, Title, Text, Alert } from '@mantine/core';
+import { Stack, Title, Text } from '@mantine/core';
 import { CollectionList } from '@/components/ui/collection-list';
-import { IconInfoCircle } from '@tabler/icons-react';
 import { useNameLookup } from '@/lib/hooks/useNameLookup';
 
 export default function MaterialReadinessPage() {
@@ -13,13 +12,9 @@ export default function MaterialReadinessPage() {
       <div>
         <Title order={2}>Materials Ready for Production</Title>
         <Text c="dimmed" size="sm">
-          Check whether raw materials have arrived, passed QC, and are available before planning production.
+          Check whether raw materials have arrived, passed QC, and are available before planning production. Materials become available after QC approval and warehouse storage.
         </Text>
       </div>
-
-      <Alert icon={<IconInfoCircle size={16} />} color="blue" variant="light">
-        Use this page before creating production orders. Materials become available for production after QC approval and warehouse storage.
-      </Alert>
 
       <CollectionList
         collection="raw_material_orders"

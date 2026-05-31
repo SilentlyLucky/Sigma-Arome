@@ -1,8 +1,7 @@
 'use client';
 
-import { Stack, Title, Text, Alert } from '@mantine/core';
+import { Stack, Title, Text } from '@mantine/core';
 import { CollectionList } from '@/components/ui/collection-list';
-import { IconInfoCircle } from '@tabler/icons-react';
 import { useRouter } from 'next/navigation';
 
 export default function LogisticRequestsPage() {
@@ -15,9 +14,6 @@ export default function LogisticRequestsPage() {
           Review material requests from PPIC and approve the ones Warehouse should prepare for production.
         </Text>
       </div>
-      <Alert icon={<IconInfoCircle size={16} />} color="cyan" variant="light">
-        Submitted requests need your review. Approve them when Warehouse should prepare the materials for production.
-      </Alert>
       <CollectionList
         collection="material_requests"
         enableSearch

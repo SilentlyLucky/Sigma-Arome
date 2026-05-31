@@ -1,8 +1,7 @@
 'use client';
 
-import { Stack, Title, Text, Alert } from '@mantine/core';
+import { Stack, Title, Text } from '@mantine/core';
 import { CollectionList } from '@/components/ui/collection-list';
-import { IconInfoCircle } from '@tabler/icons-react';
 import { useNameLookup } from '@/lib/hooks/useNameLookup';
 
 export default function FGPutawayPage() {
@@ -16,9 +15,6 @@ export default function FGPutawayPage() {
           Finished product batches approved by QC and ready to be stored.
         </Text>
       </div>
-      <Alert icon={<IconInfoCircle size={16} />} color="cyan" variant="light">
-        Finished product batches approved by QC are ready for Warehouse to move into finished goods storage.
-      </Alert>
       <CollectionList
         collection="batches"
         enableSearch

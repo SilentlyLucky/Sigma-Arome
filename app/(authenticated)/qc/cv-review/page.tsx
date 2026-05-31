@@ -8,11 +8,13 @@ export default function CVReviewPage() {
   return (
     <Stack gap="md">
       <div>
-        <Title order={2}>Computer Vision Review</Title>
-        <Text c="dimmed" size="sm">AI-assisted inspection results. These are decision support only — final QC decision is made by the inspector.</Text>
+        <Title order={2}>Image Quality Check Review</Title>
+        <Text c="dimmed" size="sm">
+          Review image check suggestions. The final QC decision is always made by the inspector.
+        </Text>
       </div>
       <Alert icon={<IconInfoCircle size={16} />} color="blue" variant="light">
-        CV results are <strong>simulated</strong> for MVP. In production, this will connect to a trained model.
+        These suggestions support inspection review and should not replace manual QC judgment.
       </Alert>
       <CollectionList
         collection="cv_results"

@@ -25,12 +25,12 @@ export default function QCHistoryPage() {
       <div>
         <Title order={2}>Inspection History</Title>
         <Text c="dimmed" size="sm">
-          All QC inspections with AI confidence scores and recommendations inline.
+          Past QC inspections with image check confidence and suggested decisions.
         </Text>
       </div>
 
       <Alert icon={<IconInfoCircle size={16} />} color="blue" variant="light">
-        AI scores are <strong>simulated</strong> for MVP and generated automatically when a batch enters QC Pending.
+        Image check suggestions help inspectors review batches faster. The inspector's recorded QC decision is final.
       </Alert>
 
       <CollectionList

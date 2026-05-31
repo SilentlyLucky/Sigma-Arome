@@ -12,8 +12,10 @@ export default function QCHoldsPage() {
   return (
     <Stack gap="md">
       <div>
-        <Title order={2}>Hold / Reject List</Title>
-        <Text c="dimmed" size="sm">Batches currently on hold or rejected. Review and take action.</Text>
+        <Title order={2}>Held and Rejected Batches</Title>
+        <Text c="dimmed" size="sm">
+          Batches that need follow-up because they were put on hold or rejected during QC.
+        </Text>
       </div>
       <CollectionList
         collection="batches"

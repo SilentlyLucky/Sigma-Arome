@@ -176,16 +176,16 @@ export default function QCInspectPage() {
         </Group>
       </Paper>
 
-      {/* ── AI CV SCORE — shown as soon as available, above the decision panel ── */}
+      {/* Image quality score - shown as soon as available, above the decision panel */}
       {cvLoading && (
         <Alert color="blue" variant="light" icon={<IconRobot size={16} />}>
-          AI computer vision analysis is running… results will appear here automatically.
+          Image quality check is running. Results will appear here automatically.
         </Alert>
       )}
 
       {cvResult && isInspectable && (
         <>
-          <Divider label="AI Computer Vision Analysis" labelPosition="left" />
+          <Divider label="Image Quality Check" labelPosition="left" />
           <Paper p="md" radius="md" withBorder>
             <Group align="flex-start" gap="xl">
               {/* Confidence ring */}
@@ -203,18 +203,17 @@ export default function QCInspectPage() {
                 />
               </Center>
 
-              {/* CV details */}
+              {/* Image check details */}
               <Stack gap={6} style={{ flex: 1 }}>
                 <Alert icon={<IconAlertCircle size={14} />} color="blue" variant="light" p="xs">
                   <Text size="xs">
-                    AI decision support only — the final QC decision is made by the inspector.
-                    {cvResult.is_simulated && ' (Simulated — mock model v1.0)'}
+                    This is a suggestion only. The inspector makes the final QC decision.
                   </Text>
                 </Alert>
                 <Table withTableBorder>
                   <Table.Tbody>
                     <Table.Tr>
-                      <Table.Td fw={500} w={160}>Defect Detected</Table.Td>
+                      <Table.Td fw={500} w={160}>Detected issue</Table.Td>
                       <Table.Td>
                         <Badge color={cvResult.defect_type === 'none' ? 'green' : 'red'} variant="light">
                           {cvResult.defect_type === 'none' ? 'None' : cvResult.defect_type.replace(/_/g, ' ')}
@@ -222,11 +221,11 @@ export default function QCInspectPage() {
                       </Table.Td>
                     </Table.Tr>
                     <Table.Tr>
-                      <Table.Td fw={500}>Confidence Score</Table.Td>
+                      <Table.Td fw={500}>Confidence</Table.Td>
                       <Table.Td>{confidencePct}%</Table.Td>
                     </Table.Tr>
                     <Table.Tr>
-                      <Table.Td fw={500}>AI Recommendation</Table.Td>
+                      <Table.Td fw={500}>Suggested decision</Table.Td>
                       <Table.Td>
                         <Badge size="md" color={REC_COLORS[cvResult.recommendation] ?? 'gray'} variant="filled">
                           {cvResult.recommendation.toUpperCase()}
@@ -248,8 +247,8 @@ export default function QCInspectPage() {
           <Paper p="md" radius="md" withBorder>
             <Stack gap="sm">
               <Textarea
-                label="Decision Reason"
-                placeholder="Required for Hold/Reject. Optional for Approve."
+                label="Reason for hold or rejection"
+                placeholder="Required for Hold or Reject. Optional for Approve."
                 value={reason}
                 onChange={(v) => setReason(String(v ?? ''))}
               />
@@ -274,11 +273,11 @@ export default function QCInspectPage() {
         <>
           {cvResult && (
             <>
-              <Divider label="AI Computer Vision Analysis" labelPosition="left" />
+              <Divider label="Image Quality Check" labelPosition="left" />
               <Paper p="sm" radius="md" withBorder>
                 <Group gap="md">
                   <Badge color={REC_COLORS[cvResult.recommendation] ?? 'gray'} variant="light">
-                    AI: {cvResult.recommendation} ({confidencePct}% confidence)
+                    Suggested: {cvResult.recommendation} ({confidencePct}% confidence)
                   </Badge>
                   {cvResult.defect_type !== 'none' && (
                     <Badge color="red" variant="light">
@@ -299,7 +298,7 @@ export default function QCInspectPage() {
         </>
       )}
 
-      <Button variant="subtle" onClick={() => router.push('/qc/queue')}>← Back to Queue</Button>
+      <Button variant="subtle" onClick={() => router.push('/qc/queue')}>← Back to Inspections</Button>
     </Stack>
   );
 }

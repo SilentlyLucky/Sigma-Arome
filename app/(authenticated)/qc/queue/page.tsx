@@ -13,11 +13,13 @@ export default function QCQueuePage() {
   return (
     <Stack gap="md">
       <div>
-        <Title order={2}>QC Queue</Title>
-        <Text c="dimmed" size="sm">Batches pending QC inspection. Click a batch to start or continue inspection.</Text>
+        <Title order={2}>Batches Waiting for Inspection</Title>
+        <Text c="dimmed" size="sm">
+          Batches that need QC review. Select a batch to start or continue the inspection.
+        </Text>
       </div>
       <Alert icon={<IconInfoCircle size={16} />} color="grape" variant="light">
-        Starting an inspection auto-generates a CV analysis result. Review the CV recommendation, enter manual QC parameters, then make your decision.
+        The image quality check gives a suggestion only. Review it, enter your QC findings, then make the final decision.
       </Alert>
       <CollectionList
         collection="batches"

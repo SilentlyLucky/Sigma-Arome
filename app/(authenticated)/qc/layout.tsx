@@ -10,9 +10,9 @@ import type { ReactNode } from 'react';
 // CV Review has been merged into Inspection History — no standalone tab needed.
 const NAV_ITEMS = [
   { label: 'Dashboard', href: '/qc', icon: IconDashboard, section: 'Overview' },
-  { label: 'QC Queue', href: '/qc/queue', icon: IconFlask, section: 'Inspection' },
+  { label: 'Batches Waiting for Inspection', href: '/qc/queue', icon: IconFlask, section: 'Inspection' },
   { label: 'Inspection History', href: '/qc/history', icon: IconClipboardCheck, section: 'Records' },
-  { label: 'Hold / Reject List', href: '/qc/holds', icon: IconAlertTriangle, section: 'Records' },
+  { label: 'Held and Rejected Batches', href: '/qc/holds', icon: IconAlertTriangle, section: 'Records' },
 ];
 const SECTIONS = ['Overview', 'Inspection', 'Records'];
 

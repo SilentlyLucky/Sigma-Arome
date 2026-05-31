@@ -30,11 +30,11 @@ export default function QCDashboard() {
       ]);
 
       setKpis([
-        { label: 'QC Pending', value: qcPending, color: 'orange', href: '/qc/queue' },
-        { label: 'Under QC', value: underQc, color: 'blue', href: '/qc/queue' },
+        { label: 'Waiting for QC', value: qcPending, color: 'orange', href: '/qc/queue' },
+        { label: 'Being Inspected', value: underQc, color: 'blue', href: '/qc/queue' },
         { label: 'On Hold', value: hold, color: 'yellow', href: '/qc/holds' },
         { label: 'Rejected', value: rejected, color: 'red', href: '/qc/holds' },
-        { label: 'Approved (total)', value: approved, color: 'green' },
+        { label: 'Approved Inspections', value: approved, color: 'green' },
       ]);
       setLoading(false);
     }
@@ -47,7 +47,7 @@ export default function QCDashboard() {
     <Stack gap="lg">
       <div>
         <Title order={2}>QC Workbench</Title>
-        <Text c="dimmed" size="sm">Quality Control — inspect raw materials and finished products, review CV results, make QC decisions.</Text>
+        <Text c="dimmed" size="sm">Inspect raw materials and finished goods, review image check suggestions, and record QC decisions.</Text>
       </div>
       {loading ? <Group justify="center" py="xl"><Loader /></Group> : (
         <SimpleGrid cols={{ base: 2, sm: 3, md: 5 }} spacing="md">

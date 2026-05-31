@@ -34,6 +34,7 @@ export {
 
 // Field utilities
 export {
+  getAutoGenerationType,
   isFieldReadOnly,
   isPresentationField,
   getFieldValidation,

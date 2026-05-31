@@ -114,7 +114,7 @@ export default function ReceiveMaterialPage() {
       return;
     }
     if (!form.material_id && !form.order_id) {
-      notifications.show({ title: 'Missing material', message: 'Select a PPIC order or choose a material for unplanned receiving.', color: 'red' });
+      notifications.show({ title: 'Missing material', message: 'Select a PPIC order or choose a material for an unplanned delivery.', color: 'red' });
       return;
     }
     if ((form.packaging_condition === 'acceptable' || form.packaging_condition === 'damaged') && !form.notes.trim()) {
@@ -204,14 +204,16 @@ export default function ReceiveMaterialPage() {
   return (
     <Stack gap="md">
       <div>
-        <Title order={2}>Raw Material Receiving</Title>
-        <Text c="dimmed" size="sm">Record incoming raw materials. Select a PPIC order for planned receiving, or leave blank for unplanned.</Text>
+        <Title order={2}>Receive Raw Materials</Title>
+        <Text c="dimmed" size="sm">
+          Record raw materials as they arrive. Select a PPIC order for planned deliveries, or leave it blank for an unplanned delivery.
+        </Text>
       </div>
 
       <Tabs defaultValue="receive">
         <Tabs.List>
-          <Tabs.Tab value="receive">New Receipt</Tabs.Tab>
-          <Tabs.Tab value="history">Receipt History</Tabs.Tab>
+          <Tabs.Tab value="receive">Record Delivery</Tabs.Tab>
+          <Tabs.Tab value="history">Receiving History</Tabs.Tab>
         </Tabs.List>
 
         <Tabs.Panel value="receive" pt="md">
@@ -223,7 +225,7 @@ export default function ReceiveMaterialPage() {
               ) : orderChoices.length > 0 ? (
                 <SelectDropdown
                   label="PPIC Order (optional)"
-                  placeholder="Select order for planned receiving, or leave blank for unplanned"
+                  placeholder="Select an order for a planned delivery, or leave blank for unplanned"
                   choices={orderChoices}
                   value={form.order_id || null}
                   onChange={handleOrderChange}
@@ -233,7 +235,7 @@ export default function ReceiveMaterialPage() {
                 <Input
                   label="PPIC Order (optional)"
                   value=""
-                  placeholder="No open PPIC orders — use unplanned receiving"
+                  placeholder="No open PPIC orders - use unplanned delivery"
                   disabled
                   onChange={() => {}}
                 />
@@ -241,7 +243,7 @@ export default function ReceiveMaterialPage() {
 
               {isUnplanned && (
                 <Alert icon={<IconAlertTriangle size={16} />} color="yellow" variant="light">
-                  <strong>Unplanned Receiving</strong> — no PPIC order selected. This receipt will be flagged as unplanned. Make sure to select the correct material below.
+                  <strong>Unplanned delivery</strong> - no PPIC order is selected. This receipt will be flagged for review, so make sure the material is correct before saving.
                 </Alert>
               )}
 

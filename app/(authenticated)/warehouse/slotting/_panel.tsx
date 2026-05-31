@@ -114,10 +114,10 @@ export function AutoSlottingPanel() {
         cache: 'no-store',
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data?.error ?? 'Failed to compute recommendations');
+      if (!res.ok) throw new Error(data?.error ?? 'Could not find storage suggestions');
       setResult(data);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to compute recommendations');
+      setError(e instanceof Error ? e.message : 'Could not find storage suggestions');
     } finally {
       setComputing(false);
     }
@@ -131,10 +131,9 @@ export function AutoSlottingPanel() {
   return (
     <Stack gap="md">
       <Alert icon={<IconInfoCircle size={16} />} color="blue" variant="light">
-        Rule-based engine (no AI/LLM). Locations are scored on{' '}
-        <strong>Temperature 40% · Hazard 30% · Capacity 15% · Occupancy 15%</strong>. Any location
-        that is hazard-incompatible, temperature-incompatible, or lacks capacity is eliminated
-        outright. The top recommendation and its reasoning are saved when a batch is QC-released.
+        We compare each batch with available storage locations and suggest the safest matches. The
+        check considers temperature requirements, hazard compatibility, available space, and current
+        location use.
       </Alert>
 
       <Group align="flex-end" gap="sm">
@@ -143,8 +142,8 @@ export function AutoSlottingPanel() {
         ) : batchChoices.length > 0 ? (
           <Box style={{ flex: 1, maxWidth: 560 }}>
             <SelectDropdown
-              label="Select a QC-released batch"
-              placeholder="Choose a batch to slot"
+              label="Select an approved batch"
+              placeholder="Choose a batch to store"
               choices={batchChoices}
               value={selectedBatch}
               onChange={(v) => setSelectedBatch(String(v ?? ''))}
@@ -166,7 +165,7 @@ export function AutoSlottingPanel() {
           disabled={!selectedBatch || computing}
           loading={computing}
         >
-          Compute Recommendations
+          Find Storage Suggestions
         </Button>
       </Group>
 
@@ -185,7 +184,7 @@ export function AutoSlottingPanel() {
       {result && !computing && (
         <Stack gap="md">
           <Group gap="xs">
-            <Text fw={600}>Recommendations for</Text>
+            <Text fw={600}>Storage suggestions for</Text>
             <Badge variant="light" size="lg" style={{ fontFamily: 'monospace' }}>
               {result.batch.batch_number}
             </Badge>
@@ -228,7 +227,7 @@ export function AutoSlottingPanel() {
                         </Text>
                         <Text size="xs" c="dimmed">
                           {c.zone.replace(/_/g, ' ')} ·{' '}
-                          {c.slot_state === 'same_material' ? 'consolidate' : 'empty'}
+                          {c.slot_state === 'same_material' ? 'same material' : 'empty'}
                         </Text>
                       </div>
                     </Group>
@@ -266,7 +265,7 @@ export function AutoSlottingPanel() {
                         <Group gap={6} wrap="nowrap">
                           <Badge size="xs" color={c.comparison.after_occupancy_pct > 90 ? 'orange' : 'teal'} variant="dot" />
                           <Text size="xs">
-                            <strong>Occupancy:</strong> {c.comparison.current_occupancy_pct}% now → {c.comparison.after_occupancy_pct}% after putaway
+                            <strong>Occupancy:</strong> {c.comparison.current_occupancy_pct}% now → {c.comparison.after_occupancy_pct}% after storage
                           </Text>
                         </Group>
                       </>
@@ -284,7 +283,7 @@ export function AutoSlottingPanel() {
               <Group gap="xs" mb="sm">
                 <IconBan size={16} color="var(--mantine-color-red-6)" />
                 <Text fw={600} size="sm">
-                  Eliminated locations ({result.eliminated.length})
+                  Locations not recommended ({result.eliminated.length})
                 </Text>
               </Group>
               <ScrollArea.Autosize mah={240}>
@@ -293,7 +292,7 @@ export function AutoSlottingPanel() {
                     <Table.Tr>
                       <Table.Th>Location</Table.Th>
                       <Table.Th>Zone</Table.Th>
-                      <Table.Th>Reason</Table.Th>
+                      <Table.Th>Why not recommended</Table.Th>
                     </Table.Tr>
                   </Table.Thead>
                   <Table.Tbody>

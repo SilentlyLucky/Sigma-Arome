@@ -11,8 +11,10 @@ export default function ExpectedIncomingPage() {
   return (
     <Stack gap="md">
       <div>
-        <Title order={2}>Expected Incoming Orders</Title>
-        <Text c="dimmed" size="sm">PPIC raw material orders with status &quot;Ordered&quot; — prepare for receiving.</Text>
+        <Title order={2}>Expected Raw Material Deliveries</Title>
+        <Text c="dimmed" size="sm">
+          Raw material orders expected to arrive soon. Use this list to prepare receiving.
+        </Text>
       </div>
       <CollectionList
         collection="raw_material_orders"

@@ -99,12 +99,12 @@ export default function PutawayPage() {
       } else {
         notifications.show({
           title: 'Error',
-          message: data?.error ?? 'Failed to compute recommendations',
+          message: data?.error ?? 'Could not find storage suggestions',
           color: 'red',
         });
       }
     } catch {
-      notifications.show({ title: 'Error', message: 'Failed to load recommendations', color: 'red' });
+      notifications.show({ title: 'Error', message: 'Could not load storage suggestions', color: 'red' });
     } finally {
       setLoadingSlots(false);
     }
@@ -124,10 +124,10 @@ export default function PutawayPage() {
       });
       if (!res.ok) {
         const err = await res.json();
-        throw new Error(err?.errors?.[0]?.message ?? 'Putaway failed');
+        throw new Error(err?.errors?.[0]?.message ?? 'Could not confirm storage');
       }
       notifications.show({
-        title: 'Putaway Confirmed',
+        title: 'Storage confirmed',
         message: `Batch ${selectedBatch.batch_number} stored successfully`,
         color: 'green',
       });
@@ -170,17 +170,16 @@ export default function PutawayPage() {
   return (
     <Stack gap="md">
       <div>
-        <Title order={2}>Putaway — Approved Batches</Title>
+        <Title order={2}>Put Away Approved Batches</Title>
         <Text c="dimmed" size="sm">
-          Assign storage locations and confirm putaway for QC-approved batches. The rule-based
-          engine recommends the best bins (Temperature 40% · Hazard 30% · Capacity 15% · Occupancy
-          15%).
+          Choose storage locations for batches that have passed QC. We suggest locations based on
+          temperature needs, hazard rules, available space, and current bin use.
         </Text>
       </div>
 
       <Alert icon={<IconInfoCircle size={16} />} color="teal" variant="light">
-        Only <strong>QC Approved</strong> batches appear here. Click a batch to see the Top-3 scored
-        recommendations and confirm putaway.
+        Only batches approved by QC appear here. Select a batch, review the suggested locations,
+        then confirm where it was stored.
       </Alert>
 
       <CollectionList
@@ -192,7 +191,7 @@ export default function PutawayPage() {
         onItemClick={(item) => openPutaway(item as unknown as Batch)}
       />
 
-      <Modal opened={opened} onClose={close} title={`Putaway: ${selectedBatch?.batch_number}`} size="lg">
+      <Modal opened={opened} onClose={close} title={`Store batch: ${selectedBatch?.batch_number}`} size="lg">
         {loadingSlots ? (
           <Group justify="center" py="xl">
             <Loader />
@@ -216,9 +215,8 @@ export default function PutawayPage() {
             {candidates.length === 0 ? (
               <Stack gap="sm">
                 <Alert color="orange" variant="light" icon={<IconInfoCircle size={16} />}>
-                  No fully compatible location found by the rule engine. All candidate bins have at
-                  least one concern. You may select a location manually below — review the concern
-                  before confirming.
+                  No fully suitable location was found. You can choose a location manually, but
+                  review the warning before confirming.
                 </Alert>
 
                 {eliminated.length > 0 && (
@@ -250,7 +248,7 @@ export default function PutawayPage() {
                 <Group gap={6}>
                   <IconWand size={15} color="var(--mantine-color-teal-6)" />
                   <Text size="sm" fw={600}>
-                    Recommended locations
+                    Suggested storage locations
                   </Text>
                 </Group>
                 {candidates.map((c) => {
@@ -283,7 +281,7 @@ export default function PutawayPage() {
                             </Text>
                             <Text size="xs" c="dimmed">
                               {c.zone.replace(/_/g, ' ')} ·{' '}
-                              {c.slot_state === 'same_material' ? 'consolidate' : 'empty'}
+                              {c.slot_state === 'same_material' ? 'same material' : 'empty'}
                             </Text>
                           </div>
                         </Group>
@@ -317,7 +315,7 @@ export default function PutawayPage() {
                         <Group gap={6} wrap="nowrap">
                           <Badge size="xs" color={cmp?.after_occupancy_pct && cmp.after_occupancy_pct > 90 ? 'orange' : 'teal'} variant="dot" />
                           <Text size="xs">
-                            <strong>Occupancy:</strong> {cmp?.current_occupancy_pct}% now → {cmp?.after_occupancy_pct}% after putaway
+                            <strong>Occupancy:</strong> {cmp?.current_occupancy_pct}% now → {cmp?.after_occupancy_pct}% after storage
                           </Text>
                         </Group>
                       </Stack>
@@ -349,7 +347,7 @@ export default function PutawayPage() {
                 onClick={confirmPutaway}
                 disabled={!selectedLocation}
               >
-                Confirm Putaway
+                Confirm Storage
               </Button>
             </Group>
           </Stack>

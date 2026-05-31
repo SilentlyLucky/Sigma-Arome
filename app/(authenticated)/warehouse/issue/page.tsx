@@ -11,11 +11,13 @@ export default function MaterialIssuePage() {
   return (
     <Stack gap="md">
       <div>
-        <Title order={2}>Material Issue to Production</Title>
-        <Text c="dimmed" size="sm">Issue approved raw material batches to Production based on Material Requests.</Text>
+        <Title order={2}>Send Materials to Production</Title>
+        <Text c="dimmed" size="sm">
+          Send approved raw material batches to production when they are needed for active orders.
+        </Text>
       </div>
       <Alert icon={<IconInfoCircle size={16} />} color="grape" variant="light">
-        Only batches with status <strong>Stored - Available</strong> can be issued. Stock decreases after issue is confirmed.
+        Only batches marked <strong>Available for production</strong> can be sent. Stock is reduced after the send is confirmed.
       </Alert>
       <CollectionList
         collection="batches"

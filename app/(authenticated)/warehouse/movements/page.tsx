@@ -7,10 +7,10 @@ export default function MovementLogPage() {
   return (
     <Stack gap="md">
       <div>
-        <Title order={2}>Inventory Movement Log</Title>
+        <Title order={2}>Inventory Movement History</Title>
         <Text c="dimmed" size="sm">
-          History of all physical material movements — receiving, putaway, issue, and transfers.
-          Entries are created automatically when batches are received or their location changes.
+          A history of material movement across the factory, including receiving, storage,
+          production release, and transfers.
         </Text>
       </div>
       <CollectionList

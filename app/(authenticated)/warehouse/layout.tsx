@@ -65,7 +65,7 @@ export default function WarehouseLayout({ children }: { children: ReactNode }) {
                 </ActionIcon>
               </Menu.Target>
               <Menu.Dropdown>
-                <Menu.Item leftSection={<IconSettings size={14} />} style={{ color: '#4B5563' }}>Settings</Menu.Item>
+                <Menu.Item leftSection={<IconSettings size={14} />} style={{ color: '#4B5563' }} onClick={() => router.push('/account/settings')}>Settings</Menu.Item>
                 <Menu.Divider />
                 <Menu.Item leftSection={<IconLogout size={14} />} color="red" onClick={async () => { await fetch('/api/auth/logout', { method: 'POST' }); router.push('/login'); }}>
                   Logout

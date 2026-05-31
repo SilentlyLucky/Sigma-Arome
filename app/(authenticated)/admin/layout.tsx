@@ -125,7 +125,11 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
               </ActionIcon>
             </Menu.Target>
             <Menu.Dropdown>
-              <Menu.Item leftSection={<IconSettings size={14} />} style={{ color: '#4B5563' }}>
+              <Menu.Item
+                leftSection={<IconSettings size={14} />}
+                style={{ color: '#4B5563' }}
+                onClick={() => router.push('/account/settings')}
+              >
                 Settings
               </Menu.Item>
               <Menu.Divider />

@@ -12,12 +12,11 @@ import {
   Modal,
   Loader,
   Divider,
-  Progress,
   Box,
 } from '@mantine/core';
 import { CollectionList } from '@/components/ui/collection-list';
 import { SelectDropdown } from '@/components/ui/select-dropdown';
-import { IconInfoCircle, IconMapPin, IconCheck, IconTrophy, IconWand } from '@tabler/icons-react';
+import { IconInfoCircle, IconMapPin, IconCheck, IconTrophy, IconWand, IconAlertTriangle } from '@tabler/icons-react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { notifications } from '@mantine/notifications';
@@ -45,6 +44,25 @@ interface Candidate {
   slot_state: 'empty' | 'same_material';
   is_recommended: boolean;
   reasoning: string;
+  comparison: {
+    material_temp: string;
+    location_temp: string;
+    temp_ok: boolean;
+    material_hazard: string;
+    hazard_allowed: boolean;
+    material_weight: string;
+    location_available: string;
+    capacity_ok: boolean;
+    current_occupancy_pct: number;
+    after_occupancy_pct: number;
+  };
+}
+
+interface Eliminated {
+  location_id: string;
+  location_code: string;
+  zone: string;
+  reason: string;
 }
 
 const RANK_COLORS = ['yellow', 'gray', 'orange'];
@@ -53,6 +71,7 @@ export default function PutawayPage() {
   const router = useRouter();
   const [selectedBatch, setSelectedBatch] = useState<Batch | null>(null);
   const [candidates, setCandidates] = useState<Candidate[]>([]);
+  const [eliminated, setEliminated] = useState<Eliminated[]>([]);
   const [selectedLocation, setSelectedLocation] = useState<string>('');
   const [confirming, setConfirming] = useState(false);
   const [loadingSlots, setLoadingSlots] = useState(false);
@@ -62,6 +81,7 @@ export default function PutawayPage() {
     setSelectedBatch(batch);
     setSelectedLocation('');
     setCandidates([]);
+    setEliminated([]);
     setLoadingSlots(true);
     open();
 
@@ -72,8 +92,9 @@ export default function PutawayPage() {
       const data = await res.json();
       if (res.ok) {
         const cands: Candidate[] = data?.candidates ?? [];
+        const elim: Eliminated[] = data?.eliminated ?? [];
         setCandidates(cands);
-        // Default to the top recommendation
+        setEliminated(elim);
         if (cands.length > 0) setSelectedLocation(cands[0].location_id);
       } else {
         notifications.show({
@@ -118,6 +139,28 @@ export default function PutawayPage() {
       setConfirming(false);
     }
   };
+
+  // Sort eliminated locations by concern severity (least severe first = most viable for manual override)
+  // Priority: capacity > single-material > hazard > temperature > zone mismatch
+  const concernSeverity = (reason: string): number => {
+    if (reason.includes('Capacity insufficient')) return 1;
+    if (reason.includes('single-material')) return 2;
+    if (reason.includes('Hazard') || reason.includes('hazard')) return 3;
+    if (reason.includes('Temperature')) return 4;
+    if (reason.includes('Zone')) return 5;
+    return 3;
+  };
+
+  const sortedEliminated = [...eliminated].sort(
+    (a, b) => concernSeverity(a.reason) - concernSeverity(b.reason)
+  );
+
+  const sortedEliminatedChoices = sortedEliminated.map((e) => ({
+    text: `${e.location_code} — ${e.zone.replace(/_/g, ' ')} ⚠ ${e.reason.slice(0, 60)}${e.reason.length > 60 ? '…' : ''}`,
+    value: e.location_id,
+  }));
+
+  const selectedConcern = eliminated.find((e) => e.location_id === selectedLocation) ?? null;
 
   const locationChoices = candidates.map((c) => ({
     text: `#${c.rank} ${c.location_code} — score ${c.score} · ${c.zone.replace(/_/g, ' ')}`,
@@ -171,10 +214,37 @@ export default function PutawayPage() {
             </Paper>
 
             {candidates.length === 0 ? (
-              <Alert color="orange" variant="light" icon={<IconInfoCircle size={16} />}>
-                No compatible location found by the rule engine. All candidate bins were eliminated
-                (hazard, temperature, or capacity). Please review the warehouse setup.
-              </Alert>
+              <Stack gap="sm">
+                <Alert color="orange" variant="light" icon={<IconInfoCircle size={16} />}>
+                  No fully compatible location found by the rule engine. All candidate bins have at
+                  least one concern. You may select a location manually below — review the concern
+                  before confirming.
+                </Alert>
+
+                {eliminated.length > 0 && (
+                  <>
+                    <Text size="sm" fw={600}>
+                      Manual selection (sorted by least concern)
+                    </Text>
+                    <SelectDropdown
+                      label="Storage Location (manual override)"
+                      placeholder="Select a location — review concerns"
+                      choices={sortedEliminatedChoices}
+                      value={selectedLocation}
+                      onChange={(v) => setSelectedLocation(String(v ?? ''))}
+                      searchable
+                    />
+                    {selectedLocation && selectedConcern && (
+                      <Alert color="red" variant="light" icon={<IconAlertTriangle size={16} />}>
+                        <Text size="sm" fw={600}>
+                          Concern for {selectedConcern.location_code}:
+                        </Text>
+                        <Text size="sm">{selectedConcern.reason}</Text>
+                      </Alert>
+                    )}
+                  </>
+                )}
+              </Stack>
             ) : (
               <Stack gap="xs">
                 <Group gap={6}>
@@ -185,6 +255,7 @@ export default function PutawayPage() {
                 </Group>
                 {candidates.map((c) => {
                   const isSel = selectedLocation === c.location_id;
+                  const cmp = c.comparison;
                   return (
                     <Paper
                       key={c.location_id}
@@ -212,21 +283,44 @@ export default function PutawayPage() {
                             </Text>
                             <Text size="xs" c="dimmed">
                               {c.zone.replace(/_/g, ' ')} ·{' '}
-                              {c.slot_state === 'same_material' ? 'consolidate' : 'empty'} · occ after{' '}
-                              {c.occupancy_after_pct}%
+                              {c.slot_state === 'same_material' ? 'consolidate' : 'empty'}
                             </Text>
                           </div>
                         </Group>
                         <Box style={{ textAlign: 'right', minWidth: 60 }}>
-                          <Text fw={700} c={isSel ? 'teal' : undefined}>
+                          <Text fw={700} size="lg" c={isSel ? 'teal' : undefined}>
                             {c.score}
                           </Text>
-                          <Progress value={c.score} size="xs" mt={2} color="teal" />
+                          <Text size="xs" c="dimmed">/ 100</Text>
                         </Box>
                       </Group>
-                      <Text size="xs" c="dimmed" mt={6}>
-                        {c.reasoning}
-                      </Text>
+
+                      <Stack gap={4} mt="sm" ml={4}>
+                        <Group gap={6} wrap="nowrap">
+                          <Badge size="xs" color={cmp?.temp_ok ? 'teal' : 'red'} variant="dot" />
+                          <Text size="xs">
+                            <strong>Temperature:</strong> Material needs {cmp?.material_temp} → Location accepts {cmp?.location_temp}
+                          </Text>
+                        </Group>
+                        <Group gap={6} wrap="nowrap">
+                          <Badge size="xs" color={cmp?.hazard_allowed ? 'teal' : 'red'} variant="dot" />
+                          <Text size="xs">
+                            <strong>Hazard Class:</strong> {cmp?.material_hazard} — {cmp?.hazard_allowed ? 'Allowed' : 'Not allowed'}
+                          </Text>
+                        </Group>
+                        <Group gap={6} wrap="nowrap">
+                          <Badge size="xs" color={cmp?.capacity_ok ? 'teal' : 'red'} variant="dot" />
+                          <Text size="xs">
+                            <strong>Capacity:</strong> Batch {cmp?.material_weight} → {cmp?.location_available}
+                          </Text>
+                        </Group>
+                        <Group gap={6} wrap="nowrap">
+                          <Badge size="xs" color={cmp?.after_occupancy_pct && cmp.after_occupancy_pct > 90 ? 'orange' : 'teal'} variant="dot" />
+                          <Text size="xs">
+                            <strong>Occupancy:</strong> {cmp?.current_occupancy_pct}% now → {cmp?.after_occupancy_pct}% after putaway
+                          </Text>
+                        </Group>
+                      </Stack>
                     </Paper>
                   );
                 })}

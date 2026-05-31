@@ -2,7 +2,7 @@
 
 import { AppShell, Burger, Group, NavLink, Text, Title, ActionIcon, Menu, Avatar, Divider } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
-import { IconDashboard, IconTruckDelivery, IconBarcode, IconMapPin, IconHistory, IconLogout, IconSettings, IconMap } from '@tabler/icons-react';
+import { IconDashboard, IconTruckDelivery, IconBarcode, IconMapPin, IconHistory, IconLogout, IconSettings, IconMap, IconWand } from '@tabler/icons-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import type { ReactNode } from 'react';
@@ -16,6 +16,7 @@ const NAV_ITEMS = [
   { label: 'Receive Material', href: '/warehouse/receive', icon: IconTruckDelivery, section: 'Receiving' },
   { label: 'Batches', href: '/warehouse/batches', icon: IconBarcode, section: 'Inventory' },
   { label: 'Putaway', href: '/warehouse/putaway', icon: IconMapPin, section: 'Inventory' },
+  { label: 'Auto Slotting', href: '/warehouse/slotting', icon: IconWand, section: 'Inventory' },
   { label: 'Movement Log', href: '/warehouse/movements', icon: IconHistory, section: 'History' },
 ];
 const SECTIONS = ['Overview', 'Receiving', 'Inventory', 'History'];

@@ -89,6 +89,19 @@ export interface Candidate {
   slot_state: 'empty' | 'same_material';
   is_recommended: boolean;
   reasoning: string;
+  // Comparison data for user-friendly display
+  comparison: {
+    material_temp: string;       // e.g. "2–8°C"
+    location_temp: string;       // e.g. "2–8°C"
+    temp_ok: boolean;
+    material_hazard: string;     // e.g. "Flammable Liquid"
+    hazard_allowed: boolean;
+    material_weight: string;     // e.g. "800 kg"
+    location_available: string;  // e.g. "2,000 kg free"
+    capacity_ok: boolean;
+    current_occupancy_pct: number;
+    after_occupancy_pct: number;
+  };
 }
 
 export interface Eliminated {
@@ -338,6 +351,11 @@ export async function GET(request: NextRequest) {
             1000
         ) / 10;
 
+      // Build comparison data for user-friendly display
+      const locTempMin = loc.temperature_min ?? (loc.temperature_class === 'cold' ? 2 : 15);
+      const locTempMax = loc.temperature_max ?? (loc.temperature_class === 'cold' ? 8 : 30);
+      const currentOccPct = capacity > 0 ? Math.round((occupancy / capacity) * 100) : 0;
+
       candidates.push({
         location_id: loc.id,
         location_code: loc.location_code,
@@ -354,6 +372,18 @@ export async function GET(request: NextRequest) {
         slot_state: locMatId ? 'same_material' : 'empty',
         is_recommended: false,
         reasoning: reasons.join(' · '),
+        comparison: {
+          material_temp: `${matTempMin}–${matTempMax}°C`,
+          location_temp: `${locTempMin}–${locTempMax}°C`,
+          temp_ok: rangesOverlap(matTempMin, matTempMax, locTempMin, locTempMax),
+          material_hazard: batchHazard?.name ?? 'None',
+          hazard_allowed: true, // if we got here, hazard passed
+          material_weight: `${need.toLocaleString()} ${unitLabel}`,
+          location_available: available === Infinity ? 'Unlimited' : `${available.toLocaleString()} ${unitLabel} free`,
+          capacity_ok: true, // if we got here, capacity passed
+          current_occupancy_pct: currentOccPct,
+          after_occupancy_pct: Math.round(occupancyAfter * 100),
+        },
       });
     }
 

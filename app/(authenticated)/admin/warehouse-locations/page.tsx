@@ -9,7 +9,6 @@ import {
   IconStack2,
   IconBox,
   IconPackages,
-  IconWand,
 } from '@tabler/icons-react';
 import { OverviewTab } from './_tabs/overview-tab';
 import { TreeViewTab } from './_tabs/tree-view-tab';
@@ -18,13 +17,13 @@ import { ZonesTab } from './_tabs/zones-tab';
 import { RacksTab } from './_tabs/racks-tab';
 import { BinsTab } from './_tabs/bins-tab';
 import { InventoryViewTab } from './_tabs/inventory-view-tab';
-import { AutoSlottingTab } from './_tabs/auto-slotting-tab';
 
 /**
  * Warehouse Location — single sidebar menu, tabbed UI.
  *
  * Hierarchy: Warehouse → Zone → Rack → Bin (= warehouse_locations).
  * Actual inventory always lives at the Bin level.
+ * Auto Slotting lives in the Warehouse Operation module (/warehouse/slotting).
  */
 export default function WarehouseLocationPage() {
   return (
@@ -32,8 +31,8 @@ export default function WarehouseLocationPage() {
       <div>
         <Title order={2}>Warehouse Location</Title>
         <Text c="dimmed" size="sm">
-          Manage the warehouse hierarchy — Warehouse → Zone → Rack → Bin — plus live inventory and
-          rule-based auto slotting.
+          Manage the warehouse hierarchy — Warehouse → Zone → Rack → Bin — plus live inventory
+          view.
         </Text>
       </div>
 
@@ -60,9 +59,6 @@ export default function WarehouseLocationPage() {
           <Tabs.Tab value="inventory" leftSection={<IconPackages size={16} />}>
             Inventory View
           </Tabs.Tab>
-          <Tabs.Tab value="slotting" leftSection={<IconWand size={16} />}>
-            Auto Slotting
-          </Tabs.Tab>
         </Tabs.List>
 
         <Tabs.Panel value="overview" pt="md">
@@ -85,9 +81,6 @@ export default function WarehouseLocationPage() {
         </Tabs.Panel>
         <Tabs.Panel value="inventory" pt="md">
           <InventoryViewTab />
-        </Tabs.Panel>
-        <Tabs.Panel value="slotting" pt="md">
-          <AutoSlottingTab />
         </Tabs.Panel>
       </Tabs>
     </Stack>

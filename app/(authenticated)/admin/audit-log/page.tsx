@@ -29,7 +29,7 @@ interface AuditStats {
   today: number;
   uniqueUsers: number;
   lastEvent: string | null;
-  ipCoverage: number;
+  clientIp: string | null;
 }
 
 const ROLE_ROUTE_MAP: Record<string, string> = {
@@ -73,7 +73,7 @@ export default function AuditLogPage() {
     today: 0,
     uniqueUsers: 0,
     lastEvent: null,
-    ipCoverage: 0,
+    clientIp: null,
   });
 
   useEffect(() => {
@@ -139,29 +139,36 @@ export default function AuditLogPage() {
       try {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
-        const countsRes = await fetch('/api/batch-counts', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            counts: [
-              { key: 'total', collection: 'daas_activity' },
-              { key: 'today', collection: 'daas_activity', filter: { timestamp: { _gte: today.toISOString() } } },
-            ],
-          }),
-        });
-        const counts = countsRes.ok ? ((await countsRes.json())?.counts ?? {}) : {};
 
-        const recentRes = await fetch('/api/items/daas_activity?fields[]=user_id&fields[]=timestamp&fields[]=ip&limit=200&sort[]=-timestamp');
-        const recent: ActivityItem[] = recentRes.ok ? ((await recentRes.json())?.data ?? []) : [];
-        const users = new Set(recent.map(item => item.user_id).filter(Boolean));
-        const ipRows = recent.filter(item => typeof item.ip === 'string' && item.ip.trim().length > 0);
+        const [countsRes, lastEventRes, recentUsersRes, ipRes] = await Promise.all([
+          fetch('/api/batch-counts', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              counts: [
+                { key: 'total', collection: 'daas_activity' },
+                { key: 'today', collection: 'daas_activity', filter: { timestamp: { _gte: today.toISOString() } } },
+              ],
+            }),
+          }),
+          fetch('/api/items/daas_activity?fields[]=timestamp&limit=1&sort=-timestamp'),
+          fetch('/api/items/daas_activity?fields[]=user_id&limit=200&sort=-timestamp'),
+          fetch('/api/client-ip'),
+        ]);
+
+        const counts = countsRes.ok ? ((await countsRes.json())?.counts ?? {}) : {};
+        const lastEventData = lastEventRes.ok ? ((await lastEventRes.json())?.data ?? []) : [];
+        const recentUsersData: ActivityItem[] = recentUsersRes.ok ? ((await recentUsersRes.json())?.data ?? []) : [];
+        const ipData = ipRes.ok ? await ipRes.json() : {};
+
+        const uniqueUserIds = new Set(recentUsersData.map(item => item.user_id).filter(Boolean));
 
         setStats({
           total: Number(counts.total ?? 0),
           today: Number(counts.today ?? 0),
-          uniqueUsers: users.size,
-          lastEvent: recent[0]?.timestamp ?? null,
-          ipCoverage: recent.length === 0 ? 0 : Math.round((ipRows.length / recent.length) * 100),
+          uniqueUsers: uniqueUserIds.size,
+          lastEvent: (lastEventData[0] as ActivityItem | undefined)?.timestamp ?? null,
+          clientIp: typeof ipData.ip === 'string' ? ipData.ip : null,
         });
       } catch {
         // Keep zero-state cards if stats cannot load.
@@ -205,8 +212,8 @@ export default function AuditLogPage() {
     },
     {
       label: 'IP Tracker',
-      value: `${stats.ipCoverage}%`,
-      note: stats.ipCoverage > 0 ? 'Recent events with IP' : 'Forwarding enabled',
+      value: stats.clientIp ?? 'Detecting…',
+      note: stats.clientIp ? 'Current session IP' : 'Check proxy headers',
       icon: ShieldCheck,
       visual: 'shield',
       accent: '#0F7A38',
@@ -276,7 +283,7 @@ export default function AuditLogPage() {
                 {card.visual === 'ring' && <Box className="audit-ring"><FileText size={26} /></Box>}
                 {card.visual === 'people' && (
                   <Group gap={-4} className="audit-people">
-                    {['#B7791F', '#2B6CB0', '#C05621', '#4A5568'].map((color) => (
+                    {['#2E7D32', '#1565C0', '#E53935', '#546E7A'].map((color) => (
                       <span key={color} style={{ backgroundColor: color }} />
                     ))}
                   </Group>

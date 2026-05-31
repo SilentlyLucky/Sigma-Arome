@@ -4,6 +4,7 @@ import {
   SimpleGrid, Paper, Text, Title, Group, Stack, ThemeIcon, Loader, Anchor,
   Divider, Badge, Alert, Table, Button,
 } from '@mantine/core';
+import { BarChart } from '@mantine/charts';
 import {
   IconTruckDelivery, IconBarcode, IconMapPin, IconBuildingFactory,
   IconAlertTriangle, IconCheck, IconCircleCheck, IconChevronRight, IconPackage,
@@ -11,32 +12,6 @@ import {
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { notifications } from '@mantine/notifications';
-import React from 'react';
-
-function Pipeline({ stages }: { stages: { label: string; count: number; color: string }[] }) {
-  return (
-    <div style={{ display: 'flex', gap: 4, alignItems: 'stretch', overflowX: 'auto', paddingBottom: 4 }}>
-      {stages.map((s, i) => (
-        <React.Fragment key={s.label}>
-          <div style={{
-            flex: '1 1 0', minWidth: 70, textAlign: 'center', padding: '10px 6px',
-            background: `var(--mantine-color-${s.color}-0)`,
-            border: `1px solid var(--mantine-color-${s.color}-3)`,
-            borderRadius: 8,
-          }}>
-            <Text size="xl" fw={700} c={s.count > 0 ? s.color : 'dimmed'}>{s.count}</Text>
-            <Text size="xs" c="dimmed" lineClamp={2}>{s.label}</Text>
-          </div>
-          {i < stages.length - 1 && (
-            <div style={{ display: 'flex', alignItems: 'center', color: 'var(--mantine-color-gray-4)', padding: '0 2px' }}>
-              <IconChevronRight size={14} />
-            </div>
-          )}
-        </React.Fragment>
-      ))}
-    </div>
-  );
-}
 
 interface PickTask {
   production_order_id: string;
@@ -305,12 +280,18 @@ export default function WarehouseDashboard() {
           {/* ── Warehouse Flow Pipeline ─────────────────────────────────────── */}
           <Paper p="md" radius="md" withBorder>
             <Text fw={600} size="sm" mb="sm">Warehouse Flow</Text>
-            <Pipeline stages={[
-              { label: 'Deliveries Due', count: n('incoming'), color: 'blue' },
-              { label: 'Waiting QC', count: n('qcPending'), color: 'orange' },
-              { label: 'Approved — To Store', count: n('approvedWaiting'), color: 'teal' },
-              { label: 'Stored & Ready', count: n('stored'), color: 'green' },
-            ]} />
+            <BarChart
+              h={180}
+              data={[
+                { stage: 'Deliveries Due', count: n('incoming') },
+                { stage: 'Waiting QC', count: n('qcPending') },
+                { stage: 'Approved→Store', count: n('approvedWaiting') },
+                { stage: 'Stored & Ready', count: n('stored') },
+              ]}
+              dataKey="stage"
+              series={[{ name: 'count', label: 'Count', color: 'teal.6' }]}
+              withLegend={false}
+            />
           </Paper>
 
           {/* ── Putaway Queue ───────────────────────────────────────────────── */}

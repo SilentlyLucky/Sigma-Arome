@@ -1,13 +1,7 @@
 'use client';
 
-import {
-  SimpleGrid, Paper, Text, Title, Group, Stack, ThemeIcon, Loader, Anchor,
-  Divider, Badge, Table, Button, Box,
-} from '@mantine/core';
-import {
-  IconTruckDelivery, IconBarcode, IconMapPin,
-  IconAlertTriangle, IconCheck, IconCircleCheck, IconPackage,
-} from '@tabler/icons-react';
+import { SimpleGrid, Paper, Text, Title, Group, Stack, Loader, Anchor, Badge, Table, Button, Box } from '@mantine/core';
+import { IconTruckDelivery, IconBarcode, IconMapPin, IconAlertTriangle, IconCircleCheck, IconPackage } from '@tabler/icons-react';
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { notifications } from '@mantine/notifications';
@@ -38,83 +32,6 @@ interface PutawayBatch {
   material_id: string;
 }
 
-interface MetricCardProps {
-  label: string;
-  value: number;
-  description: string;
-  color: string;
-  icon: typeof IconTruckDelivery;
-  active?: boolean;
-  onClick: () => void;
-}
-
-function MetricCard({ label, value, description, color, icon: Icon, active, onClick }: MetricCardProps) {
-  return (
-    <Paper
-      p="md"
-      radius="md"
-      withBorder
-      style={{
-        cursor: 'pointer',
-        minHeight: 136,
-        borderColor: active ? `var(--mantine-color-${color}-4)` : undefined,
-      }}
-      onClick={onClick}
-    >
-      <Group justify="space-between" align="flex-start" wrap="nowrap">
-        <Stack gap={8}>
-          <Text size="xs" c="dimmed" fw={700} tt="uppercase">
-            {label}
-          </Text>
-          <Group gap="xs" align="flex-end">
-            <Text
-              fw={800}
-              lh={1}
-              c={active ? color : 'dimmed'}
-              style={{ fontSize: 38, fontVariantNumeric: 'tabular-nums' }}
-            >
-              {value}
-            </Text>
-            <Badge size="xs" color={active ? color : 'gray'} variant="light" mb={4}>
-              {active ? 'Action' : 'Clear'}
-            </Badge>
-          </Group>
-          <Text size="sm" c="dimmed">
-            {description}
-          </Text>
-        </Stack>
-        <ThemeIcon size={56} radius="md" variant={active ? 'filled' : 'light'} color={color}>
-          <Icon size={24} />
-        </ThemeIcon>
-      </Group>
-    </Paper>
-  );
-}
-
-function EmptyQueueState({
-  title,
-  description,
-  icon: Icon = IconCircleCheck,
-}: {
-  title: string;
-  description: string;
-  icon?: typeof IconCircleCheck;
-}) {
-  return (
-    <Paper p="lg" radius="md" withBorder bg="var(--mantine-color-green-light)">
-      <Group gap="md" align="center" wrap="nowrap">
-        <ThemeIcon size={48} radius="xl" color="green" variant="filled">
-          <Icon size={24} />
-        </ThemeIcon>
-        <Stack gap={2}>
-          <Text fw={700}>{title}</Text>
-          <Text size="sm" c="dimmed">{description}</Text>
-        </Stack>
-      </Group>
-    </Paper>
-  );
-}
-
 export default function WarehouseDashboard() {
   const router = useRouter();
   const [counts, setCounts] = useState<Record<string, number>>({});
@@ -133,12 +50,10 @@ export default function WarehouseDashboard() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           counts: [
-            { key: 'incoming', collection: 'raw_material_orders', filter: { status: { _eq: 'ordered' } } },
-            { key: 'receivedAll', collection: 'raw_material_receipts' },
-            { key: 'qcPending', collection: 'batches', filter: { status: { _eq: 'qc_pending' } } },
-            { key: 'approvedWaiting', collection: 'batches', filter: { status: { _eq: 'approved' } } },
-            { key: 'stored', collection: 'batches', filter: { status: { _eq: 'stored_available' } } },
-            { key: 'pickPending', collection: 'material_request_items', filter: { issued_qty: { _eq: 0 } } },
+            { key: 'incoming',        collection: 'raw_material_orders', filter: { status: { _eq: 'ordered' } } },
+            { key: 'qcPending',       collection: 'batches',             filter: { status: { _eq: 'qc_pending' } } },
+            { key: 'approvedWaiting', collection: 'batches',             filter: { status: { _eq: 'approved' } } },
+            { key: 'stored',          collection: 'batches',             filter: { status: { _eq: 'stored_available' } } },
           ],
         }),
       }).then(async r => r.ok ? (await r.json())?.counts ?? {} : {}).catch(() => ({}));
@@ -148,7 +63,7 @@ export default function WarehouseDashboard() {
     load();
   }, []);
 
-  // ── Putaway queue (approved batches needing a bin) ───────────────────────────
+  // ── Putaway queue ────────────────────────────────────────────────────────────
   useEffect(() => {
     fetch('/api/items/batches?filter[status][_eq]=approved&fields[]=id&fields[]=batch_number&fields[]=qty&fields[]=unit&fields[]=material_id&limit=8&sort[]=-id')
       .then(async r => r.ok ? (await r.json())?.data ?? [] : [])
@@ -157,7 +72,7 @@ export default function WarehouseDashboard() {
       .finally(() => setLoadingPutaway(false));
   }, []);
 
-  // ── Materials Needed for Production pick queue ───────────────────────────────
+  // ── Production pick queue ────────────────────────────────────────────────────
   const loadPickQueue = useCallback(async () => {
     setLoadingPick(true);
     try {
@@ -280,11 +195,7 @@ export default function WarehouseDashboard() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ issued_qty: task.available_qty }),
       });
-      notifications.show({
-        title: 'Sent to production',
-        message: `${task.material_name} (${task.available_batch_number}) was sent to production.`,
-        color: 'green',
-      });
+      notifications.show({ title: 'Sent to production', message: `${task.material_name} (${task.available_batch_number}) was sent to production.`, color: 'green' });
       await loadPickQueue();
     } catch (err) {
       notifications.show({ title: 'Error', message: err instanceof Error ? err.message : 'Failed', color: 'red' });
@@ -296,237 +207,231 @@ export default function WarehouseDashboard() {
   const n = (k: string) => counts[k] ?? 0;
   const pendingTasks = pickTasks.filter(t => t.available_batch_id);
   const blockedTasks = pickTasks.filter(t => !t.available_batch_id);
-  const warehouseFlow = [
-    { stage: 'Deliveries Due', count: n('incoming'), color: 'blue', description: 'Supplier orders expected' },
-    { stage: 'Waiting QC', count: n('qcPending'), color: 'orange', description: 'Received batches to inspect' },
-    { stage: 'Approved to Store', count: n('approvedWaiting'), color: 'teal', description: 'Cleared batches needing bins' },
-    { stage: 'Stored & Ready', count: n('stored'), color: 'green', description: 'Available for production' },
-  ];
-  const maxFlowCount = Math.max(...warehouseFlow.map(item => item.count), 1);
   const totalOpenFlow = n('incoming') + n('qcPending') + n('approvedWaiting');
 
+  const kpiCards = [
+    { label: 'Deliveries Expected',     value: n('incoming'),        icon: IconTruckDelivery, href: '/warehouse/incoming', link: 'View deliveries →' },
+    { label: 'Waiting for QC',          value: n('qcPending'),       icon: IconBarcode,       href: '/warehouse/batches',  link: 'View batches →'    },
+    { label: 'Approved — Needs Storage',value: n('approvedWaiting'), icon: IconMapPin,        href: '/warehouse/putaway',  link: 'Go to putaway →'   },
+    { label: 'Stored & Ready',          value: n('stored'),          icon: IconPackage,       href: '/warehouse/batches',  link: 'View inventory →'  },
+  ];
+
+  const pipeline = [
+    { stage: 'Deliveries Due',    count: n('incoming'),        description: 'Supplier orders expected' },
+    { stage: 'Waiting QC',        count: n('qcPending'),       description: 'Received — to inspect'    },
+    { stage: 'Approved to Store', count: n('approvedWaiting'), description: 'Cleared — needs a bin'    },
+    { stage: 'Stored & Ready',    count: n('stored'),          description: 'Available for production'  },
+  ];
+
   return (
-    <Stack gap="lg">
-      <div>
-        <Title order={2}>Warehouse Operations</Title>
-        <Text c="dimmed" size="sm">Receive raw materials, approve QC batches, assign storage, and send materials to production.</Text>
-      </div>
+    <Stack gap={32}>
 
-      {loadingKpis ? <Group justify="center" py="xl"><Loader /></Group> : (
+      {/* ── Page Header ──────────────────────────────────────────────────────── */}
+      <Group gap={16} align="center">
+        <Box style={{ width: 48, height: 48, borderRadius: 12, backgroundColor: '#E8F5E9', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+          <IconTruckDelivery size={24} color="#2E7D32" strokeWidth={1.75} />
+        </Box>
+        <div>
+          <Title order={2} fw={700} style={{ color: '#1F2937', lineHeight: 1.2 }}>Warehouse Operations</Title>
+          <Text size="sm" style={{ color: '#6B7280', marginTop: 2 }}>
+            Receive materials, manage QC flow, assign storage, send to production.
+          </Text>
+        </div>
+      </Group>
+
+      {loadingKpis ? (
+        <Group justify="center" py="xl"><Loader color="primary" /></Group>
+      ) : (
         <>
-          {/* ── Priority Cards ─────────────────────────────────────────────── */}
-          <SimpleGrid cols={{ base: 2, sm: 4 }} spacing="md">
-            <MetricCard
-              label="Deliveries Expected"
-              value={n('incoming')}
-              description="Raw material orders on the way"
-              color="blue"
-              icon={IconTruckDelivery}
-              active={n('incoming') > 0}
-              onClick={() => router.push('/warehouse/incoming')}
-            />
-
-            <MetricCard
-              label="Waiting for QC"
-              value={n('qcPending')}
-              description="Received batches waiting for inspection"
-              color="orange"
-              icon={IconBarcode}
-              active={n('qcPending') > 0}
-              onClick={() => router.push('/warehouse/batches')}
-            />
-
-            <MetricCard
-              label="Approved - Needs Storage"
-              value={n('approvedWaiting')}
-              description="QC-approved batches needing a bin"
-              color="teal"
-              icon={IconMapPin}
-              active={n('approvedWaiting') > 0}
-              onClick={() => router.push('/warehouse/putaway')}
-            />
-
-            <MetricCard
-              label="Stored & Ready"
-              value={n('stored')}
-              description="Batches available for production"
-              color="green"
-              icon={IconPackage}
-              active={n('stored') > 0}
-              onClick={() => router.push('/warehouse/batches')}
-            />
+          {/* ── KPI Cards ──────────────────────────────────────────────────────── */}
+          <SimpleGrid cols={{ base: 2, md: 4 }} spacing="md">
+            {kpiCards.map(({ label, value, icon: Icon, href, link }) => {
+              const active = value > 0;
+              return (
+                <Paper
+                  key={label}
+                  p="lg"
+                  withBorder
+                  onClick={() => router.push(href)}
+                  style={{ cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,0,0,0.04)', borderColor: active ? '#C8E6C9' : '#E8ECE8' }}
+                >
+                  <Stack gap={8}>
+                    <Group justify="space-between" align="flex-start">
+                      <Text size="xs" fw={600} tt="uppercase" style={{ color: '#9CA3AF', letterSpacing: '0.05em' }}>
+                        {label}
+                      </Text>
+                      <Box style={{ width: 36, height: 36, borderRadius: 10, backgroundColor: active ? '#E8F5E9' : '#F3F5F3', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <Icon size={18} color={active ? '#2E7D32' : '#9CA3AF'} strokeWidth={1.75} />
+                      </Box>
+                    </Group>
+                    <Text fw={700} style={{ fontSize: 34, color: active ? '#1F2937' : '#9CA3AF', lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>
+                      {value}
+                    </Text>
+                    <Text size="xs" fw={500} style={{ color: active ? '#2E7D32' : '#9CA3AF' }}>{link}</Text>
+                  </Stack>
+                </Paper>
+              );
+            })}
           </SimpleGrid>
 
-          {/* ── Warehouse Flow Pipeline ─────────────────────────────────────── */}
-          <Paper p="md" radius="md" withBorder>
-            <Group justify="space-between" align="flex-start" mb="md">
+          {/* ── Warehouse Pipeline ─────────────────────────────────────────────── */}
+          <Paper p="xl" withBorder style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+            <Group justify="space-between" align="flex-start" mb={28}>
               <div>
-                <Text fw={700} size="sm">Warehouse Flow</Text>
-                <Text size="xs" c="dimmed">A quick view of where work is currently sitting.</Text>
+                <Text fw={600} size="sm" style={{ color: '#1F2937' }}>Warehouse Flow</Text>
+                <Text size="xs" style={{ color: '#6B7280', marginTop: 2 }}>Where work is currently sitting.</Text>
               </div>
-              <Badge color={totalOpenFlow > 0 ? 'teal' : 'green'} variant="light">
-                {totalOpenFlow > 0 ? `${totalOpenFlow} open actions` : 'No bottlenecks'}
+              <Badge color={totalOpenFlow > 0 ? 'primary' : 'gray'} variant="light" size="sm">
+                {totalOpenFlow > 0 ? `${totalOpenFlow} open actions` : 'All clear'}
               </Badge>
             </Group>
+            <Group justify="space-between" align="flex-start" wrap="nowrap" gap={0}>
+              {pipeline.map((item, idx) => (
+                <Group key={item.stage} wrap="nowrap" gap={0} style={{ flex: 1 }} align="flex-start">
+                  <Stack gap={4} align="center" style={{ flex: 1 }}>
+                    <Text fw={800} style={{ fontSize: 32, color: item.count > 0 ? '#2E7D32' : '#D1D9D1', lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>
+                      {item.count}
+                    </Text>
+                    <Text size="xs" fw={600} tt="uppercase" style={{ color: '#9CA3AF', letterSpacing: '0.06em', textAlign: 'center' }}>
+                      {item.stage}
+                    </Text>
+                    <Text size="xs" style={{ color: '#6B7280', textAlign: 'center', lineHeight: 1.3 }}>
+                      {item.description}
+                    </Text>
+                  </Stack>
+                  {idx < pipeline.length - 1 && (
+                    <Text size="xl" style={{ color: '#D1D9D1', paddingTop: 4, paddingLeft: 4, paddingRight: 4, flexShrink: 0 }}>→</Text>
+                  )}
+                </Group>
+              ))}
+            </Group>
+          </Paper>
 
-            <SimpleGrid cols={{ base: 1, sm: 2, lg: 4 }} spacing="sm">
-              {warehouseFlow.map((item) => {
-                const width = item.count === 0 ? 0 : Math.max(12, Math.round((item.count / maxFlowCount) * 100));
-                return (
-                  <Paper key={item.stage} p="sm" radius="sm" withBorder>
-                    <Group justify="space-between" mb="xs" wrap="nowrap">
-                      <Text size="xs" c="dimmed" fw={700} tt="uppercase">{item.stage}</Text>
-                      <Text fw={800} c={item.count > 0 ? item.color : 'dimmed'} style={{ fontVariantNumeric: 'tabular-nums' }}>
-                        {item.count}
+          {/* ── Putaway Task Cards ─────────────────────────────────────────────── */}
+          <Box>
+            <Group justify="space-between" align="center" mb={12}>
+              <Text fw={600} size="sm" style={{ color: '#1F2937' }}>
+                Needs Storage Assignment{putawayBatches.length > 0 ? ` · ${putawayBatches.length}` : ''}
+              </Text>
+              <Anchor href="/warehouse/putaway" size="xs" fw={500} style={{ color: '#2E7D32' }}>Go to putaway →</Anchor>
+            </Group>
+
+            {loadingPutaway ? (
+              <Group justify="center" py="md"><Loader size="sm" color="primary" /></Group>
+            ) : putawayBatches.length === 0 ? (
+              <Paper p="lg" withBorder style={{ borderColor: '#C8E6C9', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
+                <Group gap={16} align="center">
+                  <Box style={{ width: 40, height: 40, borderRadius: 10, backgroundColor: '#E8F5E9', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <IconCircleCheck size={20} color="#2E7D32" />
+                  </Box>
+                  <div>
+                    <Text fw={600} size="sm" style={{ color: '#1F2937' }}>All batches stored</Text>
+                    <Text size="xs" style={{ color: '#6B7280' }}>No approved batches waiting for a storage bin.</Text>
+                  </div>
+                </Group>
+              </Paper>
+            ) : (
+              <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="sm">
+                {putawayBatches.map(b => (
+                  <Paper key={b.id} p="md" withBorder style={{ borderColor: '#E8ECE8', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
+                    <Group justify="space-between" align="flex-start" mb={12}>
+                      <div>
+                        <Text fw={600} size="sm" style={{ color: '#1F2937', fontFamily: 'monospace' }}>{b.batch_number}</Text>
+                        <Text size="xs" style={{ color: '#9CA3AF', marginTop: 2 }}>Batch cleared for storage</Text>
+                      </div>
+                      <Text fw={500} size="sm" style={{ color: '#6B7280', flexShrink: 0 }}>{b.qty} {b.unit}</Text>
+                    </Group>
+                    <Button size="sm" color="primary" variant="filled" fullWidth onClick={() => router.push('/warehouse/slotting')} style={{ borderRadius: 10 }}>
+                      Assign Location
+                    </Button>
+                  </Paper>
+                ))}
+              </SimpleGrid>
+            )}
+          </Box>
+
+          {/* ── Production Materials ───────────────────────────────────────────── */}
+          <Box>
+            <Text fw={600} size="sm" mb={16} style={{ color: '#1F2937' }}>Materials Needed for Production</Text>
+
+            {loadingPick ? (
+              <Group justify="center" py="md"><Loader size="sm" color="primary" /></Group>
+            ) : pickTasks.length === 0 ? (
+              <Paper p="lg" withBorder style={{ borderColor: '#C8E6C9', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
+                <Group gap={16} align="center">
+                  <Box style={{ width: 40, height: 40, borderRadius: 10, backgroundColor: '#E8F5E9', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <IconCircleCheck size={20} color="#2E7D32" />
+                  </Box>
+                  <div>
+                    <Text fw={600} size="sm" style={{ color: '#1F2937' }}>No materials needed right now</Text>
+                    <Text size="xs" style={{ color: '#6B7280' }}>Production has no open material requests waiting on the warehouse.</Text>
+                  </div>
+                </Group>
+              </Paper>
+            ) : (
+              <Stack gap={16}>
+                {pendingTasks.length > 0 && (
+                  <Box>
+                    <Text size="xs" fw={600} mb={10} style={{ color: '#2E7D32' }}>Ready to Send · {pendingTasks.length}</Text>
+                    <Paper withBorder style={{ borderColor: '#E8ECE8', overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
+                      <Table highlightOnHover highlightOnHoverColor="#F9FAF9">
+                        <Table.Thead style={{ backgroundColor: '#F9FAF9' }}>
+                          <Table.Tr>
+                            {['Order', 'Material', 'Batch', 'Location', 'Qty', ''].map(h => (
+                              <Table.Th key={h} style={{ color: '#6B7280', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{h}</Table.Th>
+                            ))}
+                          </Table.Tr>
+                        </Table.Thead>
+                        <Table.Tbody>
+                          {pendingTasks.map(task => (
+                            <Table.Tr key={task.mr_item_id} style={{ height: 52 }}>
+                              <Table.Td>
+                                <Text size="sm" fw={500} style={{ color: '#2E7D32', cursor: 'pointer' }}
+                                  onClick={() => router.push(`/warehouse/production/${task.production_order_id}`)}>
+                                  {task.order_number}
+                                </Text>
+                              </Table.Td>
+                              <Table.Td><Text size="sm" style={{ color: '#1F2937' }}>{task.material_name}</Text></Table.Td>
+                              <Table.Td><Text size="xs" style={{ color: '#6B7280', fontFamily: 'monospace' }}>{task.available_batch_number}</Text></Table.Td>
+                              <Table.Td><Badge size="xs" color="primary" variant="light">{task.batch_location ?? '—'}</Badge></Table.Td>
+                              <Table.Td><Text size="sm" style={{ color: '#4B5563' }}>{task.available_qty} {task.unit}</Text></Table.Td>
+                              <Table.Td>
+                                <Button size="compact-sm" color="primary" loading={issuing === task.mr_item_id} onClick={() => issueBatch(task)}>
+                                  Send to Production
+                                </Button>
+                              </Table.Td>
+                            </Table.Tr>
+                          ))}
+                        </Table.Tbody>
+                      </Table>
+                    </Paper>
+                  </Box>
+                )}
+
+                {blockedTasks.length > 0 && (
+                  <Paper p="md" withBorder style={{ borderLeft: '3px solid #D97706', borderColor: '#FDE68A', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
+                    <Group gap={8} mb={12} align="center">
+                      <IconAlertTriangle size={16} color="#D97706" />
+                      <Text size="sm" fw={600} style={{ color: '#92400E' }}>
+                        No Stock Available · {blockedTasks.length} material{blockedTasks.length > 1 ? 's' : ''} blocked
                       </Text>
                     </Group>
-                    <Box h={10} bg="var(--mantine-color-dark-5)" style={{ borderRadius: 999, overflow: 'hidden' }}>
-                      <Box
-                        h="100%"
-                        w={`${width}%`}
-                        bg={item.count > 0 ? `var(--mantine-color-${item.color}-6)` : 'transparent'}
-                        style={{ borderRadius: 999, transition: 'width 180ms ease' }}
-                      />
-                    </Box>
-                    <Text size="xs" c="dimmed" mt="xs">{item.description}</Text>
-                  </Paper>
-                );
-              })}
-            </SimpleGrid>
-          </Paper>
-          {/* ── Putaway Queue ───────────────────────────────────────────────── */}
-          <Divider label="Putaway Queue — Batches Needing a Bin" labelPosition="left" />
-          {loadingPutaway ? (
-            <Group justify="center" py="sm"><Loader size="sm" /></Group>
-          ) : putawayBatches.length === 0 ? (
-            <EmptyQueueState
-              title="All approved batches have a storage plan."
-              description="Nothing needs putaway right now. New QC-approved batches will appear here when they need a bin."
-              icon={IconMapPin}
-            />
-          ) : (
-            <Paper p="md" radius="md" withBorder>
-              <Group justify="space-between" mb="sm">
-                <Text fw={600} size="sm">Batches Cleared for Putaway ({putawayBatches.length})</Text>
-                <Anchor href="/warehouse/putaway" size="xs">Go to putaway →</Anchor>
-              </Group>
-              <Table withTableBorder withColumnBorders>
-                <Table.Thead>
-                  <Table.Tr>
-                    <Table.Th>Batch</Table.Th>
-                    <Table.Th>Quantity</Table.Th>
-                    <Table.Th>Action</Table.Th>
-                  </Table.Tr>
-                </Table.Thead>
-                <Table.Tbody>
-                  {putawayBatches.map(b => (
-                    <Table.Tr key={b.id}>
-                      <Table.Td><Text size="sm" style={{ fontFamily: 'monospace' }}>{b.batch_number}</Text></Table.Td>
-                      <Table.Td><Text size="sm">{b.qty} {b.unit}</Text></Table.Td>
-                      <Table.Td>
-                        <Anchor href="/warehouse/slotting" size="xs">Assign location →</Anchor>
-                      </Table.Td>
-                    </Table.Tr>
-                  ))}
-                </Table.Tbody>
-              </Table>
-            </Paper>
-          )}
-
-          {/* ── Send to Production Queue ────────────────────────────────────── */}
-          <Divider label="Materials Needed for Production" labelPosition="left" />
-          <Text size="sm" c="dimmed">
-            Materials needed for active production orders. Only batches marked as available for production can be sent to the floor.
-          </Text>
-
-          {loadingPick ? (
-            <Group justify="center" py="md"><Loader size="sm" /></Group>
-          ) : pickTasks.length === 0 ? (
-            <EmptyQueueState
-              title="No materials need to be sent right now."
-              description="Production has no open material requests waiting on the warehouse. New requests will appear here when production orders are released."
-              icon={IconCheck}
-            />
-          ) : (
-            <Stack gap="md">
-              {pendingTasks.length > 0 && (
-                <Paper p="md" radius="md" withBorder>
-                  <Text size="sm" fw={600} mb="sm" c="green">Ready to Send ({pendingTasks.length})</Text>
-                  <Table withTableBorder withColumnBorders>
-                    <Table.Thead>
-                      <Table.Tr>
-                        <Table.Th>Order</Table.Th>
-                        <Table.Th>Material</Table.Th>
-                        <Table.Th>Required</Table.Th>
-                        <Table.Th>Batch</Table.Th>
-                        <Table.Th>Bin</Table.Th>
-                        <Table.Th>Available</Table.Th>
-                        <Table.Th>Action</Table.Th>
-                      </Table.Tr>
-                    </Table.Thead>
-                    <Table.Tbody>
-                      {pendingTasks.map(task => (
-                        <Table.Tr key={task.mr_item_id}>
-                          <Table.Td>
-                            <Text
-                              size="sm" fw={500} style={{ cursor: 'pointer', textDecoration: 'underline' }}
-                              onClick={() => router.push(`/warehouse/production/${task.production_order_id}`)}
-                            >
-                              {task.order_number}
-                            </Text>
-                          </Table.Td>
-                          <Table.Td><Text size="sm">{task.material_name}</Text></Table.Td>
-                          <Table.Td><Text size="sm">{task.requested_qty} {task.unit}</Text></Table.Td>
-                          <Table.Td><Text size="xs" style={{ fontFamily: 'monospace' }}>{task.available_batch_number}</Text></Table.Td>
-                          <Table.Td><Badge size="xs" variant="light" color="blue">{task.batch_location ?? '—'}</Badge></Table.Td>
-                          <Table.Td><Text size="sm">{task.available_qty} {task.unit}</Text></Table.Td>
-                          <Table.Td>
-                            <Button size="compact-xs" color="green" loading={issuing === task.mr_item_id} onClick={() => issueBatch(task)}>Send</Button>
-                          </Table.Td>
-                        </Table.Tr>
-                      ))}
-                    </Table.Tbody>
-                  </Table>
-                </Paper>
-              )}
-
-              {blockedTasks.length > 0 && (
-                <Paper p="md" radius="md" withBorder>
-                  <Group gap="xs" mb="sm">
-                    <IconAlertTriangle size={16} color="var(--mantine-color-orange-6)" />
-                    <Text size="sm" fw={600} c="orange">No Production-Ready Stock ({blockedTasks.length})</Text>
-                  </Group>
-                  <Table withTableBorder withColumnBorders>
-                    <Table.Thead>
-                      <Table.Tr>
-                        <Table.Th>Order</Table.Th>
-                        <Table.Th>Material</Table.Th>
-                        <Table.Th>Required</Table.Th>
-                        <Table.Th>Status</Table.Th>
-                      </Table.Tr>
-                    </Table.Thead>
-                    <Table.Tbody>
+                    <Stack gap={8}>
                       {blockedTasks.map(task => (
-                        <Table.Tr key={task.mr_item_id}>
-                          <Table.Td>
-                            <Text
-                              size="sm" fw={500} style={{ cursor: 'pointer', textDecoration: 'underline' }}
-                              onClick={() => router.push(`/warehouse/production/${task.production_order_id}`)}
-                            >
-                              {task.order_number}
-                            </Text>
-                          </Table.Td>
-                          <Table.Td><Text size="sm">{task.material_name}</Text></Table.Td>
-                          <Table.Td><Text size="sm">{task.requested_qty} {task.unit}</Text></Table.Td>
-                          <Table.Td><Badge size="xs" color="orange" variant="light">No batch available</Badge></Table.Td>
-                        </Table.Tr>
+                        <Group key={task.mr_item_id} justify="space-between" wrap="nowrap">
+                          <Text size="sm" style={{ color: '#4B5563' }}>{task.material_name}</Text>
+                          <Group gap={16} wrap="nowrap">
+                            <Text size="xs" style={{ color: '#9CA3AF' }}>{task.requested_qty} {task.unit}</Text>
+                            <Text size="xs" style={{ color: '#9CA3AF' }}>Order: {task.order_number}</Text>
+                          </Group>
+                        </Group>
                       ))}
-                    </Table.Tbody>
-                  </Table>
-                </Paper>
-              )}
-            </Stack>
-          )}
+                    </Stack>
+                  </Paper>
+                )}
+              </Stack>
+            )}
+          </Box>
         </>
       )}
     </Stack>

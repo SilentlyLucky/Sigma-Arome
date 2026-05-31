@@ -29,7 +29,7 @@ export default function RootLayout({
   return (
     <html lang="en" {...mantineHtmlProps}>
       <head>
-        <ColorSchemeScript />
+        <ColorSchemeScript defaultColorScheme="light" />
         <link rel="icon" type="image/png" href="/Sigma_Arome_Logo.png" />
         <link rel="apple-touch-icon" href="/Sigma_Arome_Logo.png" />
         <meta
@@ -38,9 +38,16 @@ export default function RootLayout({
         />
       </head>
       <body className={inter.variable}>
-        <MantineProvider theme={theme} defaultColorScheme="auto">
+        <MantineProvider theme={theme} defaultColorScheme="light">
           <ModalsProvider>
-            <Notifications position="top-right" />
+            <Notifications
+              position="top-right"
+              autoClose={4500}
+              containerWidth={420}
+              limit={4}
+              notificationMaxHeight={240}
+              zIndex={1000}
+            />
             {children}
           </ModalsProvider>
         </MantineProvider>

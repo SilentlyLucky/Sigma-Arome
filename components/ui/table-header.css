@@ -30,9 +30,11 @@
   height: 48px;
   max-height: 48px;
   font-weight: 600;
-  color: var(--mantine-color-text);
-  background-color: var(--mantine-color-gray-0);
-  border-bottom: 2px solid var(--mantine-color-default-border);
+  font-size: 0.75rem;
+  letter-spacing: 0.02em;
+  color: #374151;
+  background-color: #F4F7F5;
+  border-bottom: 2px solid #DCE5DD;
   -webkit-user-select: none;
   user-select: none;
   position: relative;
@@ -44,7 +46,9 @@
 }
 
 [data-mantine-color-scheme="dark"] .table-header .cell {
-  background-color: var(--mantine-color-dark-6);
+  background-color: var(--mantine-color-dark-7);
+  color: var(--mantine-color-gray-3);
+  border-bottom-color: var(--mantine-color-dark-4);
 }
 
 .table-header .cell.select {
@@ -88,7 +92,7 @@
 }
 
 .table-header .cell.sortable:hover {
-  background-color: var(--mantine-color-gray-1);
+  background-color: #E8EDE9;
 }
 
 [data-mantine-color-scheme="dark"] .table-header .cell.sortable:hover {

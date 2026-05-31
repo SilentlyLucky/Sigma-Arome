@@ -61,12 +61,29 @@ export async function updateSession(request: NextRequest) {
     },
   });
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  let hasUser = false;
+
+  try {
+    const {
+      data: { user },
+      error,
+    } = await supabase.auth.getUser();
+
+    if (error) {
+      console.warn(`Supabase auth check failed (${error.status ?? 'unknown status'}). Redirecting to login.`);
+    }
+
+    hasUser = Boolean(user);
+  } catch (error) {
+    const status =
+      typeof error === 'object' && error !== null && 'status' in error
+        ? String(error.status)
+        : 'unknown status';
+    console.warn(`Supabase auth check unavailable (${status}). Redirecting to login.`);
+  }
 
   // Redirect unauthenticated users to login (except for public and API routes)
-  if (!user) {
+  if (!hasUser) {
     const url = request.nextUrl.clone();
     url.pathname = '/login';
     return NextResponse.redirect(url);

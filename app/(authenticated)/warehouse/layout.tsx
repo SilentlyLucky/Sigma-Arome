@@ -35,9 +35,9 @@ export default function WarehouseLayout({ children }: { children: ReactNode }) {
       navbar={{ width: 268, breakpoint: 'sm', collapsed: { mobile: !opened } }}
       padding="xl"
       styles={{
-        header: { backgroundColor: '#FFFFFF', borderBottom: '1px solid #E8ECE8', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' },
-        navbar: { backgroundColor: '#FFFFFF', borderRight: '1px solid #E8ECE8' },
-        main:   { backgroundColor: '#FAFBFA', minHeight: '100vh' },
+        header: { backgroundColor: '#FFFFFF', borderBottom: '1px solid #DCE5DD', boxShadow: '0 1px 4px rgba(0,0,0,0.03)' },
+        navbar: { backgroundColor: '#FFFFFF', borderRight: '1px solid #DCE5DD' },
+        main:   { backgroundColor: '#F4F7F5', minHeight: '100vh' },
       }}
     >
       {/* ── Header ─────────────────────────────────────────── */}
@@ -50,7 +50,7 @@ export default function WarehouseLayout({ children }: { children: ReactNode }) {
                 <IconLeaf size={16} color="white" strokeWidth={2} />
               </Box>
               <div>
-                <Text fw={700} size="sm" style={{ color: '#1F2937', lineHeight: 1.1 }}>Sigma Arome</Text>
+                <Text fw={700} size="sm" style={{ color: '#0F172A', lineHeight: 1.1 }}>Sigma Arome</Text>
                 <Text size="xs" style={{ color: '#9CA3AF', lineHeight: 1.1 }} visibleFrom="sm">Warehouse</Text>
               </div>
             </Group>
@@ -79,11 +79,11 @@ export default function WarehouseLayout({ children }: { children: ReactNode }) {
       {/* ── Sidebar ────────────────────────────────────────── */}
       <AppShell.Navbar style={{ overflowY: 'auto' }}>
         {/* Brand block */}
-        <Box px={20} py={20} style={{ borderBottom: '1px solid #EEF2EE' }}>
+        <Box px={20} py={20} style={{ borderBottom: '1px solid #E4EDE5' }}>
           <Text fw={600} size="xs" style={{ color: '#9CA3AF', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 4 }}>
             Warehouse Ops
           </Text>
-          <Title order={5} style={{ color: '#1F2937', fontWeight: 700 }}>Warehouse Operation</Title>
+          <Title order={5} style={{ color: '#0F172A', fontWeight: 700 }}>Warehouse Operation</Title>
         </Box>
 
         {/* Nav sections */}
@@ -92,7 +92,7 @@ export default function WarehouseLayout({ children }: { children: ReactNode }) {
             const items = NAV_ITEMS.filter(i => i.section === section);
             return (
               <Box key={section} mb={4}>
-                {idx > 0 && <Divider my={8} color="#EEF2EE" />}
+                {idx > 0 && <Divider my={8} color="#E4EDE5" />}
                 <Text size="xs" fw={600} tt="uppercase" px={8} style={{ color: '#9CA3AF', letterSpacing: '0.06em', lineHeight: 1, paddingTop: 6, paddingBottom: 8, display: 'block' }}>
                   {section}
                 </Text>
@@ -104,11 +104,11 @@ export default function WarehouseLayout({ children }: { children: ReactNode }) {
                       component={Link}
                       href={item.href}
                       label={item.label}
-                      leftSection={<item.icon size={16} strokeWidth={1.75} style={{ color: active ? '#2E7D32' : '#6B7280' }} />}
+                      leftSection={<item.icon size={16} strokeWidth={1.75} style={{ color: active ? '#1B5E20' : '#6B7280' }} />}
                       active={active}
                       variant="light"
                       color="primary"
-                      style={{ color: active ? '#2E7D32' : '#4B5563', fontWeight: active ? 600 : 500 }}
+                      style={{ color: active ? '#1B5E20' : '#4B5563', fontWeight: active ? 600 : 500 }}
                     />
                   );
                 })}

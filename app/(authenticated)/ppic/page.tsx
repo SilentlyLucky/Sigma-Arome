@@ -58,7 +58,7 @@ function FlowGraph({ stages }: { stages: FlowStage[] }) {
                   <Text size="xs" c="dimmed" fw={700} tt="uppercase">{stage.label}</Text>
                   <Text fw={800} c={stage.value > 0 ? stage.color : 'dimmed'}>{stage.value}</Text>
                 </Group>
-                <Box h={10} bg="var(--mantine-color-dark-5)" style={{ borderRadius: 999, overflow: 'hidden' }}>
+                <Box h={6} style={{ borderRadius: 999, overflow: 'hidden', backgroundColor: '#E5E7EB' }}>
                   <Box
                     h="100%"
                     w={`${width}%`}
@@ -115,7 +115,7 @@ function RiskBreakdown({ risks }: { risks: RiskItem[] }) {
                   </Stack>
                   <Text fw={800} c={risk.value > 0 ? risk.color : 'dimmed'}>{risk.value}</Text>
                 </Group>
-                <Box h={10} bg="var(--mantine-color-dark-5)" style={{ borderRadius: 999, overflow: 'hidden' }}>
+                <Box h={6} style={{ borderRadius: 999, overflow: 'hidden', backgroundColor: '#E5E7EB' }}>
                   <Box
                     h="100%"
                     w={`${width}%`}
@@ -202,7 +202,7 @@ export default function PPICDashboard() {
       label: 'Logistics Queue',
       value: n('requestsPending'),
       description: 'Material requests waiting for review',
-      color: 'grape',
+      color: 'blue',
       href: '/ppic/requests',
     },
     {
@@ -239,7 +239,7 @@ export default function PPICDashboard() {
       label: 'Requests waiting logistics',
       value: n('requestsPending'),
       description: 'Material requests not yet approved',
-      color: 'grape',
+      color: 'blue',
       href: '/ppic/requests',
     },
     {
@@ -302,7 +302,7 @@ export default function PPICDashboard() {
                   <Title order={2} c={n('requestsPending') > 0 ? 'grape' : undefined}>{n('requestsPending')}</Title>
                   <Text size="xs" c="dimmed">Material requests waiting for review</Text>
                 </Stack>
-                <ThemeIcon size="xl" radius="md" variant={n('requestsPending') > 0 ? 'filled' : 'light'} color="grape"><IconClipboardList size={22} /></ThemeIcon>
+                <ThemeIcon size="xl" radius="md" variant={n('requestsPending') > 0 ? 'filled' : 'light'} color="blue"><IconClipboardList size={22} /></ThemeIcon>
               </Group>
             </Paper>
           </SimpleGrid>
@@ -399,7 +399,7 @@ export default function PPICDashboard() {
                       <Table.Tr key={request.id} style={{ cursor: 'pointer' }} onClick={() => router.push(`/ppic/requests/${request.id}`)}>
                         <Table.Td><Text size="sm" fw={500}>{request.request_number}</Text></Table.Td>
                         <Table.Td><Text size="sm">{request.needed_date ? new Date(request.needed_date).toLocaleDateString() : '—'}</Text></Table.Td>
-                        <Table.Td><Badge size="xs" color="grape" variant="light">{request.priority ?? 'normal'}</Badge></Table.Td>
+                        <Table.Td><Badge size="xs" color="blue" variant="light">{request.priority ?? 'normal'}</Badge></Table.Td>
                       </Table.Tr>
                     ))}
                   </Table.Tbody>

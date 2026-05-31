@@ -115,16 +115,16 @@ export default function ManagerDashboard() {
             </Paper>
 
             <Paper
-              p="md" radius="md" withBorder style={{ cursor: 'pointer', borderColor: n('ordersOverdue') > 0 ? 'var(--mantine-color-yellow-5)' : undefined }}
+              p="md" radius="md" withBorder style={{ cursor: 'pointer', borderColor: n('ordersOverdue') > 0 ? 'var(--mantine-color-orange-5)' : undefined }}
               onClick={() => router.push('/ppic/orders')}
             >
               <Group justify="space-between" wrap="nowrap">
                 <Stack gap={2}>
                   <Text size="xs" c="dimmed" fw={600} tt="uppercase">Deliveries Overdue</Text>
-                  <Title order={2} c={n('ordersOverdue') > 0 ? 'yellow' : undefined}>{n('ordersOverdue')}</Title>
+                  <Title order={2} c={n('ordersOverdue') > 0 ? 'orange' : undefined}>{n('ordersOverdue')}</Title>
                   <Text size="xs" c="dimmed">Orders past expected arrival</Text>
                 </Stack>
-                <ThemeIcon size="xl" radius="md" variant={n('ordersOverdue') > 0 ? 'filled' : 'light'} color="yellow">
+                <ThemeIcon size="xl" radius="md" variant={n('ordersOverdue') > 0 ? 'filled' : 'light'} color="orange">
                   <IconTruckDelivery size={22} />
                 </ThemeIcon>
               </Group>
@@ -137,10 +137,10 @@ export default function ManagerDashboard() {
               <Group justify="space-between" wrap="nowrap">
                 <Stack gap={2}>
                   <Text size="xs" c="dimmed" fw={600} tt="uppercase">Currently Running</Text>
-                  <Title order={2} c="violet">{n('prodActive')}</Title>
+                  <Title order={2} c="blue">{n('prodActive')}</Title>
                   <Text size="xs" c="dimmed">Production orders active</Text>
                 </Stack>
-                <ThemeIcon size="xl" radius="md" variant="light" color="violet">
+                <ThemeIcon size="xl" radius="md" variant="light" color="blue">
                   <IconBuildingFactory size={22} />
                 </ThemeIcon>
               </Group>
@@ -174,7 +174,7 @@ export default function ManagerDashboard() {
                 data={[
                   { name: 'Blocked', value: n('prodBlocked'), color: 'red.5' },
                   { name: 'Ready to start', value: n('prodReady'), color: 'lime.5' },
-                  { name: 'Running', value: n('prodActive'), color: 'violet.5' },
+                  { name: 'Running', value: n('prodActive'), color: 'blue.5' },
                   { name: 'Completed', value: n('prodCompleted'), color: 'green.5' },
                 ]}
                 size={160}

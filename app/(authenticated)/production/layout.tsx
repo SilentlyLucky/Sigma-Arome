@@ -22,20 +22,33 @@ export default function ProductionLayout({ children }: { children: ReactNode }) 
   const router = useRouter();
 
   return (
-    <AppShell header={{ height: 60 }} navbar={{ width: 260, breakpoint: 'sm', collapsed: { mobile: !opened } }} padding="md">
+    <AppShell
+      header={{ height: 60 }}
+      navbar={{ width: 260, breakpoint: 'sm', collapsed: { mobile: !opened } }}
+      padding="md"
+      styles={{
+        header: { backgroundColor: '#FFFFFF', borderBottom: '1px solid #DCE5DD', boxShadow: '0 1px 4px rgba(0,0,0,0.03)' },
+        navbar: { backgroundColor: '#FFFFFF', borderRight: '1px solid #DCE5DD' },
+        main:   { backgroundColor: '#F4F7F5', minHeight: '100vh' },
+      }}
+    >
       <AppShell.Header>
         <Group h="100%" px="md" justify="space-between">
           <Group>
-            <Burger opened={opened} onClick={toggle} hiddenFrom="sm" size="sm" />
-            <Title order={4} c="violet">Sigma Arome</Title>
-            <Text size="xs" c="dimmed" visibleFrom="sm">Production Workbench</Text>
+            <Burger opened={opened} onClick={toggle} hiddenFrom="sm" size="sm" color="#4B5563" />
+            <Title order={4} style={{ color: '#2E7D32' }}>Sigma Arome</Title>
+            <Text size="xs" style={{ color: '#9CA3AF' }} visibleFrom="sm">Production Workbench</Text>
           </Group>
           <Group gap="xs">
             <NotificationBell role="production" />
-            <Menu shadow="md" width={200}>
-              <Menu.Target><ActionIcon variant="subtle" size="lg" radius="xl"><Avatar size="sm" color="violet">P</Avatar></ActionIcon></Menu.Target>
+            <Menu shadow="md" width={200} radius="md">
+              <Menu.Target>
+                <ActionIcon variant="subtle" size="lg" radius="xl">
+                  <Avatar size="sm" color="primary">P</Avatar>
+                </ActionIcon>
+              </Menu.Target>
               <Menu.Dropdown>
-                <Menu.Item leftSection={<IconSettings size={14} />}>Settings</Menu.Item>
+                <Menu.Item leftSection={<IconSettings size={14} />} style={{ color: '#4B5563' }}>Settings</Menu.Item>
                 <Menu.Divider />
                 <Menu.Item leftSection={<IconLogout size={14} />} color="red" onClick={async () => { await fetch('/api/auth/logout', { method: 'POST' }); router.push('/login'); }}>Logout</Menu.Item>
               </Menu.Dropdown>
@@ -43,10 +56,32 @@ export default function ProductionLayout({ children }: { children: ReactNode }) 
           </Group>
         </Group>
       </AppShell.Header>
+
       <AppShell.Navbar p="xs" style={{ overflowY: 'auto' }}>
         {SECTIONS.map((section, idx) => {
           const items = NAV_ITEMS.filter(i => i.section === section);
-          return (<div key={section}>{idx > 0 && <Divider my="xs" />}<Text size="xs" c="dimmed" fw={700} tt="uppercase" px="xs" py={4}>{section}</Text>{items.map(item => (<NavLink key={item.href} component={Link} href={item.href} label={item.label} leftSection={<item.icon size={16} />} active={pathname === item.href || (item.href !== '/production' && pathname.startsWith(item.href))} variant="light" />))}</div>);
+          return (
+            <div key={section}>
+              {idx > 0 && <Divider my="xs" color="#E4EDE5" />}
+              <Text size="xs" fw={600} tt="uppercase" px="xs" py={4} style={{ color: '#9CA3AF', letterSpacing: '0.06em' }}>{section}</Text>
+              {items.map(item => {
+                const active = pathname === item.href || (item.href !== '/production' && pathname.startsWith(item.href));
+                return (
+                  <NavLink
+                    key={item.href}
+                    component={Link}
+                    href={item.href}
+                    label={item.label}
+                    leftSection={<item.icon size={16} strokeWidth={1.75} style={{ color: active ? '#1B5E20' : '#6B7280' }} />}
+                    active={active}
+                    variant="light"
+                    color="primary"
+                    style={{ color: active ? '#1B5E20' : '#4B5563', fontWeight: active ? 600 : 500 }}
+                  />
+                );
+              })}
+            </div>
+          );
         })}
       </AppShell.Navbar>
       <AppShell.Main>{children}</AppShell.Main>

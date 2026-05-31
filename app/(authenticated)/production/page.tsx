@@ -90,10 +90,10 @@ export default function ProductionDashboard() {
               <Group justify="space-between" wrap="nowrap">
                 <Stack gap={2}>
                   <Text size="xs" c="dimmed" fw={600} tt="uppercase">Currently Running</Text>
-                  <Title order={2} c="violet">{n('inProgress')}</Title>
+                  <Title order={2} c="blue">{n('inProgress')}</Title>
                   <Text size="xs" c="dimmed">Orders in production</Text>
                 </Stack>
-                <ThemeIcon size="xl" radius="md" variant="light" color="violet"><IconClock size={22} /></ThemeIcon>
+                <ThemeIcon size="xl" radius="md" variant="light" color="blue"><IconClock size={22} /></ThemeIcon>
               </Group>
             </Paper>
 
@@ -127,7 +127,7 @@ export default function ProductionDashboard() {
               data={[
                 { name: 'Blocked', value: n('blocked'), color: 'red.5' },
                 { name: 'Ready to start', value: n('ready'), color: 'lime.5' },
-                { name: 'Running', value: n('inProgress'), color: 'violet.5' },
+                { name: 'Running', value: n('inProgress'), color: 'blue.5' },
                 { name: 'Completed', value: n('completed'), color: 'green.5' },
               ]}
               size={160}

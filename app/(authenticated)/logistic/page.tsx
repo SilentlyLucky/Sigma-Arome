@@ -100,14 +100,14 @@ export default function LogisticDashboard() {
               </Group>
             </Paper>
 
-            <Paper p="md" radius="md" withBorder style={{ cursor: 'pointer', borderColor: n('fgApproved') > 0 ? 'var(--mantine-color-teal-4)' : undefined }} onClick={() => router.push('/logistic/fg-putaway')}>
+            <Paper p="md" radius="md" withBorder style={{ cursor: 'pointer', borderColor: n('fgApproved') > 0 ? 'var(--mantine-color-green-4)' : undefined }} onClick={() => router.push('/logistic/fg-putaway')}>
               <Group justify="space-between" wrap="nowrap">
                 <Stack gap={2}>
                   <Text size="xs" c="dimmed" fw={600} tt="uppercase">Finished Goods to Store</Text>
                   <Title order={2} c={n('fgApproved') > 0 ? 'teal' : undefined}>{n('fgApproved')}</Title>
                   <Text size="xs" c="dimmed">QC-cleared, awaiting putaway</Text>
                 </Stack>
-                <ThemeIcon size="xl" radius="md" variant={n('fgApproved') > 0 ? 'filled' : 'light'} color="teal"><IconPackage size={22} /></ThemeIcon>
+                <ThemeIcon size="xl" radius="md" variant={n('fgApproved') > 0 ? 'filled' : 'light'} color="green"><IconPackage size={22} /></ThemeIcon>
               </Group>
             </Paper>
           </SimpleGrid>

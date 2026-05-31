@@ -11,7 +11,6 @@ import {
   Badge,
   Anchor,
   Loader,
-  Divider,
   Alert,
   RingProgress,
   Box,
@@ -29,6 +28,7 @@ import {
   IconFileText,
   IconActivity,
   IconCircleCheck,
+  IconSettings,
 } from '@tabler/icons-react';
 import { useEffect, useState } from 'react';
 
@@ -54,7 +54,7 @@ interface StatCard {
 }
 
 const STAT_CARDS: StatCard[] = [
-  { label: 'Suppliers', icon: IconBuildingFactory2, collection: 'suppliers', color: 'blue', href: '/admin/suppliers', description: 'Supplier list' },
+  { label: 'Suppliers', icon: IconBuildingFactory2, collection: 'suppliers', color: 'green', href: '/admin/suppliers', description: 'Supplier list' },
   { label: 'Raw Materials', icon: IconFlask, collection: 'raw_materials', color: 'green', href: '/admin/raw-materials', description: 'Materials you buy and store' },
   { label: 'Products', icon: IconPackage, collection: 'products', color: 'violet', href: '/admin/products', description: 'Finished goods you produce' },
   { label: 'Warehouse Locations', icon: IconMapPin, collection: 'warehouse_locations', color: 'orange', href: '/admin/warehouse-locations', description: 'Storage areas and bins' },
@@ -173,7 +173,7 @@ export default function AdminDashboard() {
       label: 'Active Users',
       value: userCount ?? 0,
       target: Math.max(userCount ?? 0, 1),
-      color: 'blue',
+      color: 'green',
       href: '/admin/users',
       note: 'Users currently allowed to access the system',
     },
@@ -181,7 +181,7 @@ export default function AdminDashboard() {
       label: 'Roles Configured',
       value: roleCount ?? 0,
       target: REQUIRED_ROLE_COUNT,
-      color: 'grape',
+      color: 'teal',
       href: '/admin/roles',
       note: `${REQUIRED_ROLE_COUNT} required roles expected`,
     },
@@ -204,135 +204,163 @@ export default function AdminDashboard() {
   ];
 
   return (
-    <Stack gap="lg">
-      <Group justify="space-between" align="flex-start">
-        <div>
-          <Title order={2}>Admin Control Center</Title>
-          <Text c="dimmed" size="sm">
-            Manage users, roles, factory setup data, and access settings.
-          </Text>
-        </div>
-        {loading && <Loader size="sm" />}
+    <Stack gap={32}>
+      {/* Page Header */}
+      <Group justify="space-between" align="center">
+        <Group gap={16} align="center">
+          <Box
+            style={{
+              width: 48, height: 48, borderRadius: 12,
+              backgroundColor: '#E8F5E9',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              flexShrink: 0,
+            }}
+          >
+            <IconSettings size={24} color="#2E7D32" strokeWidth={1.75} />
+          </Box>
+          <div>
+            <Title order={2} fw={700} style={{ color: '#0F172A', lineHeight: 1.2 }}>
+              Admin Control Center
+            </Title>
+            <Text size="sm" style={{ color: '#6B7280', marginTop: 2 }}>
+              Manage users, roles, factory setup data, and access settings.
+            </Text>
+          </div>
+        </Group>
+        {loading && <Loader size="sm" color="primary" />}
       </Group>
 
-      {/* PRD 17.1 KPI Cards */}
-      <SimpleGrid cols={{ base: 2, sm: 3, md: 4 }} spacing="md">
-        <Paper p="md" radius="md" withBorder>
-          <Group justify="space-between">
-            <Stack gap={4}>
-              <Text size="xs" c="dimmed" tt="uppercase" fw={700}>Active Users</Text>
-              <Title order={3}>{userCount ?? '—'}</Title>
-            </Stack>
-            <ThemeIcon size="xl" radius="md" variant="light" color="blue">
-              <IconUsers size={24} />
-            </ThemeIcon>
-          </Group>
-          <Anchor href="/admin/users" size="xs" c="dimmed" mt={4} display="block">Manage users →</Anchor>
+      {/* KPI Cards */}
+      <SimpleGrid cols={{ base: 2, sm: 2, md: 4 }} spacing="md">
+        <Paper p="lg" withBorder style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+          <Stack gap={8}>
+            <Group justify="space-between" align="flex-start">
+              <Text size="xs" fw={600} tt="uppercase" style={{ color: '#9CA3AF', letterSpacing: '0.05em' }}>
+                Active Users
+              </Text>
+              <Box style={{ width: 36, height: 36, borderRadius: 10, backgroundColor: '#E8F5E9', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <IconUsers size={18} color="#2E7D32" strokeWidth={1.75} />
+              </Box>
+            </Group>
+            <Title order={2} fw={700} style={{ color: '#0F172A', lineHeight: 1 }}>{userCount ?? '—'}</Title>
+            <Anchor href="/admin/users" size="xs" fw={500} style={{ color: '#2E7D32' }}>Manage users →</Anchor>
+          </Stack>
         </Paper>
 
-        <Paper p="md" radius="md" withBorder>
-          <Group justify="space-between">
-            <Stack gap={4}>
-              <Text size="xs" c="dimmed" tt="uppercase" fw={700}>Roles Configured</Text>
-              <Title order={3}>{roleCount ?? '—'}</Title>
-            </Stack>
-            <ThemeIcon size="xl" radius="md" variant="light" color="grape">
-              <IconShieldCheck size={24} />
-            </ThemeIcon>
-          </Group>
-          <Anchor href="/admin/roles" size="xs" c="dimmed" mt={4} display="block">Manage roles →</Anchor>
+        <Paper p="lg" withBorder style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+          <Stack gap={8}>
+            <Group justify="space-between" align="flex-start">
+              <Text size="xs" fw={600} tt="uppercase" style={{ color: '#9CA3AF', letterSpacing: '0.05em' }}>
+                Roles
+              </Text>
+              <Box style={{ width: 36, height: 36, borderRadius: 10, backgroundColor: '#E8F5E9', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <IconShieldCheck size={18} color="#2E7D32" strokeWidth={1.75} />
+              </Box>
+            </Group>
+            <Title order={2} fw={700} style={{ color: '#0F172A', lineHeight: 1 }}>{roleCount ?? '—'}</Title>
+            <Anchor href="/admin/roles" size="xs" fw={500} style={{ color: '#2E7D32' }}>Manage roles →</Anchor>
+          </Stack>
         </Paper>
 
-        <Paper p="md" radius="md" withBorder>
-          <Group justify="space-between">
-            <Stack gap={4}>
-              <Text size="xs" c="dimmed" tt="uppercase" fw={700}>Setup Data</Text>
-              <Group gap={4} align="center">
-                <Title order={3}>{setupDataCount}/{SETUP_DATA_TOTAL}</Title>
-                <Badge size="xs" color={setupDataComplete ? 'green' : 'orange'} variant="light">
-                  {setupDataComplete ? 'Complete' : 'Incomplete'}
-                </Badge>
-              </Group>
-            </Stack>
-            <ThemeIcon size="xl" radius="md" variant="light" color={setupDataComplete ? 'green' : 'orange'}>
-              <IconActivity size={24} />
-            </ThemeIcon>
-          </Group>
-          <Text size="xs" c="dimmed" mt={4}>Roles plus setup areas with at least one record</Text>
+        <Paper p="lg" withBorder style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+          <Stack gap={8}>
+            <Group justify="space-between" align="flex-start">
+              <Text size="xs" fw={600} tt="uppercase" style={{ color: '#9CA3AF', letterSpacing: '0.05em' }}>
+                Setup Data
+              </Text>
+              <Box style={{ width: 36, height: 36, borderRadius: 10, backgroundColor: setupDataComplete ? '#E8F5E9' : '#FEF3C7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <IconActivity size={18} color={setupDataComplete ? '#2E7D32' : '#D97706'} strokeWidth={1.75} />
+              </Box>
+            </Group>
+            <Group gap={6} align="center">
+              <Title order={2} fw={700} style={{ color: '#0F172A', lineHeight: 1 }}>
+                {setupDataCount}/{SETUP_DATA_TOTAL}
+              </Title>
+              <Badge size="xs" color={setupDataComplete ? 'primary' : 'yellow'} variant="light">
+                {setupDataComplete ? 'Complete' : 'Incomplete'}
+              </Badge>
+            </Group>
+            <Text size="xs" style={{ color: '#9CA3AF' }}>Roles plus setup areas</Text>
+          </Stack>
         </Paper>
 
-        <Paper p="md" radius="md" withBorder>
-          <Group justify="space-between">
-            <Stack gap={4}>
-              <Text size="xs" c="dimmed" tt="uppercase" fw={700}>Audit Events (24h)</Text>
-              <Title order={3}>{auditCount ?? '—'}</Title>
-            </Stack>
-            <ThemeIcon size="xl" radius="md" variant="light" color="teal">
-              <IconFileText size={24} />
-            </ThemeIcon>
-          </Group>
-          <Anchor href="/admin/audit-log" size="xs" c="dimmed" mt={4} display="block">View audit log →</Anchor>
+        <Paper p="lg" withBorder style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+          <Stack gap={8}>
+            <Group justify="space-between" align="flex-start">
+              <Text size="xs" fw={600} tt="uppercase" style={{ color: '#9CA3AF', letterSpacing: '0.05em' }}>
+                Audit (24h)
+              </Text>
+              <Box style={{ width: 36, height: 36, borderRadius: 10, backgroundColor: '#EEF2FF', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <IconFileText size={18} color="#4F46E5" strokeWidth={1.75} />
+              </Box>
+            </Group>
+            <Title order={2} fw={700} style={{ color: '#0F172A', lineHeight: 1 }}>{auditCount ?? '—'}</Title>
+            <Anchor href="/admin/audit-log" size="xs" fw={500} style={{ color: '#2E7D32' }}>View audit log →</Anchor>
+          </Stack>
         </Paper>
       </SimpleGrid>
 
-      <Paper p="md" radius="md" withBorder>
-        <Group justify="space-between" align="flex-start" mb="md">
+      {/* Setup Graph */}
+      <Paper p="lg" withBorder style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+        <Group justify="space-between" align="flex-start" mb={24}>
           <div>
-            <Text fw={700} size="sm">Admin Setup Graph</Text>
-            <Text c="dimmed" size="xs">A visual health check for users, roles, setup data, and recent system activity.</Text>
+            <Text fw={600} size="sm" style={{ color: '#0F172A' }}>System Readiness</Text>
+            <Text size="xs" style={{ color: '#6B7280', marginTop: 2 }}>
+              A health check across users, roles, setup data, and recent system activity.
+            </Text>
           </div>
-          <Badge color={setupDataComplete ? 'green' : 'orange'} variant="light">
-            {setupDataCount}/{SETUP_DATA_TOTAL} setup areas ready
+          <Badge color={setupDataComplete ? 'primary' : 'yellow'} variant="light" size="sm">
+            {setupDataCount}/{SETUP_DATA_TOTAL} areas ready
           </Badge>
         </Group>
 
-        <SimpleGrid cols={{ base: 1, md: 2 }} spacing="lg">
-          <Group gap="lg" align="center" wrap="nowrap">
+        <SimpleGrid cols={{ base: 1, md: 2 }} spacing="xl">
+          <Group gap="xl" align="center" wrap="nowrap">
             <RingProgress
-              size={172}
-              thickness={18}
+              size={160}
+              thickness={14}
               roundCaps
-              sections={[
-                { value: setupProgress, color: setupDataComplete ? 'green' : 'orange' },
-              ]}
+              sections={[{ value: setupProgress, color: setupDataComplete ? '#2E7D32' : '#D97706' }]}
               label={
                 <Stack gap={0} align="center">
-                  <Text fw={800} size="xl">{setupProgress}%</Text>
-                  <Text size="xs" c="dimmed">ready</Text>
+                  <Text fw={800} size="xl" style={{ color: '#0F172A' }}>{setupProgress}%</Text>
+                  <Text size="xs" style={{ color: '#9CA3AF' }}>ready</Text>
                 </Stack>
               }
             />
-            <Stack gap={4}>
-              <Text fw={700}>Setup readiness</Text>
-              <Text size="sm" c="dimmed">
+            <Stack gap={6}>
+              <Text fw={600} style={{ color: '#0F172A' }}>Setup readiness</Text>
+              <Text size="sm" style={{ color: '#6B7280' }}>
                 {setupDataComplete
-                  ? 'All required admin setup areas are ready.'
-                  : `${SETUP_DATA_TOTAL - setupDataCount} setup area${SETUP_DATA_TOTAL - setupDataCount === 1 ? '' : 's'} still need attention.`}
+                  ? 'All required setup areas are ready.'
+                  : `${SETUP_DATA_TOTAL - setupDataCount} area${SETUP_DATA_TOTAL - setupDataCount === 1 ? '' : 's'} still need attention.`}
               </Text>
-              <Anchor href="#setup-checklist" size="sm">Review checklist</Anchor>
+              <Anchor href="#setup-checklist" size="sm" fw={500} style={{ color: '#2E7D32' }}>
+                Review checklist →
+              </Anchor>
             </Stack>
           </Group>
 
-          <Stack gap="sm">
+          <Stack gap={16}>
             {graphRows.map((row) => {
               const pct = row.target === 0 ? 0 : Math.min(100, Math.round((row.value / row.target) * 100));
+              const barColor = row.color === 'green' ? '#2E7D32' : row.color === 'teal' ? '#0EA5E9' : row.color === 'orange' ? '#D97706' : '#4F46E5';
               return (
                 <Box key={row.label}>
-                  <Group justify="space-between" mb={4} wrap="nowrap">
-                    <Stack gap={0}>
-                      <Text size="xs" fw={700} tt="uppercase" c="dimmed">{row.label}</Text>
-                      <Text size="xs" c="dimmed">{row.note}</Text>
+                  <Group justify="space-between" mb={6} wrap="nowrap">
+                    <Stack gap={1}>
+                      <Text size="xs" fw={600} style={{ color: '#4B5563' }}>{row.label}</Text>
+                      <Text size="xs" style={{ color: '#9CA3AF' }}>{row.note}</Text>
                     </Stack>
-                    <Anchor href={row.href} size="sm" fw={700}>
+                    <Anchor href={row.href} size="sm" fw={700} style={{ color: '#2E7D32', flexShrink: 0 }}>
                       {row.label === 'Setup Data' ? `${row.value}/${row.target}` : row.value}
                     </Anchor>
                   </Group>
-                  <Box h={10} bg="var(--mantine-color-dark-5)" style={{ borderRadius: 999, overflow: 'hidden' }}>
+                  <Box h={6} style={{ backgroundColor: '#E5E7EB', borderRadius: 999, overflow: 'hidden' }}>
                     <Box
                       h="100%"
-                      w={`${Math.max(row.value > 0 ? 8 : 0, pct)}%`}
-                      bg={`var(--mantine-color-${row.color}-6)`}
-                      style={{ borderRadius: 999, transition: 'width 180ms ease' }}
+                      w={`${Math.max(row.value > 0 ? 6 : 0, pct)}%`}
+                      style={{ borderRadius: 999, transition: 'width 220ms ease', backgroundColor: barColor }}
                     />
                   </Box>
                 </Box>
@@ -342,30 +370,32 @@ export default function AdminDashboard() {
         </SimpleGrid>
       </Paper>
 
-      {/* Master Data Counts */}
+      {/* Factory Setup Overview */}
       <div>
-        <Text fw={600} size="sm" mb="sm">Factory Setup Overview</Text>
+        <Text fw={600} size="sm" mb={12} style={{ color: '#0F172A' }}>Factory Setup Overview</Text>
         <SimpleGrid cols={{ base: 2, sm: 3, md: 4 }} spacing="sm">
           {STAT_CARDS.map((card) => (
-            <Paper key={card.collection} p="sm" radius="md" withBorder>
-              <Group justify="space-between" wrap="nowrap">
-                <Stack gap={2}>
-                  <Text size="xs" c="dimmed" tt="uppercase" fw={700} lineClamp={1}>
+            <Paper key={card.collection} p="md" withBorder style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
+              <Group justify="space-between" wrap="nowrap" align="flex-start">
+                <Stack gap={4}>
+                  <Text size="xs" fw={600} tt="uppercase" lineClamp={1} style={{ color: '#9CA3AF', letterSpacing: '0.04em' }}>
                     {card.label}
                   </Text>
-                  <Group gap={4} align="center">
-                    <Title order={4}>{counts[card.collection] ?? '—'}</Title>
+                  <Group gap={6} align="center">
+                    <Title order={3} fw={700} style={{ color: '#0F172A' }}>
+                      {counts[card.collection] ?? '—'}
+                    </Title>
                     {(counts[card.collection] ?? 0) === 0 && (
-                      <Badge size="xs" color="orange" variant="light">Empty</Badge>
+                      <Badge size="xs" color="yellow" variant="light">Empty</Badge>
                     )}
                   </Group>
                 </Stack>
-                <ThemeIcon size="lg" radius="md" variant="light" color={card.color}>
-                  <card.icon size={18} />
+                <ThemeIcon size="md" radius={8} variant="light" color={card.color}>
+                  <card.icon size={16} />
                 </ThemeIcon>
               </Group>
-              <Anchor href={card.href} size="xs" c="dimmed" mt={4} display="block">
-                {card.description}
+              <Anchor href={card.href} size="xs" fw={500} mt={8} display="block" style={{ color: '#2E7D32' }}>
+                {card.description} →
               </Anchor>
             </Paper>
           ))}
@@ -373,57 +403,77 @@ export default function AdminDashboard() {
       </div>
 
       {/* Setup Exceptions */}
-      <Divider label="Setup Exceptions — Areas Needing Attention" labelPosition="left" />
-      {!loading && (() => {
-        const emptyAreas = setupChecklist.filter((item) => !item.done);
-        return emptyAreas.length === 0 ? (
-          <Alert color="green" variant="light" icon={<IconCircleCheck size={16} />}>
-            All required setup areas have at least one record. Your system is fully configured.
-          </Alert>
-        ) : (
-          <SimpleGrid cols={{ base: 1, sm: 2, md: 3 }} spacing="sm">
-            {emptyAreas.map(area => (
-              <Paper key={area.label} p="sm" radius="md" withBorder style={{ borderColor: 'var(--mantine-color-orange-4)' }}>
-                <Group justify="space-between" wrap="nowrap">
-                  <Stack gap={2}>
-                    <Text size="sm" fw={600}>{area.label}</Text>
-                    <Text size="xs" c="dimmed">{area.description} — no records yet</Text>
-                  </Stack>
-                  <ThemeIcon size="md" radius="md" variant="light" color="orange">
-                    <area.icon size={16} />
-                  </ThemeIcon>
-                </Group>
-                <Anchor href={area.href} size="xs" mt={4} display="block" c="orange">Set up now →</Anchor>
-              </Paper>
-            ))}
-          </SimpleGrid>
-        );
-      })()}
+      <Box>
+        <Text fw={600} size="sm" mb={12} style={{ color: '#0F172A' }}>Setup Exceptions</Text>
+        {!loading && (() => {
+          const emptyAreas = setupChecklist.filter((item) => !item.done);
+          return emptyAreas.length === 0 ? (
+            <Alert
+              color="primary"
+              variant="light"
+              radius="lg"
+              icon={<IconCircleCheck size={16} />}
+              style={{ borderColor: '#C8E6C9' }}
+            >
+              <Text size="sm" style={{ color: '#0F172A' }}>
+                All required setup areas have at least one record. Your system is fully configured.
+              </Text>
+            </Alert>
+          ) : (
+            <SimpleGrid cols={{ base: 1, sm: 2, md: 3 }} spacing="sm">
+              {emptyAreas.map(area => (
+                <Paper key={area.label} p="md" withBorder style={{ borderColor: '#FDE68A', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
+                  <Group justify="space-between" wrap="nowrap" align="flex-start">
+                    <Stack gap={2}>
+                      <Text size="sm" fw={600} style={{ color: '#0F172A' }}>{area.label}</Text>
+                      <Text size="xs" style={{ color: '#6B7280' }}>{area.description} — no records yet</Text>
+                    </Stack>
+                    <Box style={{ width: 32, height: 32, borderRadius: 8, backgroundColor: '#FEF3C7', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <area.icon size={14} color="#D97706" />
+                    </Box>
+                  </Group>
+                  <Anchor href={area.href} size="xs" fw={500} mt={8} display="block" style={{ color: '#D97706' }}>
+                    Set up now →
+                  </Anchor>
+                </Paper>
+              ))}
+            </SimpleGrid>
+          );
+        })()}
+      </Box>
 
-      {/* Quick Links */}
+      {/* Quick Links & Checklist */}
       <SimpleGrid cols={{ base: 1, md: 2 }} spacing="md">
-        <Paper p="md" radius="md" withBorder>
-          <Title order={4} mb="sm">Configuration Quick Links</Title>
-          <Stack gap="xs">
-          {QUICK_LINKS.map((link) => (
-            <Group key={link.href} gap="xs">
-              <link.icon size={14} />
-              <Anchor href={link.href} size="sm">{link.label}</Anchor>
-              <Text size="xs" c="dimmed">— {link.description}</Text>
-            </Group>
-          ))}
+        <Paper p="lg" withBorder style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+          <Text fw={600} size="sm" mb={16} style={{ color: '#0F172A' }}>Configuration Quick Links</Text>
+          <Stack gap={12}>
+            {QUICK_LINKS.map((link) => (
+              <Group key={link.href} gap={10} align="center">
+                <Box style={{ width: 28, height: 28, borderRadius: 7, backgroundColor: '#E8F5E9', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <link.icon size={14} color="#2E7D32" strokeWidth={1.75} />
+                </Box>
+                <div style={{ minWidth: 0 }}>
+                  <Anchor href={link.href} size="sm" fw={500} style={{ color: '#0F172A' }}>{link.label}</Anchor>
+                  <Text size="xs" style={{ color: '#9CA3AF' }}>{link.description}</Text>
+                </div>
+              </Group>
+            ))}
           </Stack>
         </Paper>
 
-        <Paper id="setup-checklist" p="md" radius="md" withBorder>
-          <Title order={4} mb="sm">Setup Checklist</Title>
-          <Stack gap="xs">
+        <Paper id="setup-checklist" p="lg" withBorder style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+          <Text fw={600} size="sm" mb={16} style={{ color: '#0F172A' }}>Setup Checklist</Text>
+          <Stack gap={10}>
             {setupChecklist.map((item) => (
-              <Group key={item.label} gap="xs">
-                <Badge size="xs" color={item.done ? 'green' : 'gray'} variant="light">
-                  {item.done ? 'Done' : 'Todo'}
-                </Badge>
-                <Text size="sm" c={item.done ? undefined : 'dimmed'}>
+              <Group key={item.label} gap={10} align="center">
+                <Box style={{
+                  width: 20, height: 20, borderRadius: 6, flexShrink: 0,
+                  backgroundColor: item.done ? '#E8F5E9' : '#F3F5F3',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}>
+                  {item.done && <IconCircleCheck size={13} color="#2E7D32" />}
+                </Box>
+                <Text size="sm" style={{ color: item.done ? '#1F2937' : '#9CA3AF' }}>
                   {item.label}
                 </Text>
               </Group>

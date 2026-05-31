@@ -66,9 +66,28 @@ async function getUserRoleRoute(): Promise<string> {
 
 export default async function HomePage() {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  let hasUser = false;
 
-  if (!user) {
+  try {
+    const {
+      data: { user },
+      error,
+    } = await supabase.auth.getUser();
+
+    if (error) {
+      console.warn(`Supabase auth check failed (${error.status ?? 'unknown status'}). Redirecting to login.`);
+    }
+
+    hasUser = Boolean(user);
+  } catch (error) {
+    const status =
+      typeof error === 'object' && error !== null && 'status' in error
+        ? String(error.status)
+        : 'unknown status';
+    console.warn(`Supabase auth check unavailable (${status}). Redirecting to login.`);
+  }
+
+  if (!hasUser) {
     redirect('/login');
   }
 

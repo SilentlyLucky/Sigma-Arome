@@ -31,7 +31,18 @@ import { createClient } from '@/lib/supabase/server';
  */
 export async function POST(request: NextRequest) {
   try {
-    const { email, password } = await request.json();
+    let body: { email?: string; password?: string };
+
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json(
+        { errors: [{ message: 'Invalid login request' }] },
+        { status: 400 }
+      );
+    }
+
+    const { email, password } = body;
 
     if (!email || !password) {
       return NextResponse.json(

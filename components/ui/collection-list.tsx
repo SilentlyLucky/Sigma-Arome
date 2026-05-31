@@ -951,6 +951,38 @@ export const CollectionList: React.FC<CollectionListProps> = ({
         );
       }
 
+      // ---------- Status / type string fields — colored badge ----------
+      const fieldKey = header.value.toLowerCase();
+      if (
+        (fieldKey === 'status' || fieldKey === 'type' || fieldKey === 'state' || fieldKey === 'stage') &&
+        fieldType === 'string' &&
+        typeof value === 'string'
+      ) {
+        const v = value.toLowerCase().replace(/_/g, ' ');
+        const color =
+          v === 'active' || v === 'approved' || v === 'completed' || v === 'ready' || v === 'stored available' || v === 'stored'
+            ? 'green'
+            : v === 'inactive' || v === 'rejected' || v === 'blocked' || v === 'waiting issue'
+            ? 'red'
+            : v === 'pending' || v === 'ordered' || v === 'submitted' || v === 'overdue' || v === 'draft'
+            ? 'orange'
+            : v === 'in progress' || v === 'under qc' || v === 'qc pending' || v === 'partially received' || v === 'approved waiting'
+            ? 'blue'
+            : v === 'hold'
+            ? 'yellow'
+            : 'gray';
+        return (
+          <Badge
+            size="xs"
+            color={color}
+            variant="light"
+            style={{ textTransform: 'none', fontWeight: 500 }}
+          >
+            {value.replace(/_/g, ' ')}
+          </Badge>
+        );
+      }
+
       return null;
     },
     [permittedFields, consumerRenderCell, relationNames],

@@ -104,9 +104,11 @@ body {
 }
 
 /* ── VTable Sticky Header Offset ─────────────────────────── */
-/* Ensures sticky table headers clear the AppShell header (60-64px) */
+/* AppShell.Main is the scroll container — it already starts below the
+   64px fixed header. The sticky header must sit at top: 0 within that
+   container so no data rows can slip above it. */
 .v-table {
-  --v-table-sticky-offset-top: 64px;
+  --v-table-sticky-offset-top: 0px;
 }
 
 /* ── NavLink Active State ─────────────────────────────────── */

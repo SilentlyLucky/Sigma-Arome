@@ -24,7 +24,7 @@
 .v-table {
   position: relative;
   height: auto;
-  overflow-y: auto;
+  overflow-y: clip;
   overflow-x: auto;
 }
 

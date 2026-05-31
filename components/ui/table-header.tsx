@@ -4,7 +4,7 @@
  *
  * TableHeader Component
  * Renders the table header row with sorting, resizing, reordering, and selection controls.
- * Column reordering uses @dnd-kit horizontal list sorting.
+ * Column reordering uses native pointer handling to keep table markup valid.
  */
 
 import { Checkbox, Text, Tooltip } from "@mantine/core";
@@ -16,22 +16,7 @@ import {
   IconGripVertical,
 } from "@tabler/icons-react";
 import React, { useCallback, useRef, useState } from "react";
-import {
-  DndContext,
-  closestCenter,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  type DragEndEvent,
-} from "@dnd-kit/core";
-import {
-  arrayMove,
-  SortableContext,
-  horizontalListSortingStrategy,
-  useSortable,
-} from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
+import { arrayMove } from "@dnd-kit/sortable";
 import type { Header, ShowSelect, Sort } from "./vtable-types";
 import "./table-header.css";
 
@@ -73,9 +58,11 @@ interface SortableHeaderCellProps {
   onSort: (header: Header) => void;
   onContextMenu: (header: Header, event: React.MouseEvent) => void;
   onResizeStart: (header: Header, event: React.PointerEvent) => void;
+  onReorderPointerDown: (header: Header, event: React.PointerEvent) => void;
+  onReorderByDelta: (header: Header, delta: number) => void;
   getSortIcon: (header: Header) => React.ReactNode;
   getHeaderClasses: (header: Header) => string;
-  /** Ref set by DndContext onDragStart — any truthy value blocks the next click from sorting */
+  /** Any truthy value blocks the next click from sorting after a reorder gesture. */
   dragHappenedRef: React.MutableRefObject<boolean>;
 }
 
@@ -89,40 +76,23 @@ const SortableHeaderCell: React.FC<SortableHeaderCellProps> = ({
   onSort,
   onContextMenu,
   onResizeStart,
+  onReorderPointerDown,
+  onReorderByDelta,
   getSortIcon,
   getHeaderClasses,
   dragHappenedRef,
 }) => {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: header.value, disabled: !allowReorder });
-
   // Suppress sort when the user holds the mouse (drag intent) instead of doing a quick click.
   // Three independent signals — any one is enough to block sort:
   //   1. hold duration > 200 ms (left-button held = drag intent)
-  //   2. pointer moved > 4 px before dnd-kit captured events
-  //   3. dnd-kit fired onDragStart (authoritative: a real column reorder happened)
+  //   2. pointer moved > 4 px before the click fires
+  //   3. the reorder grip handled the gesture
   const pointerDownTime = useRef(0);
   const pointerDownPos = useRef<{ x: number; y: number } | null>(null);
   const wasDragGesture = useRef(false);
 
-  const style: React.CSSProperties = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
-    position: "relative",
-    zIndex: isDragging ? 10 : undefined,
-  };
-
   return (
     <th
-      ref={setNodeRef}
-      style={style}
       data-column-value={header.value}
       className={getHeaderClasses(header)}
       onPointerDown={(e) => {
@@ -141,12 +111,12 @@ const SortableHeaderCell: React.FC<SortableHeaderCellProps> = ({
         const heldMs = Date.now() - pointerDownTime.current;
         const wasHeld = heldMs > 200;
         const wasMoved = wasDragGesture.current;
-        const wasDndDrag = dragHappenedRef.current;
+        const wasReorderGesture = dragHappenedRef.current;
 
         wasDragGesture.current = false;
         dragHappenedRef.current = false;
 
-        if (wasHeld || wasMoved || wasDndDrag) return;
+        if (wasHeld || wasMoved || wasReorderGesture) return;
         onSort(header);
       }}
       onContextMenu={(e) => onContextMenu(header, e)}
@@ -164,9 +134,23 @@ const SortableHeaderCell: React.FC<SortableHeaderCellProps> = ({
         {allowReorder && (
           <div
             className="reorder-handle"
+            role="button"
+            tabIndex={0}
             aria-label="Drag to reorder column"
-            {...attributes}
-            {...listeners}
+            onClick={(e) => e.stopPropagation()}
+            onPointerDown={(e) => onReorderPointerDown(header, e)}
+            onKeyDown={(e) => {
+              if (e.key === "ArrowLeft") {
+                e.preventDefault();
+                e.stopPropagation();
+                onReorderByDelta(header, -1);
+              }
+              if (e.key === "ArrowRight") {
+                e.preventDefault();
+                e.stopPropagation();
+                onReorderByDelta(header, 1);
+              }
+            }}
           >
             <IconGripVertical size={14} />
           </div>
@@ -243,11 +227,12 @@ export const TableHeader: React.FC<TableHeaderProps> = ({
   // Tracks whether a column reorder drag just happened so the subsequent click doesn't trigger sort
   const dragHappenedRef = useRef(false);
 
-  // DnD sensors — require 5px movement before drag starts (prevents accidental drags on click)
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
-    useSensor(KeyboardSensor)
-  );
+  // Native pointer state for column reordering; keeps the table DOM valid.
+  const reorderRef = useRef<{
+    header: Header;
+    startX: number;
+    startY: number;
+  } | null>(null);
 
   // ─── Context Menu ──────────────────────────────────────────────────────────
 
@@ -386,26 +371,65 @@ export const TableHeader: React.FC<TableHeaderProps> = ({
 
   // ─── Drag-to-Reorder ──────────────────────────────────────────────────────
 
-  const handleDragEnd = useCallback(
-    (event: DragEndEvent) => {
-      const { active, over } = event;
-      onReorderingChange?.(false);
-      if (!over || active.id === over.id) return;
-
-      const oldIndex = headers.findIndex((h) => h.value === active.id);
-      const newIndex = headers.findIndex((h) => h.value === over.id);
-      if (oldIndex === -1 || newIndex === -1) return;
-
-      const reordered = arrayMove(headers, oldIndex, newIndex);
-      onHeadersChange?.(reordered);
+  const moveHeader = useCallback(
+    (header: Header, toIndex: number) => {
+      const oldIndex = headers.findIndex((h) => h.value === header.value);
+      if (oldIndex === -1 || toIndex === -1 || oldIndex === toIndex) return;
+      onHeadersChange?.(arrayMove(headers, oldIndex, toIndex));
     },
-    [headers, onHeadersChange, onReorderingChange],
+    [headers, onHeadersChange],
   );
 
-  const handleDragStart = useCallback(() => {
-    dragHappenedRef.current = true;
-    onReorderingChange?.(true);
-  }, [onReorderingChange]);
+  const handleReorderByDelta = useCallback(
+    (header: Header, delta: number) => {
+      const oldIndex = headers.findIndex((h) => h.value === header.value);
+      if (oldIndex === -1) return;
+      const nextIndex = Math.max(0, Math.min(headers.length - 1, oldIndex + delta));
+      moveHeader(header, nextIndex);
+    },
+    [headers, moveHeader],
+  );
+
+  const handleReorderPointerDown = useCallback(
+    (header: Header, event: React.PointerEvent) => {
+      if (event.button !== 0) return;
+      event.preventDefault();
+      event.stopPropagation();
+      reorderRef.current = { header, startX: event.clientX, startY: event.clientY };
+      dragHappenedRef.current = true;
+      onReorderingChange?.(true);
+
+      const handlePointerMove = (e: PointerEvent) => {
+        if (!reorderRef.current) return;
+        const dx = Math.abs(e.clientX - reorderRef.current.startX);
+        const dy = Math.abs(e.clientY - reorderRef.current.startY);
+        if (dx > 4 || dy > 4) dragHappenedRef.current = true;
+      };
+
+      const handlePointerUp = (e: PointerEvent) => {
+        const active = reorderRef.current;
+        reorderRef.current = null;
+        onReorderingChange?.(false);
+        window.removeEventListener("pointermove", handlePointerMove);
+        window.removeEventListener("pointerup", handlePointerUp);
+        window.removeEventListener("pointercancel", handlePointerUp);
+
+        if (!active) return;
+        const target = document
+          .elementFromPoint(e.clientX, e.clientY)
+          ?.closest<HTMLElement>("th[data-column-value]");
+        const targetValue = target?.dataset.columnValue;
+        if (!targetValue || targetValue === active.header.value) return;
+        const newIndex = headers.findIndex((h) => h.value === targetValue);
+        moveHeader(active.header, newIndex);
+      };
+
+      window.addEventListener("pointermove", handlePointerMove);
+      window.addEventListener("pointerup", handlePointerUp);
+      window.addEventListener("pointercancel", handlePointerUp);
+    },
+    [headers, moveHeader, onReorderingChange],
+  );
 
   // ─── Helpers ───────────────────────────────────────────────────────────────
 
@@ -430,8 +454,6 @@ export const TableHeader: React.FC<TableHeaderProps> = ({
 
   // ─── Render ────────────────────────────────────────────────────────────────
 
-  const headerIds = headers.map((h) => h.value);
-
   const headerCells = headers.map((header) => (
     <SortableHeaderCell
       key={header.value}
@@ -446,6 +468,8 @@ export const TableHeader: React.FC<TableHeaderProps> = ({
       onSort={handleSort}
       onContextMenu={handleContextMenu}
       onResizeStart={handleResizeStart}
+      onReorderPointerDown={handleReorderPointerDown}
+      onReorderByDelta={handleReorderByDelta}
       getSortIcon={getSortIcon}
       getHeaderClasses={getHeaderClasses}
       dragHappenedRef={dragHappenedRef}
@@ -453,14 +477,7 @@ export const TableHeader: React.FC<TableHeaderProps> = ({
   ));
 
   return (
-    <DndContext
-      sensors={sensors}
-      collisionDetection={closestCenter}
-      onDragStart={handleDragStart}
-      onDragEnd={handleDragEnd}
-      accessibility={{ container: typeof document !== 'undefined' ? document.body : undefined }}
-    >
-      <SortableContext items={headerIds} strategy={horizontalListSortingStrategy}>
+    <>
         <thead
           className={`table-header ${resizing ? "resizing" : ""} ${reordering ? "reordering" : ""}`}
           role="rowgroup"
@@ -506,7 +523,6 @@ export const TableHeader: React.FC<TableHeaderProps> = ({
             )}
           </tr>
         </thead>
-      </SortableContext>
 
       {/* Context Menu Popup — rendered via portal at document.body so it is
           completely outside the table grid. Previously it was inside a <tr>
@@ -522,6 +538,6 @@ export const TableHeader: React.FC<TableHeaderProps> = ({
         </div>,
         document.body
       )}
-    </DndContext>
+    </>
   );
 };

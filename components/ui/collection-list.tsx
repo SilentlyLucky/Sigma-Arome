@@ -124,6 +124,8 @@ export interface CollectionListProps {
   primaryKeyField?: string;
   /** Row height in pixels */
   rowHeight?: number;
+  /** Stick the table header while scrolling inside a vertical table container */
+  fixedHeader?: boolean;
   /** Table spacing preset */
   tableSpacing?: "compact" | "cozy" | "comfortable";
   /** Archive field name (e.g. "status" or "archived"). When set, archive filter UI is shown. */
@@ -198,6 +200,7 @@ export const CollectionList: React.FC<CollectionListProps> = ({
   enableCreate = false,
   primaryKeyField = "id",
   rowHeight: rowHeightProp,
+  fixedHeader = false,
   tableSpacing = "cozy",
   archiveField,
   archiveValue = "archived",
@@ -1181,7 +1184,7 @@ export const CollectionList: React.FC<CollectionListProps> = ({
         showResize={enableResize}
         allowHeaderReorder={enableReorder}
         value={selectedItems}
-        fixedHeader
+        fixedHeader={fixedHeader}
         loading={loading}
         loadingText="Loading records..."
         noItemsText={

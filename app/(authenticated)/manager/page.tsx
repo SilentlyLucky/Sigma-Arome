@@ -4,63 +4,14 @@ import {
   SimpleGrid, Paper, Text, Title, Group, Stack, ThemeIcon,
   Loader, Anchor, Divider, Badge, Alert, Table,
 } from '@mantine/core';
+import { BarChart, DonutChart } from '@mantine/charts';
 import {
   IconAlertTriangle, IconCheck, IconClock, IconChevronRight,
   IconBuildingFactory, IconFlask, IconTruckDelivery, IconPackage,
   IconCircleCheck, IconX,
 } from '@tabler/icons-react';
 import { useEffect, useState } from 'react';
-import React from 'react';
 import { useRouter } from 'next/navigation';
-
-// ── Shared visual helpers ────────────────────────────────────────────────────
-
-function Pipeline({ stages }: { stages: { label: string; count: number; color: string }[] }) {
-  return (
-    <div style={{ display: 'flex', gap: 4, alignItems: 'stretch', overflowX: 'auto', paddingBottom: 4 }}>
-      {stages.map((s, i) => (
-        <React.Fragment key={s.label}>
-          <div style={{
-            flex: '1 1 0', minWidth: 70, textAlign: 'center', padding: '10px 6px',
-            background: `var(--mantine-color-${s.color}-0)`,
-            border: `1px solid var(--mantine-color-${s.color}-3)`,
-            borderRadius: 8,
-          }}>
-            <Text size="xl" fw={700} c={s.count > 0 ? s.color : 'dimmed'}>{s.count}</Text>
-            <Text size="xs" c="dimmed" lineClamp={2}>{s.label}</Text>
-          </div>
-          {i < stages.length - 1 && (
-            <div style={{ display: 'flex', alignItems: 'center', color: 'var(--mantine-color-gray-4)', padding: '0 2px' }}>
-              <IconChevronRight size={14} />
-            </div>
-          )}
-        </React.Fragment>
-      ))}
-    </div>
-  );
-}
-
-function StatusBar({ segments }: { segments: { label: string; count: number; color: string }[] }) {
-  const total = Math.max(segments.reduce((s, seg) => s + seg.count, 0), 1);
-  return (
-    <Stack gap="xs">
-      <Group gap={2} style={{ borderRadius: 4, overflow: 'hidden', height: 10 }}>
-        {segments.filter(s => s.count > 0).map(seg => (
-          <div key={seg.label} style={{ flex: seg.count / total, height: '100%', background: `var(--mantine-color-${seg.color}-5)`, minWidth: 4 }} />
-        ))}
-      </Group>
-      <Group gap="sm" wrap="wrap">
-        {segments.map(seg => (
-          <Group key={seg.label} gap={4} wrap="nowrap">
-            <div style={{ width: 10, height: 10, borderRadius: 2, background: `var(--mantine-color-${seg.color}-5)`, flexShrink: 0 }} />
-            <Text size="xs" c="dimmed">{seg.label}:</Text>
-            <Text size="xs" fw={600}>{seg.count}</Text>
-          </Group>
-        ))}
-      </Group>
-    </Stack>
-  );
-}
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
@@ -199,13 +150,19 @@ export default function ManagerDashboard() {
           {/* ── Operations Pipeline ─────────────────────────────────────────── */}
           <Paper p="md" radius="md" withBorder>
             <Text fw={600} size="sm" mb="sm">End-to-End Operations Pipeline</Text>
-            <Pipeline stages={[
-              { label: 'On Order', count: n('ordersOrdered') + n('ordersPartial'), color: 'blue' },
-              { label: 'In QC', count: n('batchesQcPending') + n('batchesUnderQc'), color: 'orange' },
-              { label: 'Stored & Ready', count: n('batchesStored'), color: 'teal' },
-              { label: 'In Production', count: n('prodActive'), color: 'violet' },
-              { label: 'Completed', count: n('prodCompleted'), color: 'green' },
-            ]} />
+            <BarChart
+              h={180}
+              data={[
+                { stage: 'On Order', count: n('ordersOrdered') + n('ordersPartial') },
+                { stage: 'In QC', count: n('batchesQcPending') + n('batchesUnderQc') },
+                { stage: 'Stored & Ready', count: n('batchesStored') },
+                { stage: 'In Production', count: n('prodActive') },
+                { stage: 'Completed', count: n('prodCompleted') },
+              ]}
+              dataKey="stage"
+              series={[{ name: 'count', label: 'Count', color: 'blue.6' }]}
+              withLegend={false}
+            />
             <Text size="xs" c="dimmed" mt="xs">Larger numbers in early stages = upstream bottleneck. Ideal: even or growing toward right.</Text>
           </Paper>
 
@@ -213,22 +170,36 @@ export default function ManagerDashboard() {
           <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
             <Paper p="md" radius="md" withBorder>
               <Text fw={600} size="sm" mb="sm">Production Orders</Text>
-              <StatusBar segments={[
-                { label: 'Waiting for materials', count: n('prodBlocked'), color: 'red' },
-                { label: 'Ready to start', count: n('prodReady'), color: 'lime' },
-                { label: 'Running', count: n('prodActive'), color: 'violet' },
-                { label: 'Completed', count: n('prodCompleted'), color: 'green' },
-              ]} />
+              <DonutChart
+                data={[
+                  { name: 'Blocked', value: n('prodBlocked'), color: 'red.5' },
+                  { name: 'Ready to start', value: n('prodReady'), color: 'lime.5' },
+                  { name: 'Running', value: n('prodActive'), color: 'violet.5' },
+                  { name: 'Completed', value: n('prodCompleted'), color: 'green.5' },
+                ]}
+                size={160}
+                thickness={30}
+                withLabels
+                withLabelsLine={false}
+                tooltipDataSource="segment"
+              />
             </Paper>
             <Paper p="md" radius="md" withBorder>
               <Text fw={600} size="sm" mb="sm">Batch Quality Status</Text>
-              <StatusBar segments={[
-                { label: 'Waiting inspection', count: n('batchesQcPending'), color: 'orange' },
-                { label: 'Being inspected', count: n('batchesUnderQc'), color: 'blue' },
-                { label: 'On hold', count: n('batchesHold'), color: 'yellow' },
-                { label: 'Rejected', count: n('batchesRejected'), color: 'red' },
-                { label: 'Stored & ready', count: n('batchesStored'), color: 'green' },
-              ]} />
+              <DonutChart
+                data={[
+                  { name: 'Waiting', value: n('batchesQcPending'), color: 'orange.5' },
+                  { name: 'In review', value: n('batchesUnderQc'), color: 'blue.5' },
+                  { name: 'On hold', value: n('batchesHold'), color: 'yellow.5' },
+                  { name: 'Rejected', value: n('batchesRejected'), color: 'red.5' },
+                  { name: 'Stored & ready', value: n('batchesStored'), color: 'green.5' },
+                ]}
+                size={160}
+                thickness={30}
+                withLabels
+                withLabelsLine={false}
+                tooltipDataSource="segment"
+              />
             </Paper>
           </SimpleGrid>
 

@@ -30,6 +30,18 @@ Each user role receives a dedicated dashboard with the data, permissions, and ac
 
 ---
 
+---
+
+## Team Members Citak Bana
+
+| Name | Role |
+| --- | --- |
+| Severinus Fabian Tanuwidjaja | The Designer |
+| Steven Alvin Christian | The Mastermind |
+| Melvan Hapianan Allo Ponglabba | The Mediator |
+
+---
+
 ## Live Demo
 
 - **Live Website:** https://main.dl8kg34ne80.amplifyapp.com
@@ -197,8 +209,7 @@ Incompatible bins are eliminated before scoring, helping warehouse teams make sa
 
 ### Database
 
-- PostgreSQL via Supabase
-- Supabase Row-Level Security
+- PostgreSQL via Supabase (Row-Level Security)
 
 ### APIs / Services
 
@@ -344,18 +355,6 @@ This project demonstrates how a production-grade operations platform can be buil
 - Improve mobile responsiveness for warehouse and production floor usage.
 - Add notification workflows for QC holds, low stock, production readiness, and storage conflicts.
 
----
-
-## Team Members
-
-| Name | Role |
-| --- | --- |
-| TBD | TBD |
-| TBD | TBD |
-| TBD | TBD |
-
----
-
 ## License
 
 License to be confirmed.
@@ -371,39 +370,3 @@ License to be confirmed.
 - Hackathon organizers, mentors, and contributors
 
 ---
-
-## Screenshot Checklist
-
-Use this checklist to confirm the screenshot files referenced above exist in `./screenshots/`.
-
-### Core / Shared
-
-- [ ] `landing-page.png` — Landing / Home page
-- [ ] `login-page.png` — Login or Sign Up page
-- [ ] `mobile-view.png` — Mobile responsive view
-- [ ] `empty-state.png` — Empty or error state
-
-### Admin
-
-- [ ] `admin-dashboard.png` — Admin dashboard
-- [ ] `admin-warehouse-location.png` — Warehouse location floor plan / hierarchy
-- [ ] `admin-master-data-form.png` — Master data input form
-
-### Warehouse Operation
-
-- [ ] `warehouse-dashboard.png` — Warehouse dashboard
-- [ ] `warehouse-auto-slotting.png` — Auto slotting result / output
-- [ ] `warehouse-putaway.png` — Putaway flow
-
-### Quality Control
-
-- [ ] `qc-inspection.png` — QC inspection
-
-### PPIC / Production
-
-- [ ] `ppic-production.png` — Production planning
-- [ ] `production-orders.png` — Production execution
-
-### Manager
-
-- [ ] `manager-overview.png` — Manager overview / data visualization

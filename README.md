@@ -54,11 +54,11 @@ Screenshots are stored in the `./screenshots/` folder.
 #### Admin Dashboard
 ![Admin Dashboard](./screenshots/admin-dashboard.png)
 
-#### Warehouse Location Floor Plan / Hierarchy
-![Warehouse Location](./screenshots/admin-warehouse-location.png)
-
 #### Master Data Form
 ![Master Data Form](./screenshots/admin-master-data-form.png)
+
+#### Warehouse Location Floor Plan / Hierarchy
+![Warehouse Location](./screenshots/admin-warehouse-location.png)
 
 ### Warehouse Operation Module
 

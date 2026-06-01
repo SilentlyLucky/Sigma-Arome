@@ -103,7 +103,7 @@ Screenshots are stored in the `./screenshots/` folder.
 
 ## ⚠️ Problem Statement
 
-Sigma Arome's internal factory flow needs stronger digital control across raw material ordering, receiving, QC, storage, production readiness, execution, and finished product release.
+Sima Arome's internal factory flow needs stronger digital control across raw material ordering, receiving, QC, storage, production readiness, execution, and finished product release.
 
 Current operational pain points include:
 

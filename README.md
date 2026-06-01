@@ -16,9 +16,8 @@ Sigma Arome Smart Operations is a web-based manufacturing operations system that
 
 ## Live Demo / Public Link
 
-- **Live Website:** [Insert deployed website link]
-- **Demo Video:** [Optional demo video link]
-- **GitHub Repository:** [Insert GitHub repository link]
+- **Live Website:** https://main.dl8kg34ne80.amplifyapp.com
+- **Demo Video:** https://youtu.be/gzTRbtz-OIA
 
 ---
 
@@ -35,12 +34,6 @@ This project is a multi-module system, so screenshots are grouped by role/module
 
 #### Login / Sign Up Page
 ![Login Page](./screenshots/login-page.png)
-
-#### Mobile Responsive View
-![Mobile View](./screenshots/mobile-view.png)
-
-#### Empty / Error State
-![Empty State](./screenshots/empty-state.png)
 
 ### Admin Module
 [Master data, role based access control, audit log]
@@ -87,13 +80,11 @@ This project is a multi-module system, so screenshots are grouped by role/module
 #### Manager Overview / Data Visualization
 ![Manager Overview](./screenshots/manager-overview.png)
 
-> Tip: If you have more standout screens, add them here following the same pattern, for example `./screenshots/logistic-requests.png`.
-
 ---
 
 ## Problem Statement
 
-Sigma Arome's internal factory flow lacks strong digital control across raw material ordering, receiving, QC, storage, production readiness, execution, and finished product release. Today the main pain points are:
+Siga Arome's internal factory flow lacks strong digital control across raw material ordering, receiving, QC, storage, production readiness, execution, and finished product release. Today the main pain points are:
 
 - PPIC cannot easily track whether ordered material has arrived, passed QC, and become available for production.
 - Raw material receiving and batch records are recorded manually and can become fragmented.
@@ -148,6 +139,7 @@ The platform is organized into role-based modules.
 **Frontend**
 - Next.js 16 (App Router) with React 19 and TypeScript 5
 - Mantine v8 component library with Buildpad UI components
+- TailwindCss
 
 **Backend**
 - Next.js API routes acting as a server-side proxy
@@ -171,10 +163,10 @@ This project uses pnpm. Follow these steps to run it locally.
 
 ```bash
 # 1. Clone the repository
-git clone [repository-url]
+git clone https://github.com/SilentlyLucky/Sigma-Arome.git
 
 # 2. Move into the project folder
-cd [project-folder]
+cd Sigma-Arome
 
 # 3. Install dependencies
 pnpm install

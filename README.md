@@ -59,7 +59,7 @@ Screenshots are stored in the `./screenshots/` folder.
 ![Login Page](./screenshots/login-page.png)
 
 #### Setting Page
-![Login Page](./screenshots/login-page.png)
+![Setting Page](./screenshots/setting-page.png)
 
 ### Admin Module
 
@@ -356,10 +356,6 @@ This project demonstrates how a production-grade operations platform can be buil
 - Add more advanced analytics for material readiness, QC lead time, warehouse utilization, and production yield.
 - Improve mobile responsiveness for warehouse and production floor usage.
 - Add notification workflows for QC holds, low stock, production readiness, and storage conflicts.
-
-## License
-
-License to be confirmed.
 
 ---
 

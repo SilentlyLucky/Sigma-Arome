@@ -1,20 +1,36 @@
-# Sigma Arome Smart Operations 
+# Sigma Arome Smart Operations
 
-> A role-based smart manufacturing operations platform for fragrance, essential oil, and chemical production, from raw material ordering to finished goods putaway.
+> A role-based smart manufacturing operations platform for fragrance, essential oil, and chemical production, covering the full flow from raw material ordering to finished goods putaway.
 
 ---
 
 ## Overview
 
-Sigma Arome Smart Operations is a web-based manufacturing operations system that controls the full internal factory flow for a fragrance and chemical manufacturer: raw material ordering, receiving, quality control, rule-based warehouse slotting, production execution, and finished goods storage. It gives every role one source of truth with its own dashboard, data visibility, and actions.
+Sigma Arome Smart Operations is a web-based manufacturing operations system for fragrance and chemical factories. It connects raw material ordering, receiving, quality control, rule-based warehouse slotting, production execution, and finished goods storage in one traceable platform.
 
-- **What it does:** Digitizes the internal manufacturing flow from PPIC raw material ordering through QC release, rule-based storage slotting, production, and finished goods putaway, with full batch traceability and an automatic audit trail.
-- **Target users:** Admin, Manager, PPIC planners, Warehouse Operation staff, QC inspectors, Logistic coordinators, and Production operators at a fragrance, essential oil, and chemical manufacturer.
-- **Main problem solved:** Manual, spreadsheet-driven, and fragmented control over batches, storage decisions, QC status, and traceability across warehouse and production.
+Each user role receives a dedicated dashboard with the data, permissions, and actions needed for its workflow. The system reduces spreadsheet dependency, improves batch traceability, and creates an automatic audit trail for critical operational changes.
+
+### What It Does
+
+- Digitizes the internal manufacturing flow from PPIC raw material ordering to finished goods putaway.
+- Tracks raw material batches through receiving, QC, storage, production consumption, and finished product creation.
+- Recommends compatible warehouse storage bins using an explainable rule-based slotting engine.
+- Gives Admin, Manager, PPIC, Warehouse, QC, Logistic, and Production users role-specific dashboards.
+- Maintains batch traceability and audit history across warehouse and production activities.
+
+### Target Users
+
+- Admin teams managing users, master data, access control, and audit logs
+- PPIC planners managing material orders, BOMs, and production readiness
+- Warehouse Operation staff handling receiving, putaway, inventory, and movement logs
+- QC inspectors reviewing, holding, approving, or rejecting batches
+- Production operators executing production orders and creating finished goods batches
+- Logistic coordinators managing material movement
+- Managers monitoring KPIs, bottlenecks, alerts, and traceability
 
 ---
 
-## Live Demo / Public Link
+## Live Demo
 
 - **Live Website:** https://main.dl8kg34ne80.amplifyapp.com
 - **Demo Video:** https://youtu.be/gzTRbtz-OIA
@@ -23,50 +39,44 @@ Sigma Arome Smart Operations is a web-based manufacturing operations system that
 
 ## Screenshots
 
-All screenshots live in the `./screenshots/` folder. Replace the placeholder images with your own captures using the exact file names listed below.
-
-This project is a multi-module system, so screenshots are grouped by role/module. Capture at least one representative screen per module you want the judges to see. Skip or add rows as needed.
+Screenshots are stored in the `./screenshots/` folder.
 
 ### Core / Shared
 
-#### Landing Page / Home Page
+#### Landing Page
 ![Landing Page](./screenshots/landing-page.png)
 
 #### Login / Sign Up Page
 ![Login Page](./screenshots/login-page.png)
 
 ### Admin Module
-[Master data, role based access control, audit log]
 
 #### Admin Dashboard
 ![Admin Dashboard](./screenshots/admin-dashboard.png)
 
-#### Warehouse Location (Floor Plan / Hierarchy)
+#### Warehouse Location Floor Plan / Hierarchy
 ![Warehouse Location](./screenshots/admin-warehouse-location.png)
 
-#### Master Data Form (User Input Form)
+#### Master Data Form
 ![Master Data Form](./screenshots/admin-master-data-form.png)
 
 ### Warehouse Operation Module
-[Receiving, putaway, rule based slotting, movement log]
 
 #### Warehouse Dashboard
 ![Warehouse Dashboard](./screenshots/warehouse-dashboard.png)
 
-#### Auto Slotting Recommendations (Result / Output Page)
+#### Auto Slotting Recommendations
 ![Auto Slotting](./screenshots/warehouse-auto-slotting.png)
 
 #### Putaway Flow
 ![Putaway](./screenshots/warehouse-putaway.png)
 
 ### Quality Control Module
-[QC queue, inspection, hold and release]
 
 #### QC Inspection
 ![QC Inspection](./screenshots/qc-inspection.png)
 
 ### PPIC / Production Module
-[Production planning, BOM, material requests]
 
 #### Production Planning
 ![Production Planning](./screenshots/ppic-production.png)
@@ -75,7 +85,6 @@ This project is a multi-module system, so screenshots are grouped by role/module
 ![Production Execution](./screenshots/production-orders.png)
 
 ### Manager Module
-[Reporting, traceability, oversight]
 
 #### Manager Overview / Data Visualization
 ![Manager Overview](./screenshots/manager-overview.png)
@@ -84,82 +93,127 @@ This project is a multi-module system, so screenshots are grouped by role/module
 
 ## Problem Statement
 
-Siga Arome's internal factory flow lacks strong digital control across raw material ordering, receiving, QC, storage, production readiness, execution, and finished product release. Today the main pain points are:
+Sigma Arome's internal factory flow needs stronger digital control across raw material ordering, receiving, QC, storage, production readiness, execution, and finished product release.
 
-- PPIC cannot easily track whether ordered material has arrived, passed QC, and become available for production.
-- Raw material receiving and batch records are recorded manually and can become fragmented.
-- QC queues and decisions are not visible in real time.
-- Warehouse storage decisions rely on manual judgment or spreadsheets, which is risky for hazardous and temperature-sensitive chemicals.
-- Material movement from warehouse to production is hard to trace back to a finished product batch.
-- Managers lack a single view of readiness, QC bottlenecks, warehouse status, and alerts.
+Current operational pain points include:
+
+- PPIC cannot easily track whether ordered materials have arrived, passed QC, and become available for production.
+- Raw material receiving records and batch data can become fragmented when handled manually.
+- QC queues and decisions are not visible in real time across departments.
+- Warehouse storage decisions often rely on manual judgment or spreadsheets, which is risky for hazardous and temperature-sensitive chemicals.
+- Material movement from warehouse to production is difficult to trace back to finished product batches.
+- Managers lack a single operational view of readiness, QC bottlenecks, warehouse status, and alerts.
 
 ---
 
 ## Solution
 
-A role-based smart operations website that becomes the single source of truth for the internal flow. Each role gets a tailored dashboard and only the data and actions relevant to its work. The platform enforces business rules on the backend so steps cannot be skipped, and it records an automatic audit trail for every critical change.
+Sigma Arome Smart Operations provides a role-based operations platform that acts as the single source of truth for internal factory workflows. The platform enforces business rules on the backend so critical steps cannot be skipped, while every major action is captured in an audit trail.
 
-A key component is the rule-based storage slotting engine. When a batch is QC released, the engine scores every eligible storage bin and recommends the top options, with each recommendation accompanied by a clear, auditable reason. The scoring considers temperature compatibility, hazard compatibility, available capacity, and occupancy, and it hard-eliminates any bin that is incompatible. The engine is fully explainable rather than a black box, which suits the compliance needs of chemical storage.
+A key component is the rule-based storage slotting engine. When a batch is released by QC, the engine scores eligible storage bins and recommends the best options. Each recommendation includes an auditable reason, making the result explainable instead of black-box.
+
+The slotting engine evaluates:
+
+- Temperature compatibility
+- Hazard compatibility
+- Available capacity
+- Current occupancy
+- Storage eligibility rules
+
+Incompatible bins are eliminated before scoring, helping warehouse teams make safer and more consistent putaway decisions.
+
+---
+
+## Core Workflow
+
+1. **PPIC creates or reviews raw material requirements.**
+2. **Warehouse receives incoming raw material batches.**
+3. **QC inspects each received batch and sets the decision status.**
+4. **Released batches are sent to auto slotting for recommended storage.**
+5. **Warehouse confirms putaway and records the storage location.**
+6. **PPIC plans production using available materials and BOM data.**
+7. **Production consumes approved materials and creates finished goods batches.**
+8. **Managers monitor KPIs, alerts, bottlenecks, and end-to-end traceability.**
 
 ---
 
 ## Key Features
 
-The platform is organized into role-based modules.
+### Admin
 
-**Admin**
-- Master data management for suppliers, raw materials, products, hazard classes, QC templates, and warehouse hierarchy.
-- Role-based access control with policies, field visibility, and action permissions.
-- Read-only audit log of all critical actions.
+- Master data management for suppliers, raw materials, products, hazard classes, QC templates, and warehouse hierarchy
+- Role-based access control for permissions, field visibility, and allowed actions
+- Read-only audit log for critical changes
 
-**Warehouse Operation**
-- Rule-based auto slotting that recommends the best storage bins with explainable reasoning.
-- Receiving, putaway, batch inventory, and full movement logging.
-- Live warehouse floor plan grouped by Warehouse, Zone, Rack, and Bin.
+### Warehouse Operation
 
-**Quality Control**
-- Inspection queue with computer-vision-assisted review (simulated for MVP).
-- Approve, reject, and hold decisions that drive downstream status automatically.
+- Receiving and putaway workflows
+- Rule-based auto slotting with explainable storage recommendations
+- Batch inventory tracking
+- Movement log for storage and transfer activity
+- Warehouse floor plan grouped by warehouse, zone, rack, and bin
 
-**PPIC / Production**
-- Raw material ordering and production planning.
-- Bill of Materials and automatic material request generation.
-- Production execution with consumption, yield, and finished goods batch creation.
+### Quality Control
 
-**Manager**
-- Operational overview, KPIs, and exception monitoring.
-- End-to-end batch traceability from raw material order to finished product.
+- QC inspection queue
+- Batch inspection workflow
+- Approve, reject, and hold decisions
+- Downstream status updates based on QC results
+- Computer-vision-assisted review simulation for the MVP
 
-> Adjust this list to match the exact scope you demo to the judges.
+### PPIC / Production
+
+- Raw material ordering and production planning
+- Bill of Materials management
+- Automatic material request generation
+- Production execution tracking
+- Material consumption, yield, and finished goods batch creation
+
+### Manager
+
+- Operational overview dashboard
+- KPI and exception monitoring
+- QC bottleneck visibility
+- Warehouse status visibility
+- End-to-end batch traceability from raw material order to finished product
 
 ---
 
 ## Tech Stack
 
-**Frontend**
-- Next.js 16 (App Router) with React 19 and TypeScript 5
-- Mantine v8 component library with Buildpad UI components
-- TailwindCss
+### Frontend
 
-**Backend**
-- Next.js API routes acting as a server-side proxy
-- Buildpad DaaS (Data-as-a-Service) for data access, runtime extensions, and business logic
+- Next.js 16 App Router
+- React 19
+- TypeScript 5
+- Mantine v8
+- Buildpad UI components
+- Tailwind CSS
 
-**Database**
-- PostgreSQL via Supabase (with Row-Level Security)
+### Backend
 
-**APIs / Services**
+- Next.js API routes as a server-side proxy
+- Buildpad DaaS for data access, runtime extensions, and business logic
+
+### Database
+
+- PostgreSQL via Supabase
+- Supabase Row-Level Security
+
+### APIs / Services
+
 - Buildpad DaaS REST API for collections, items, permissions, and extensions
-- Supabase Auth for authentication (server-side, cookie-based)
+- Supabase Auth for server-side, cookie-based authentication
 
-**Deployment**
-- AWS Amplify (auto-deploy on push to the main branch)
+### Deployment
+
+- AWS Amplify with automatic deployment from the `main` branch
 
 ---
 
-## Installation Steps
+## Getting Started
 
-This project uses pnpm. Follow these steps to run it locally.
+This project uses `pnpm`.
 
 ```bash
 # 1. Clone the repository
@@ -177,67 +231,84 @@ pnpm dev
 
 Open `http://localhost:3000` in your browser.
 
-> If you prefer npm, you can run `npm install` and `npm run dev` instead.
+You can also use npm:
+
+```bash
+npm install
+npm run dev
+```
 
 ---
 
 ## Environment Variables
 
-Create a file named `.env.local` in the project root and copy the keys below. A reference template is provided in `.env.example`.
+Create a `.env.local` file in the project root. A reference template is provided in `.env.example`.
 
 ```env
-# Supabase (authentication)
+# Supabase authentication
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
 
-# Buildpad DaaS (data layer)
+# Buildpad DaaS data layer
 NEXT_PUBLIC_BUILDPAD_DAAS_URL=
 
 # App URL
 NEXT_PUBLIC_APP_URL=
 ```
 
-> Security note: Never commit real secret keys or credentials to GitHub. Keep `.env.local` listed in `.gitignore`. Only commit `.env.example` with empty values. The `SUPABASE_SERVICE_ROLE_KEY` is highly privileged and must stay server-side only.
+> **Security note:** Never commit real secret keys or credentials to GitHub. Keep `.env.local` in `.gitignore`. Only commit `.env.example` with empty values. `SUPABASE_SERVICE_ROLE_KEY` is highly privileged and must stay server-side only.
 
 ---
 
-## Usage Instructions
+## Demo Guide
 
 For judges and first-time users:
 
 1. Open the live website.
-2. Log in with the role account you want to explore (Admin, Warehouse, QC, PPIC, Production, Logistic, or Manager). Each role lands on its own dashboard.
-3. To see the core flow, start in Admin to review master data, then move to Warehouse to receive material and trigger QC.
-4. In QC, inspect and release a batch. This automatically generates storage recommendations.
-5. In Warehouse, open Putaway or Auto Slotting to view the rule-based recommendations and confirm a storage location.
-6. Use the Manager module to view KPIs and full batch traceability.
+2. Log in with one of the available role accounts.
+3. Start in the Admin module to review master data and warehouse hierarchy.
+4. Move to Warehouse Operation to receive a raw material batch.
+5. Open QC to inspect and release the batch.
+6. Return to Warehouse Operation to view auto slotting recommendations and confirm putaway.
+7. Open PPIC / Production to review production planning and execution.
+8. Use the Manager module to review KPIs, exceptions, and batch traceability.
 
-> Provide the demo credentials for each role here so judges can log in quickly.
+### Demo Accounts
+
+| Role | Email | Password |
+| --- | --- | --- |
+| Admin | TBD | TBD |
+| Warehouse | TBD | TBD |
+| QC | TBD | TBD |
+| PPIC | TBD | TBD |
+| Production | TBD | TBD |
+| Logistic | TBD | TBD |
+| Manager | TBD | TBD |
 
 ---
 
 ## Project Structure
 
 ```text
-sigma-arome-starter/
+Sigma-Arome/
 ├── app/
 │   ├── (authenticated)/
-│   │   ├── admin/          (master data, RBAC, audit log, warehouse location)
-│   │   ├── warehouse/      (receiving, putaway, auto slotting, floor plan)
-│   │   ├── qc/             (inspection queue and decisions)
-│   │   ├── ppic/           (orders, BOM, production planning, requests)
-│   │   ├── production/     (production execution)
-│   │   ├── logistic/       (movement coordination)
-│   │   └── manager/        (dashboards and traceability)
-│   ├── api/                (server-side proxy routes to Buildpad DaaS)
+│   │   ├── admin/          # Master data, RBAC, audit log, warehouse location
+│   │   ├── warehouse/      # Receiving, putaway, auto slotting, floor plan
+│   │   ├── qc/             # Inspection queue and decisions
+│   │   ├── ppic/           # Orders, BOM, production planning, requests
+│   │   ├── production/     # Production execution
+│   │   ├── logistic/       # Movement coordination
+│   │   └── manager/        # Dashboards and traceability
+│   ├── api/                # Server-side proxy routes to Buildpad DaaS
 │   └── layout.tsx
 ├── components/
-│   └── ui/                 (Buildpad UI components)
+│   └── ui/                 # Buildpad UI components
 ├── lib/
-│   ├── api/                (auth headers, DaaS URL helpers)
-│   ├── supabase/           (server and client Supabase setup)
-│   └── buildpad/           (field mappers and interface helpers)
+│   ├── api/                # Auth headers and DaaS URL helpers
+│   ├── supabase/           # Server and client Supabase setup
+│   └── buildpad/           # Field mappers and interface helpers
 ├── public/
 ├── screenshots/
 ├── middleware.ts
@@ -249,80 +320,90 @@ sigma-arome-starter/
 
 ---
 
-## Team Members
+## Hackathon Theme Fit
 
-- [Name] - [Role]
-- [Name] - [Role]
-- [Name] - [Role]
-
----
-
-## Hackathon Theme
-
-[Explain how this project fits the hackathon theme. For reference, this project demonstrates a production-grade, role-based operations platform built rapidly on the Buildpad DaaS platform, applying digital transformation and explainable rule-based automation to a real industrial workflow in fragrance and chemical manufacturing.]
+This project demonstrates how a production-grade operations platform can be built rapidly using Buildpad DaaS. It applies digital transformation to a real industrial workflow in fragrance and chemical manufacturing, with a strong focus on role-based access, traceability, explainable automation, and safer warehouse decision-making.
 
 ---
 
 ## Challenges Faced
 
-- [Challenge 1]
-- [Challenge 2]
-- [Challenge 3]
+- Designing a multi-role workflow that keeps each user focused while still sharing one source of truth.
+- Building an explainable slotting engine that balances safety rules, capacity, occupancy, and operational practicality.
+- Coordinating data flow between PPIC, Warehouse, QC, Production, Logistic, and Manager modules.
+- Maintaining traceability from raw material receiving through finished goods creation.
 
 ---
 
 ## Future Improvements
 
-- [Improvement 1]
-- [Improvement 2]
-- [Improvement 3]
+- Add real computer vision integration for QC-assisted inspection.
+- Expand slotting rules for chemical segregation, expiry control, and FEFO/FIFO strategy.
+- Add barcode or QR scanning for receiving, putaway, movement, and production consumption.
+- Add more advanced analytics for material readiness, QC lead time, warehouse utilization, and production yield.
+- Improve mobile responsiveness for warehouse and production floor usage.
+- Add notification workflows for QC holds, low stock, production readiness, and storage conflicts.
+
+---
+
+## Team Members
+
+| Name | Role |
+| --- | --- |
+| TBD | TBD |
+| TBD | TBD |
+| TBD | TBD |
 
 ---
 
 ## License
 
-This project is licensed under the [License Name] License.
+License to be confirmed.
 
 ---
 
 ## Acknowledgements
 
-- Hackathon organizers: [Organizer name]
-- Platform: Buildpad (DaaS, UI components, and starter conventions)
-- Core libraries: Next.js, React, Mantine, Supabase, Tabler Icons, Recharts
-- APIs and services used: Buildpad DaaS REST API, Supabase Auth, AWS Amplify
-- Mentors and contributors: [Names or thanks]
+- Buildpad for DaaS, UI components, and starter conventions
+- Supabase for authentication, PostgreSQL, and Row-Level Security
+- AWS Amplify for deployment
+- Core libraries: Next.js, React, Mantine, Tailwind CSS, Tabler Icons, and Recharts
+- Hackathon organizers, mentors, and contributors
 
 ---
 
-## Screenshot File Checklist
+## Screenshot Checklist
 
-Upload these files to the `./screenshots/` folder. The README already references each one by name. Capture only the modules you want to showcase; remove unused rows.
+Use this checklist to confirm the screenshot files referenced above exist in `./screenshots/`.
 
-**Core / Shared**
-- [ ] `landing-page.png` (Landing / Home page)
-- [ ] `login-page.png` (Login or Sign Up page)
-- [ ] `mobile-view.png` (Mobile responsive view)
-- [ ] `empty-state.png` (Empty or error state)
+### Core / Shared
 
-**Admin**
-- [ ] `admin-dashboard.png` (Admin dashboard)
-- [ ] `admin-warehouse-location.png` (Warehouse location floor plan / hierarchy)
-- [ ] `admin-master-data-form.png` (Master data input form)
+- [ ] `landing-page.png` — Landing / Home page
+- [ ] `login-page.png` — Login or Sign Up page
+- [ ] `mobile-view.png` — Mobile responsive view
+- [ ] `empty-state.png` — Empty or error state
 
-**Warehouse Operation**
-- [ ] `warehouse-dashboard.png` (Warehouse dashboard)
-- [ ] `warehouse-auto-slotting.png` (Auto slotting result / output)
-- [ ] `warehouse-putaway.png` (Putaway flow)
+### Admin
 
-**Quality Control**
-- [ ] `qc-inspection.png` (QC inspection)
+- [ ] `admin-dashboard.png` — Admin dashboard
+- [ ] `admin-warehouse-location.png` — Warehouse location floor plan / hierarchy
+- [ ] `admin-master-data-form.png` — Master data input form
 
-**PPIC / Production**
-- [ ] `ppic-production.png` (Production planning)
-- [ ] `production-orders.png` (Production execution)
+### Warehouse Operation
 
-**Manager**
-- [ ] `manager-overview.png` (Manager overview / data visualization)
- 
- 
+- [ ] `warehouse-dashboard.png` — Warehouse dashboard
+- [ ] `warehouse-auto-slotting.png` — Auto slotting result / output
+- [ ] `warehouse-putaway.png` — Putaway flow
+
+### Quality Control
+
+- [ ] `qc-inspection.png` — QC inspection
+
+### PPIC / Production
+
+- [ ] `ppic-production.png` — Production planning
+- [ ] `production-orders.png` — Production execution
+
+### Manager
+
+- [ ] `manager-overview.png` — Manager overview / data visualization

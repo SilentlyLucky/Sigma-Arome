@@ -1,10 +1,12 @@
 'use client';
 
 import {
+  ActionIcon,
   Alert,
   Avatar,
   Box,
   Button,
+  Divider,
   Group,
   Paper,
   PasswordInput,
@@ -13,9 +15,10 @@ import {
   Stack,
   Text,
   TextInput,
+  ThemeIcon,
   Title,
 } from '@mantine/core';
-import { IconAlertCircle, IconCheck, IconLock } from '@tabler/icons-react';
+import { AlertCircle, Check, Edit3, LockKeyhole, ShieldCheck, XCircle } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 interface CurrentUser {
@@ -40,32 +43,56 @@ function getPasswordStrength(password: string): number {
   const hasDigit = /\d/.test(password);
   const hasSymbol = /[^A-Za-z0-9]/.test(password);
   const complexity = [hasUpper, hasLower, hasDigit, hasSymbol].filter(Boolean).length;
-  if (password.length >= 10 && complexity >= 3) return 4;
+  if (password.length >= 8 && complexity === 4) return 4;
   return 3;
 }
 
-const STRENGTH_COLORS = ['#E5E7EB', '#EF4444', '#F97316', '#EAB308', '#22C55E'];
+const STRENGTH_COLORS = ['#D7DCE3', '#EF4444', '#F97316', '#EAB308', '#1F9D45'];
 const STRENGTH_LABELS = ['', 'Weak', 'Fair', 'Good', 'Strong'];
 const STRENGTH_HINTS = [
-  '',
-  'Too short — use at least 6 characters.',
-  'Almost there — use at least 8 characters.',
-  'Good length. Add uppercase, numbers, or symbols to make it stronger.',
-  'Strong — long password with mixed characters.',
+  'Password strength',
+  'Weak: too short. Use at least 8 characters.',
+  'Fair: add more length before using this password.',
+  'Good: add the missing uppercase, lowercase, number, or symbol for stronger protection.',
+  'Strong: long enough and uses mixed character types.',
 ];
+
+const cardStyles = {
+  root: {
+    background: 'rgba(255, 255, 255, 0.94)',
+    borderColor: '#E2E7E2',
+    borderRadius: 8,
+    boxShadow: '0 22px 60px rgba(15, 23, 42, 0.07)',
+  },
+};
+
+const inputStyles = {
+  label: {
+    color: '#17243A',
+    fontWeight: 800,
+    fontSize: 14,
+    marginBottom: 10,
+  },
+  input: {
+    minHeight: 58,
+    borderRadius: 8,
+    borderColor: '#DDE4DD',
+    color: '#17243A',
+    fontWeight: 600,
+    boxShadow: 'inset 0 1px 0 rgba(15, 23, 42, 0.02)',
+  },
+};
 
 export default function AccountSettingsPage() {
   const [user, setUser] = useState<CurrentUser | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
 
-  // Profile form state
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [savingProfile, setSavingProfile] = useState(false);
   const [profileSaved, setProfileSaved] = useState(false);
   const [profileError, setProfileError] = useState<string | null>(null);
 
-  // Password form state
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [savingPassword, setSavingPassword] = useState(false);
@@ -105,6 +132,16 @@ export default function AccountSettingsPage() {
         const data = await res.json();
         throw new Error(data?.errors?.[0]?.message ?? 'Failed to save changes');
       }
+      setUser((prev) =>
+        prev
+          ? {
+              ...prev,
+              first_name: firstName.trim() || null,
+              last_name: lastName.trim() || null,
+            }
+          : prev,
+      );
+      window.dispatchEvent(new Event('account-profile-updated'));
       setProfileSaved(true);
       setTimeout(() => setProfileSaved(false), 2500);
     } catch (err) {
@@ -153,79 +190,87 @@ export default function AccountSettingsPage() {
   const strength = getPasswordStrength(newPassword);
   const initials = user ? getInitials(user.first_name, user.last_name, user.email) : '?';
   const canSubmitPassword = newPassword.length >= 8 && newPassword === confirmPassword;
+  const meetsLength = newPassword.length >= 8;
+  const meetsComplexity =
+    /[A-Z]/.test(newPassword) &&
+    /[a-z]/.test(newPassword) &&
+    /\d/.test(newPassword) &&
+    /[^A-Za-z0-9]/.test(newPassword);
+  const RequirementIcon = ({ met }: { met: boolean }) =>
+    met ? <Check size={17} color="#1F9D45" /> : <XCircle size={17} color="#D04437" />;
 
   if (loadError) {
     return (
-      <Alert icon={<IconAlertCircle size={16} />} color="red">
+      <Alert icon={<AlertCircle size={16} />} color="red" radius={8}>
         {loadError}
       </Alert>
     );
   }
 
   return (
-    <Stack gap={32}>
-      <div>
-        <Title order={2} fw={700} style={{ color: '#0F172A' }}>
-          Account Settings
-        </Title>
-        <Text size="sm" style={{ color: '#6B7280', marginTop: 4 }}>
-          Manage your profile and security preferences.
+    <Stack gap={34}>
+      <Box>
+        <Group gap={12} align="center">
+          <Title order={1} fw={850} style={{ color: '#07122A', letterSpacing: '-0.025em', fontSize: 'clamp(32px, 4vw, 44px)' }}>
+            Account Settings
+          </Title>
+          <ShieldCheck size={28} color="#2C8A3A" strokeWidth={2.2} />
+        </Group>
+        <Text size="lg" mt={14} style={{ color: '#667085', lineHeight: 1.5 }}>
+          Manage your profile information and security preferences.
         </Text>
-      </div>
+      </Box>
 
-      <SimpleGrid cols={{ base: 1, md: 2 }} spacing="xl">
-        {/* ── Profile Card ─────────────────────────────── */}
-        <Paper
-          withBorder
-          radius="lg"
-          style={{ overflow: 'hidden', boxShadow: '0 4px 16px rgba(0,0,0,0.06)' }}
-        >
-          {/* Green gradient hero band */}
-          <Box
-            style={{
-              height: 80,
-              background: 'linear-gradient(135deg, #1a6b2e 0%, #0d4a1f 60%, #0a3d1a 100%)',
-            }}
-          />
-
-          {/* Avatar overlapping the hero */}
-          <Box style={{ display: 'flex', justifyContent: 'center', marginTop: -36 }}>
-            {!user ? (
-              <Skeleton circle height={72} />
-            ) : (
-              <Avatar
-                size={72}
-                radius="xl"
-                style={{
-                  border: '4px solid white',
-                  backgroundColor: '#E8F5E9',
-                  color: '#2E7D32',
-                  fontSize: 26,
-                  fontWeight: 700,
-                  boxShadow: '0 4px 14px rgba(46,125,50,0.2)',
-                }}
+      <SimpleGrid cols={{ base: 1, lg: 2 }} spacing={{ base: 22, lg: 30 }}>
+        <Paper withBorder p={{ base: 22, md: 36 }} styles={cardStyles}>
+          <Stack gap={30}>
+            <Group justify="space-between" align="flex-start" wrap="nowrap">
+              <Group gap={26} align="center" wrap="nowrap">
+                {!user ? (
+                  <Skeleton circle height={88} width={88} />
+                ) : (
+                  <Avatar
+                    size={88}
+                    radius="xl"
+                    style={{
+                      background: '#D9F0DE',
+                      border: '4px solid #F7FBF8',
+                      color: '#1F8F3A',
+                      fontSize: 28,
+                      fontWeight: 850,
+                      boxShadow: '0 0 0 3px #CFE9D5',
+                    }}
+                  >
+                    {initials}
+                  </Avatar>
+                )}
+                <Box>
+                  <Text fw={850} size="xl" style={{ color: '#111C31', lineHeight: 1.2 }}>
+                    Profile Information
+                  </Text>
+                  <Text size="md" mt={10} style={{ color: '#657185', lineHeight: 1.5, maxWidth: 300 }}>
+                    Update your personal information and contact details.
+                  </Text>
+                </Box>
+              </Group>
+              <ActionIcon
+                variant="default"
+                radius={8}
+                size={54}
+                aria-label="Edit profile"
+                styles={{ root: { borderColor: '#DDE4DD', boxShadow: '0 8px 20px rgba(15, 23, 42, 0.06)' } }}
               >
-                {initials}
-              </Avatar>
-            )}
-          </Box>
+                <Edit3 size={22} color="#465467" />
+              </ActionIcon>
+            </Group>
 
-          <Stack gap="md" p="xl" pt="lg">
-            <Text
-              size="xs"
-              fw={600}
-              tt="uppercase"
-              ta="center"
-              style={{ color: '#9CA3AF', letterSpacing: '0.06em' }}
-            >
-              Profile
-            </Text>
+            <Divider color="#E0E5E0" />
 
-            <SimpleGrid cols={2} spacing="sm">
+            <SimpleGrid cols={{ base: 1, sm: 2 }} spacing={18}>
               {!user ? (
                 <>
-                  <Skeleton height={56} radius="sm" />
-                  <Skeleton height={56} radius="sm" />
+                  <Skeleton height={84} radius={8} />
+                  <Skeleton height={84} radius={8} />
                 </>
               ) : (
                 <>
@@ -234,79 +279,113 @@ export default function AccountSettingsPage() {
                     value={firstName}
                     onChange={(e) => setFirstName(e.currentTarget.value)}
                     placeholder="First name"
+                    styles={inputStyles}
                   />
                   <TextInput
                     label="Last name"
                     value={lastName}
                     onChange={(e) => setLastName(e.currentTarget.value)}
                     placeholder="Last name"
+                    styles={inputStyles}
                   />
                 </>
               )}
             </SimpleGrid>
 
             {!user ? (
-              <Skeleton height={56} radius="sm" />
+              <Skeleton height={84} radius={8} />
             ) : (
               <TextInput
-                label="Email"
+                label="Email address"
                 value={user.email}
                 readOnly
-                rightSection={<IconLock size={14} color="#9CA3AF" />}
-                styles={{ input: { color: '#6B7280', cursor: 'not-allowed' } }}
+                description="Email is managed by authentication and cannot be changed here."
+                rightSection={<LockKeyhole size={21} color="#8A95A6" />}
+                styles={{
+                  ...inputStyles,
+                  description: {
+                    color: '#8A95A6',
+                    fontWeight: 600,
+                    marginTop: 8,
+                  },
+                  input: {
+                    ...inputStyles.input,
+                    background: '#F4F6F4',
+                    borderColor: '#D6DDD6',
+                    color: '#8A95A6',
+                    cursor: 'not-allowed',
+                    opacity: 0.82,
+                    paddingRight: 50,
+                  },
+                }}
               />
             )}
 
             {profileError && (
-              <Alert icon={<IconAlertCircle size={14} />} color="red" py="xs">
+              <Alert icon={<AlertCircle size={16} />} color="red" radius={8}>
                 {profileError}
               </Alert>
             )}
 
             <Button
-              color="green"
+              fullWidth
+              size="lg"
+              radius={8}
               disabled={!user}
               loading={savingProfile}
-              leftSection={profileSaved ? <IconCheck size={16} /> : undefined}
+              leftSection={<Check size={18} />}
               onClick={handleSaveProfile}
-              style={{
-                backgroundColor: profileSaved ? '#16A34A' : '#2E7D32',
-                transition: 'background-color 0.2s',
+              styles={{
+                root: {
+                  minHeight: 58,
+                  background: 'linear-gradient(180deg, #22933E 0%, #187730 100%)',
+                  boxShadow: '0 8px 18px rgba(31, 143, 58, 0.2)',
+                  fontWeight: 850,
+                },
               }}
             >
               {profileSaved ? 'Saved' : 'Save Changes'}
             </Button>
+
+            <Paper withBorder radius={8} p={22} mt={18} style={{ background: 'rgba(250, 253, 251, 0.9)', borderColor: '#DDE9DE' }}>
+              <Group gap={18} align="flex-start" wrap="nowrap">
+                <ShieldCheck size={31} color="#2C8A3A" strokeWidth={2.2} />
+                <Box>
+                  <Text fw={850} style={{ color: '#1F7A35' }}>
+                    Your information is secure
+                  </Text>
+                  <Text size="sm" mt={8} style={{ color: '#657185', lineHeight: 1.45 }}>
+                    We use industry-standard encryption to protect your data.
+                  </Text>
+                </Box>
+              </Group>
+            </Paper>
           </Stack>
         </Paper>
 
-        {/* ── Password Card ─────────────────────────────── */}
-        <Paper
-          withBorder
-          radius="lg"
-          style={{ overflow: 'hidden', boxShadow: '0 4px 16px rgba(0,0,0,0.06)' }}
-        >
-          {/* Thin gradient top accent stripe */}
-          <Box
-            style={{
-              height: 5,
-              background: 'linear-gradient(90deg, #0d4a1f, #2d9e45, #52c977, #2d9e45, #0d4a1f)',
-            }}
-          />
-
-          <Stack gap="md" p="xl">
-            <div>
-              <Text
-                size="xs"
-                fw={600}
-                tt="uppercase"
-                style={{ color: '#9CA3AF', letterSpacing: '0.06em' }}
+        <Paper withBorder p={{ base: 22, md: 36 }} styles={cardStyles}>
+          <Stack gap={28}>
+            <Group gap={26} align="center" wrap="nowrap">
+              <ThemeIcon
+                size={88}
+                radius={8}
+                variant="light"
+                color="green"
+                styles={{ root: { background: '#EEF7EF', color: '#1F8F3A' } }}
               >
-                Password & Security
-              </Text>
-              <Text size="sm" style={{ color: '#6B7280', marginTop: 4 }}>
-                Choose a strong password with at least 8 characters.
-              </Text>
-            </div>
+                <LockKeyhole size={38} strokeWidth={2.1} />
+              </ThemeIcon>
+              <Box>
+                <Text fw={850} size="xl" style={{ color: '#111C31', lineHeight: 1.2 }}>
+                  Password & Security
+                </Text>
+                <Text size="md" mt={10} style={{ color: '#657185', lineHeight: 1.5, maxWidth: 330 }}>
+                  Update your password to keep your account secure.
+                </Text>
+              </Box>
+            </Group>
+
+            <Divider color="#E0E5E0" />
 
             <PasswordInput
               label="New password"
@@ -316,39 +395,39 @@ export default function AccountSettingsPage() {
                 setPasswordError(null);
               }}
               placeholder="Enter new password"
-              error={
-                passwordError && newPassword.length > 0 && newPassword.length < 8
-                  ? passwordError
-                  : undefined
-              }
+              error={passwordError && newPassword.length > 0 && newPassword.length < 8 ? passwordError : undefined}
+              styles={inputStyles}
             />
 
-            {/* 4-segment strength bar */}
             <Box>
-              <Group gap={4} mb={4} grow>
+              <Group gap={8} align="center" wrap="nowrap">
                 {[1, 2, 3, 4].map((seg) => (
                   <Box
                     key={seg}
                     style={{
-                      height: 5,
+                      height: 7,
+                      flex: 1,
                       borderRadius: 999,
-                      backgroundColor:
-                        strength >= seg ? STRENGTH_COLORS[strength] : '#E5E7EB',
-                      transition: 'background-color 0.2s',
+                      backgroundColor: strength >= seg ? STRENGTH_COLORS[strength] : '#D7DCE3',
+                      transition: 'background-color 160ms ease',
                     }}
                   />
                 ))}
+                <Text size="sm" style={{ color: '#8A95A6', width: 138, textAlign: 'right' }}>
+                  {newPassword ? STRENGTH_LABELS[strength] : 'Password strength'}
+                </Text>
               </Group>
-              {newPassword.length > 0 && (
-                <Group gap={6} align="baseline">
-                  <Text size="xs" fw={600} style={{ color: STRENGTH_COLORS[strength], flexShrink: 0 }}>
-                    {STRENGTH_LABELS[strength]}
-                  </Text>
-                  <Text size="xs" style={{ color: '#9CA3AF' }}>
-                    {STRENGTH_HINTS[strength]}
-                  </Text>
-                </Group>
-              )}
+              <Text
+                size="sm"
+                mt={10}
+                style={{
+                  color: newPassword ? STRENGTH_COLORS[strength] : '#8A95A6',
+                  fontWeight: newPassword ? 700 : 600,
+                  lineHeight: 1.4,
+                }}
+              >
+                {STRENGTH_HINTS[strength]}
+              </Text>
             </Box>
 
             <PasswordInput
@@ -361,38 +440,64 @@ export default function AccountSettingsPage() {
               placeholder="Repeat new password"
               error={
                 confirmError ??
-                (confirmPassword.length > 0 && confirmPassword !== newPassword
-                  ? 'Passwords do not match.'
-                  : undefined)
+                (confirmPassword.length > 0 && confirmPassword !== newPassword ? 'Passwords do not match.' : undefined)
               }
-              description={
-                confirmPassword.length > 0 && confirmPassword === newPassword
-                  ? '✓ Passwords match'
-                  : undefined
-              }
-              styles={{
-                description: { color: '#16A34A', fontWeight: 500 },
-              }}
+              styles={inputStyles}
             />
 
+            <Paper withBorder radius={8} p={22} style={{ background: 'rgba(250, 253, 251, 0.9)', borderColor: '#DDE9DE' }}>
+              <Group gap={18} align="flex-start" wrap="nowrap">
+                <ShieldCheck size={31} color="#2C8A3A" strokeWidth={2.2} />
+                <Box>
+                  <Text fw={850} style={{ color: '#1F7A35' }}>
+                    Password requirements
+                  </Text>
+                  <Stack gap={8} mt={12}>
+                    <Group gap={10} wrap="nowrap">
+                      <RequirementIcon met={meetsLength} />
+                      <Text size="sm" style={{ color: '#657185' }}>
+                        At least 8 characters long
+                      </Text>
+                    </Group>
+                    <Group gap={10} wrap="nowrap">
+                      <RequirementIcon met={meetsComplexity} />
+                      <Text size="sm" style={{ color: '#657185' }}>
+                        Include uppercase, lowercase, number & symbol
+                      </Text>
+                    </Group>
+                  </Stack>
+                </Box>
+              </Group>
+            </Paper>
+
             {passwordError && (newPassword.length === 0 || newPassword.length >= 8) && (
-              <Alert icon={<IconAlertCircle size={14} />} color="red" py="xs">
+              <Alert icon={<AlertCircle size={16} />} color="red" radius={8}>
                 {passwordError}
               </Alert>
             )}
 
             {passwordSuccess && (
-              <Alert icon={<IconCheck size={14} />} color="green" py="xs">
+              <Alert icon={<Check size={16} />} color="green" radius={8}>
                 Password updated successfully.
               </Alert>
             )}
 
             <Button
-              color="green"
+              fullWidth
+              size="lg"
+              radius={8}
               disabled={!user || !canSubmitPassword}
               loading={savingPassword}
+              leftSection={<LockKeyhole size={18} />}
               onClick={handleChangePassword}
-              style={{ backgroundColor: '#2E7D32' }}
+              styles={{
+                root: {
+                  minHeight: 58,
+                  background: 'linear-gradient(180deg, #207B35 0%, #17672D 100%)',
+                  boxShadow: '0 8px 18px rgba(31, 143, 58, 0.2)',
+                  fontWeight: 850,
+                },
+              }}
             >
               Update Password
             </Button>

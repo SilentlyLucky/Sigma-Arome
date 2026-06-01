@@ -6,7 +6,6 @@ import {
   Avatar,
   Box,
   Burger,
-  Divider,
   Group,
   Indicator,
   Menu,
@@ -38,14 +37,31 @@ import type { LucideIcon } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import type { ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import styles from './layout.module.css';
+
+interface CurrentUser {
+  email: string;
+  first_name: string | null;
+  last_name: string | null;
+}
 
 interface NavItem {
   label: string;
   href: string;
   icon: LucideIcon;
   section: string;
+}
+
+function getInitials(first: string | null, last: string | null, email: string): string {
+  if (first && last) return `${first[0]}${last[0]}`.toUpperCase();
+  if (first) return first[0].toUpperCase();
+  return email[0]?.toUpperCase() ?? 'A';
+}
+
+function getDisplayName(user: CurrentUser | null): string {
+  if (!user) return 'Account';
+  return [user.first_name, user.last_name].filter(Boolean).join(' ') || user.email;
 }
 
 const NAV_ITEMS: NavItem[] = [
@@ -69,13 +85,32 @@ const SECTIONS = ['Overview', 'Access Control', 'Master Data', 'Audit'];
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
   const [opened, { toggle }] = useDisclosure();
+  const [user, setUser] = useState<CurrentUser | null>(null);
   const pathname = usePathname();
   const router = useRouter();
+
+  useEffect(() => {
+    async function loadUser() {
+      try {
+        const res = await fetch('/api/auth/user');
+        if (!res.ok) return;
+        const data = await res.json();
+        setUser(data.data as CurrentUser);
+      } catch {
+        setUser(null);
+      }
+    }
+
+    loadUser();
+  }, []);
 
   const handleLogout = async () => {
     await fetch('/api/auth/logout', { method: 'POST' });
     router.push('/login');
   };
+
+  const displayName = getDisplayName(user);
+  const initials = user ? getInitials(user.first_name, user.last_name, user.email) : 'A';
 
   return (
     <AppShell
@@ -117,16 +152,6 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
               </Text>
             </Box>
           </Group>
-        </Box>
-
-        <Box px={18} pb={16}>
-          <Text size="xs" fw={800} tt="uppercase" style={{ color: '#6E7B8B', letterSpacing: '0.06em', marginBottom: 10 }}>
-            Control Center
-          </Text>
-          <Text fw={850} size="md" style={{ color: '#102033', marginBottom: 12 }}>
-            Administration
-          </Text>
-          <Divider color="#E3E9DF" />
         </Box>
 
         <Box px={12} pb={22}>
@@ -210,10 +235,11 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
                     radius="xl"
                     styles={{ root: { cursor: 'pointer', border: '1px solid rgba(218,226,214,0.9)', background: '#FFFFFF', color: '#1F8F3A', fontWeight: 800, boxShadow: '0 1px 4px rgba(0,0,0,0.06)' } }}
                   >
-                    A
+                    {initials}
                   </Avatar>
                 </Menu.Target>
                 <Menu.Dropdown>
+                  <Menu.Label>{displayName}</Menu.Label>
                   <Menu.Item leftSection={<Sparkles size={14} />} onClick={() => router.push('/account/settings')}>
                     Settings
                   </Menu.Item>

@@ -27,8 +27,6 @@ export default function QCLayout({ children }: { children: ReactNode }) {
       notificationRole="qc"
       roleLabel="QC Workbench"
       sections={SECTIONS}
-      workspaceEyebrow="Quality Center"
-      workspaceTitle="QC Workbench"
     >
       {children}
     </RoleAppShell>

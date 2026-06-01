@@ -29,8 +29,6 @@ export default function PPICLayout({ children }: { children: ReactNode }) {
       notificationRole="ppic"
       roleLabel="PPIC Planning"
       sections={SECTIONS}
-      workspaceEyebrow="Planning Center"
-      workspaceTitle="PPIC Planning"
     >
       {children}
     </RoleAppShell>

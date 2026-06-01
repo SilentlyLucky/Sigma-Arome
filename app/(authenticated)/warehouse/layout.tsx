@@ -34,8 +34,6 @@ export default function WarehouseLayout({ children }: { children: ReactNode }) {
       notificationRole="warehouse"
       roleLabel="Warehouse"
       sections={SECTIONS}
-      workspaceEyebrow="Warehouse Ops"
-      workspaceTitle="Warehouse Operation"
     >
       {children}
     </RoleAppShell>

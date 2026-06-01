@@ -6,7 +6,6 @@ import {
   Avatar,
   Box,
   Burger,
-  Divider,
   Group,
   Menu,
   NavLink,
@@ -14,12 +13,29 @@ import {
 } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { LogOut, Settings } from 'lucide-react';
-import type { CSSProperties, ReactNode } from 'react';
+import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { NotificationBell } from '@/components/NotificationBell';
 import styles from './role-app-shell.module.css';
+
+interface CurrentUser {
+  email: string;
+  first_name: string | null;
+  last_name: string | null;
+}
+
+function getInitials(first: string | null, last: string | null, email: string, fallback: string): string {
+  if (first && last) return `${first[0]}${last[0]}`.toUpperCase();
+  if (first) return first[0].toUpperCase();
+  return email[0]?.toUpperCase() ?? fallback;
+}
+
+function getDisplayName(user: CurrentUser | null): string {
+  if (!user) return 'Account';
+  return [user.first_name, user.last_name].filter(Boolean).join(' ') || user.email;
+}
 
 type NavIcon = React.ComponentType<{
   size?: number;
@@ -43,8 +59,6 @@ interface RoleAppShellProps {
   notificationRole: string;
   roleLabel: string;
   sections: string[];
-  workspaceEyebrow: string;
-  workspaceTitle: string;
 }
 
 export function RoleAppShell({
@@ -55,17 +69,34 @@ export function RoleAppShell({
   notificationRole,
   roleLabel,
   sections,
-  workspaceEyebrow,
-  workspaceTitle,
 }: RoleAppShellProps) {
   const [opened, { toggle }] = useDisclosure();
+  const [user, setUser] = useState<CurrentUser | null>(null);
   const pathname = usePathname();
   const router = useRouter();
+
+  useEffect(() => {
+    async function loadUser() {
+      try {
+        const res = await fetch('/api/auth/user');
+        if (!res.ok) return;
+        const data = await res.json();
+        setUser(data.data as CurrentUser);
+      } catch {
+        setUser(null);
+      }
+    }
+
+    loadUser();
+  }, []);
 
   const handleLogout = async () => {
     await fetch('/api/auth/logout', { method: 'POST' });
     router.push('/login');
   };
+
+  const displayName = getDisplayName(user);
+  const initials = user ? getInitials(user.first_name, user.last_name, user.email, avatarLabel) : avatarLabel;
 
   return (
     <AppShell
@@ -107,16 +138,6 @@ export function RoleAppShell({
               </Text>
             </Box>
           </Group>
-        </Box>
-
-        <Box px={18} pb={16}>
-          <Text size="xs" fw={800} tt="uppercase" style={{ color: '#6E7B8B', letterSpacing: '0.06em', marginBottom: 10 }}>
-            {workspaceEyebrow}
-          </Text>
-          <Text fw={850} size="md" style={{ color: '#102033', marginBottom: 12 }}>
-            {workspaceTitle}
-          </Text>
-          <Divider color="#E3E9DF" />
         </Box>
 
         <Box px={12} pb={22}>
@@ -211,10 +232,11 @@ export function RoleAppShell({
                       },
                     }}
                   >
-                    {avatarLabel}
+                    {initials}
                   </Avatar>
                 </Menu.Target>
                 <Menu.Dropdown>
+                  <Menu.Label>{displayName}</Menu.Label>
                   <Menu.Item leftSection={<Settings size={14} />} onClick={() => router.push('/account/settings')}>
                     Settings
                   </Menu.Item>

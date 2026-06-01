@@ -27,8 +27,6 @@ export default function ProductionLayout({ children }: { children: ReactNode }) 
       notificationRole="production"
       roleLabel="Production Workbench"
       sections={SECTIONS}
-      workspaceEyebrow="Production Floor"
-      workspaceTitle="Production Workbench"
     >
       {children}
     </RoleAppShell>

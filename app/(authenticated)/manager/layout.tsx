@@ -31,8 +31,6 @@ export default function ManagerLayout({ children }: { children: ReactNode }) {
       notificationRole="manager"
       roleLabel="Manager Dashboard"
       sections={SECTIONS}
-      workspaceEyebrow="Control Room"
-      workspaceTitle="Manager Dashboard"
     >
       {children}
     </RoleAppShell>

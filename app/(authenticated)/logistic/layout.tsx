@@ -31,8 +31,6 @@ export default function LogisticLayout({ children }: { children: ReactNode }) {
       notificationRole="logistic"
       roleLabel="Logistic Coordination"
       sections={SECTIONS}
-      workspaceEyebrow="Coordination Center"
-      workspaceTitle="Logistic Coordination"
     >
       {children}
     </RoleAppShell>

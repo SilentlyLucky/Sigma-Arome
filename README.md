@@ -324,5 +324,5 @@ Upload these files to the `./screenshots/` folder. The README already references
 
 **Manager**
 - [ ] `manager-overview.png` (Manager overview / data visualization)
-#   S i g m a - A r o m e  
+ 
  

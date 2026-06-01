@@ -6,7 +6,7 @@ import {
 } from '@mantine/core';
 import {
   IconClipboardList, IconTransferOut, IconClock, IconPackage,
-  IconCircleCheck,
+  IconCircleCheck, IconTruck,
 } from '@tabler/icons-react';
 import { DashboardLoading } from '@/components/ui/dashboard-loading';
 import { OperationalInsightPanel } from '@/components/ui/operational-dashboard';
@@ -34,6 +34,7 @@ export default function LogisticDashboard() {
               { key: 'approved', collection: 'material_requests', filter: { status: { _eq: 'approved' } } },
               { key: 'partialIssued', collection: 'material_requests', filter: { status: { _eq: 'partially_issued' } } },
               { key: 'issued', collection: 'material_requests', filter: { status: { _eq: 'issued' } } },
+              { key: 'staged', collection: 'material_request_items', filter: { status: { _eq: 'staged' } } },
               { key: 'fgApproved', collection: 'batches', filter: { batch_type: { _eq: 'finished_product' }, status: { _eq: 'approved' } } },
             ],
           }),
@@ -72,20 +73,20 @@ export default function LogisticDashboard() {
           href: '/logistic/requests',
           action: 'Monitor',
         },
-    n('approved') > 0
+    n('staged') > 0
       ? {
-          title: 'Approved requests still need warehouse execution',
-          description: `${n('approved')} approved request${n('approved') === 1 ? ' is' : 's are'} ready for warehouse picking and issue. Follow the nearest needed date first.`,
-          tone: 'info' as const,
-          href: '/logistic/requests',
-          action: 'Coordinate',
+          title: 'Materials staged are waiting for delivery confirmation',
+          description: `${n('staged')} material line${n('staged') === 1 ? ' is' : 's are'} staged in the warehouse and need a delivery confirmation before production can start.`,
+          tone: 'watch' as const,
+          href: '/logistic/deliveries',
+          action: 'Confirm',
         }
       : {
-          title: 'No approved request is waiting to be sent',
-          description: 'There is no open handoff waiting on warehouse picking right now.',
+          title: 'No staged materials are waiting on a delivery confirmation',
+          description: 'Production handoffs are caught up. Watch the warehouse staging area as new orders are released.',
           tone: 'good' as const,
-          href: '/logistic/requests',
-          action: 'Stable',
+          href: '/logistic/deliveries',
+          action: 'Monitor',
         },
     n('fgApproved') > 0
       ? {
@@ -108,13 +109,13 @@ export default function LogisticDashboard() {
     <Stack gap="lg">
       <div>
         <Title order={2}>Logistics Coordination</Title>
-        <Text c="dimmed" size="sm">Review material requests, coordinate sending materials to production, and handle finished goods storage.</Text>
+        <Text c="dimmed" size="sm">Review material requests, confirm delivery to production, and handle finished goods storage.</Text>
       </div>
 
-      {loading ? <DashboardLoading cards={4} graphPanels={0} queuePanels={2} /> : (
+      {loading ? <DashboardLoading cards={5} graphPanels={0} queuePanels={2} /> : (
         <>
           {/* ── Priority Cards ─────────────────────────────────────────────── */}
-          <SimpleGrid cols={{ base: 2, sm: 4 }} spacing="md">
+          <SimpleGrid cols={{ base: 2, sm: 5 }} spacing="md">
             <Paper p="md" radius="md" withBorder className="role-clickable-card" style={{ cursor: 'pointer', borderColor: n('submitted') > 0 ? 'var(--mantine-color-orange-4)' : undefined }} onClick={() => router.push('/logistic/requests')}>
               <Group justify="space-between" wrap="nowrap">
                 <Stack gap={2}>
@@ -131,9 +132,20 @@ export default function LogisticDashboard() {
                 <Stack gap={2}>
                   <Text size="xs" c="dimmed" fw={600} tt="uppercase">Approved — Ready to Send</Text>
                   <Title order={2} c={n('approved') > 0 ? 'blue' : undefined}>{n('approved')}</Title>
-                  <Text size="xs" c="dimmed">Waiting for pick & send</Text>
+                  <Text size="xs" c="dimmed">Waiting for pick & stage</Text>
                 </Stack>
                 <ThemeIcon size="xl" radius="md" variant={n('approved') > 0 ? 'filled' : 'light'} color="blue"><IconTransferOut size={22} /></ThemeIcon>
+              </Group>
+            </Paper>
+
+            <Paper p="md" radius="md" withBorder className="role-clickable-card" style={{ cursor: 'pointer', borderColor: n('staged') > 0 ? 'var(--mantine-color-cyan-4)' : undefined }} onClick={() => router.push('/logistic/deliveries')}>
+              <Group justify="space-between" wrap="nowrap">
+                <Stack gap={2}>
+                  <Text size="xs" c="dimmed" fw={600} tt="uppercase">Materials at Staging</Text>
+                  <Title order={2} c={n('staged') > 0 ? 'cyan' : undefined}>{n('staged')}</Title>
+                  <Text size="xs" c="dimmed">Confirm delivery to production</Text>
+                </Stack>
+                <ThemeIcon size="xl" radius="md" variant={n('staged') > 0 ? 'filled' : 'light'} color="cyan"><IconTruck size={22} /></ThemeIcon>
               </Group>
             </Paper>
 

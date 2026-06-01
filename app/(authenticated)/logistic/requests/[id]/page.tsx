@@ -72,7 +72,7 @@ export default function LogisticRequestDetailPage() {
         collection="material_request_items"
         enableSort
         filter={{ material_request_id: { _eq: requestId } }}
-        fields={['material_id', 'requested_qty', 'approved_qty', 'issued_qty', 'unit', 'shortage_qty']}
+        fields={['material_id', 'requested_qty', 'unit', 'status', 'delivered_qty', 'received_qty']}
         renderCell={(item, header) => {
           if (header.value === 'material_id') {
             const name = materialNames.get(String(item.material_id ?? ''));

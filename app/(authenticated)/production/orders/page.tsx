@@ -22,7 +22,7 @@ export default function ProductionOrdersPage() {
         enableSort
         enableHeaderMenu
         enableResize
-        filter={{ status: { _in: ['ready', 'released', 'in_progress'] } }}
+        filter={{ status: { _in: ['released', 'in_progress'] } }}
         fields={['order_number', 'product_id', 'planned_qty', 'unit', 'status', 'priority', 'due_date']}
         onItemClick={(item) => router.push(`/production/orders/${item.id}`)}
         renderCell={(item, header) => {

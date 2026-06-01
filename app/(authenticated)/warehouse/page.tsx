@@ -8,7 +8,7 @@ import {
   Hourglass,
   MapPin,
   PackageCheck,
-  Send,
+  Package as PackageIcon,
   Truck,
 } from 'lucide-react';
 import { DashboardListLoading, DashboardLoading } from '@/components/ui/dashboard-loading';
@@ -16,24 +16,15 @@ import { OperationalInsightPanel } from '@/components/ui/operational-dashboard';
 import type { CSSProperties } from 'react';
 import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { notifications } from '@mantine/notifications';
 
-interface PickTask {
+interface OrderTask {
   production_order_id: string;
   order_number: string;
   product_name: string;
-  material_request_id: string;
-  request_number: string;
-  material_id: string;
-  material_name: string;
-  requested_qty: number;
-  unit: string;
-  available_batch_id: string | null;
-  available_batch_number: string | null;
-  available_qty: number | null;
-  batch_location: string | null;
-  issued_qty: number;
-  mr_item_id: string;
+  pending_lines: number;
+  staged_lines: number;
+  total_lines: number;
+  unfulfillable_lines: number;
 }
 
 interface PutawayBatch {
@@ -100,22 +91,16 @@ const tableThStyle: CSSProperties = {
   textTransform: 'uppercase',
 };
 
-const blockedCardStyle: CSSProperties = {
-  borderColor: '#FED7AA',
-  borderLeft: '3px solid #F97316',
-  background: 'linear-gradient(135deg, #FFFDFA, #FFF7ED)',
-};
-
 export default function WarehouseDashboard() {
   const router = useRouter();
   const [counts, setCounts] = useState<Record<string, number>>({});
-  const [pickTasks, setPickTasks] = useState<PickTask[]>([]);
+  const [orderTasks, setOrderTasks] = useState<OrderTask[]>([]);
   const [putawayBatches, setPutawayBatches] = useState<PutawayBatch[]>([]);
   const [loadingKpis, setLoadingKpis] = useState(true);
-  const [loadingPick, setLoadingPick] = useState(true);
+  const [loadingProduction, setLoadingProduction] = useState(true);
   const [loadingPutaway, setLoadingPutaway] = useState(true);
-  const [issuing, setIssuing] = useState<string | null>(null);
 
+  // ── KPI counts ──────────────────────────────────────────────────────────────
   useEffect(() => {
     async function load() {
       const c = await fetch('/api/batch-counts', {
@@ -136,6 +121,7 @@ export default function WarehouseDashboard() {
     load();
   }, []);
 
+  // ── Putaway queue ────────────────────────────────────────────────────────────
   useEffect(() => {
     fetch('/api/items/batches?filter[status][_eq]=approved&fields[]=id&fields[]=batch_number&fields[]=qty&fields[]=unit&fields[]=material_id&limit=8&sort[]=-id')
       .then(async r => r.ok ? (await r.json())?.data ?? [] : [])
@@ -144,140 +130,80 @@ export default function WarehouseDashboard() {
       .finally(() => setLoadingPutaway(false));
   }, []);
 
-  const loadPickQueue = useCallback(async () => {
-    setLoadingPick(true);
+  // ── Production staging summary ──────────────────────────────────────────────
+  const loadProduction = useCallback(async () => {
+    setLoadingProduction(true);
     try {
       const ordersRes = await fetch(
-        '/api/items/production_orders?filter[status][_in]=released,in_progress' +
-        '&fields[]=id&fields[]=order_number&fields[]=product_id&fields[]=status&limit=50&sort[]=priority'
+        '/api/items/production_orders?filter[status][_eq]=released' +
+        '&fields[]=id&fields[]=order_number&fields[]=product_id&limit=20&sort[]=-id'
       );
-      const orders: Array<{ id: string; order_number: string; product_id: string }> =
-        (await ordersRes.json())?.data ?? [];
-
-      if (orders.length === 0) { setPickTasks([]); setLoadingPick(false); return; }
+      const orders: Array<{ id: string; order_number: string; product_id: string }> = (await ordersRes.json())?.data ?? [];
+      if (orders.length === 0) { setOrderTasks([]); return; }
 
       const productIds = [...new Set(orders.map(o => o.product_id))];
-      const productsRes = await fetch(
-        `/api/items/products?filter[id][_in]=${productIds.join(',')}&fields[]=id&fields[]=name&limit=100`
-      );
+      const productsRes = await fetch(`/api/items/products?filter[id][_in]=${productIds.join(',')}&fields[]=id&fields[]=name&limit=50`);
       const productMap: Record<string, string> = {};
       for (const p of (await productsRes.json())?.data ?? []) productMap[p.id] = p.name;
 
       const orderIds = orders.map(o => o.id);
       const mrRes = await fetch(
         `/api/items/material_requests?filter[production_order_id][_in]=${orderIds.join(',')}` +
-        `&filter[status][_in]=submitted,approved&fields[]=id&fields[]=request_number&fields[]=production_order_id&limit=100`
+        `&fields[]=id&fields[]=production_order_id&limit=200`
       );
-      const mrs: Array<{ id: string; request_number: string; production_order_id: string }> =
-        (await mrRes.json())?.data ?? [];
+      const mrs: Array<{ id: string; production_order_id: string }> = (await mrRes.json())?.data ?? [];
+      const mrToOrder: Record<string, string> = {};
+      for (const mr of mrs) mrToOrder[mr.id] = mr.production_order_id;
 
-      if (mrs.length === 0) { setPickTasks([]); setLoadingPick(false); return; }
+      const counts: Record<string, { pending: number; staged: number; total: number; unfulfillable: number }> = {};
+      for (const o of orders) counts[o.id] = { pending: 0, staged: 0, total: 0, unfulfillable: 0 };
 
-      const mrIds = mrs.map(m => m.id);
-      const itemsRes = await fetch(
-        `/api/items/material_request_items?filter[material_request_id][_in]=${mrIds.join(',')}` +
-        `&filter[issued_qty][_eq]=0` +
-        `&fields[]=id&fields[]=material_request_id&fields[]=material_id&fields[]=requested_qty&fields[]=unit&fields[]=issued_qty&limit=200`
-      );
-      const mrItems: Array<{ id: string; material_request_id: string; material_id: string; requested_qty: number; unit: string; issued_qty: number }> =
-        (await itemsRes.json())?.data ?? [];
-
-      if (mrItems.length === 0) { setPickTasks([]); setLoadingPick(false); return; }
-
-      const materialIds = [...new Set(mrItems.map(i => i.material_id))];
-      const matsRes = await fetch(
-        `/api/items/raw_materials?filter[id][_in]=${materialIds.join(',')}&fields[]=id&fields[]=name&limit=200`
-      );
-      const matMap: Record<string, string> = {};
-      for (const m of (await matsRes.json())?.data ?? []) matMap[m.id] = m.name;
-
-      const batchesRes = await fetch(
-        `/api/items/batches?filter[material_id][_in]=${materialIds.join(',')}` +
-        `&filter[status][_eq]=stored_available` +
-        `&fields[]=id&fields[]=batch_number&fields[]=material_id&fields[]=qty&fields[]=unit&fields[]=current_location_id` +
-        `&sort[]=expiry_date&limit=500`
-      );
-      const batches: Array<{ id: string; batch_number: string; material_id: string; qty: number; unit: string; current_location_id: string | null }> =
-        (await batchesRes.json())?.data ?? [];
-
-      const locationIds = [...new Set(batches.map(b => b.current_location_id).filter(Boolean))] as string[];
-      const locMap: Record<string, string> = {};
-      if (locationIds.length > 0) {
-        const locsRes = await fetch(
-          `/api/items/warehouse_locations?filter[id][_in]=${locationIds.join(',')}&fields[]=id&fields[]=location_code&limit=200`
+      if (mrs.length > 0) {
+        const mrIds = mrs.map(m => m.id);
+        const itemsRes = await fetch(
+          `/api/items/material_request_items?filter[material_request_id][_in]=${mrIds.join(',')}` +
+          `&fields[]=material_request_id&fields[]=status&limit=2000`
         );
-        for (const l of (await locsRes.json())?.data ?? []) locMap[l.id] = l.location_code;
+        const items: Array<{ material_request_id: string; status: string }> = (await itemsRes.json())?.data ?? [];
+        for (const it of items) {
+          const orderId = mrToOrder[it.material_request_id];
+          if (!orderId || !counts[orderId]) continue;
+          counts[orderId].total += 1;
+          const s = it.status ?? 'pending';
+          if (s === 'pending') counts[orderId].pending += 1;
+          else if (s === 'unfulfillable') counts[orderId].unfulfillable += 1;
+          else counts[orderId].staged += 1;
+        }
       }
 
-      const mrMap = Object.fromEntries(mrs.map(m => [m.id, m]));
-      const orderMap = Object.fromEntries(orders.map(o => [o.id, o]));
-      const batchByMaterial: Record<string, typeof batches[0]> = {};
-      for (const b of batches) {
-        if (!batchByMaterial[b.material_id]) batchByMaterial[b.material_id] = b;
-      }
-
-      const tasks: PickTask[] = mrItems.map(item => {
-        const mr = mrMap[item.material_request_id];
-        const order = mr ? orderMap[mr.production_order_id] : null;
-        const batch = batchByMaterial[item.material_id] ?? null;
-        return {
-          production_order_id: order?.id ?? '',
-          order_number: order?.order_number ?? '-',
-          product_name: order ? (productMap[order.product_id] ?? '-') : '-',
-          material_request_id: mr?.id ?? '',
-          request_number: mr?.request_number ?? '-',
-          material_id: item.material_id,
-          material_name: matMap[item.material_id] ?? item.material_id.slice(0, 8),
-          requested_qty: item.requested_qty,
-          unit: item.unit,
-          available_batch_id: batch?.id ?? null,
-          available_batch_number: batch?.batch_number ?? null,
-          available_qty: batch?.qty ?? null,
-          batch_location: batch?.current_location_id ? (locMap[batch.current_location_id] ?? '-') : null,
-          issued_qty: item.issued_qty,
-          mr_item_id: item.id,
-        };
-      }).filter(t => t.production_order_id);
-
-      setPickTasks(tasks);
+      setOrderTasks(orders
+        .map(o => {
+          const c = counts[o.id] ?? { pending: 0, staged: 0, total: 0, unfulfillable: 0 };
+          return {
+            production_order_id: o.id,
+            order_number: o.order_number,
+            product_name: productMap[o.product_id] ?? '—',
+            pending_lines: c.pending,
+            staged_lines: c.staged,
+            total_lines: c.total,
+            unfulfillable_lines: c.unfulfillable,
+          };
+        })
+        .filter(t => t.total_lines > 0)
+        .sort((a, b) => b.pending_lines - a.pending_lines)
+      );
     } catch (err) {
-      console.error('Failed to load pick queue:', err);
+      console.error('Failed to load production tasks:', err);
     } finally {
-      setLoadingPick(false);
+      setLoadingProduction(false);
     }
   }, []);
 
-  useEffect(() => { loadPickQueue(); }, [loadPickQueue]);
-
-  const issueBatch = async (task: PickTask) => {
-    if (!task.available_batch_id) {
-      notifications.show({ title: 'No available batch', message: `No production-ready batch found for ${task.material_name}`, color: 'orange' });
-      return;
-    }
-    setIssuing(task.mr_item_id);
-    try {
-      await fetch(`/api/items/batches/${task.available_batch_id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: 'issued' }),
-      });
-      await fetch(`/api/items/material_request_items/${task.mr_item_id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ issued_qty: task.available_qty }),
-      });
-      notifications.show({ title: 'Sent to production', message: `${task.material_name} (${task.available_batch_number}) was sent to production.`, color: 'green' });
-      await loadPickQueue();
-    } catch (err) {
-      notifications.show({ title: 'Error', message: err instanceof Error ? err.message : 'Failed', color: 'red' });
-    } finally {
-      setIssuing(null);
-    }
-  };
+  useEffect(() => { loadProduction(); }, [loadProduction]);
 
   const n = (k: string) => counts[k] ?? 0;
-  const pendingTasks = pickTasks.filter(t => t.available_batch_id);
-  const blockedTasks = pickTasks.filter(t => !t.available_batch_id);
+  const pendingTotal = orderTasks.reduce((sum, t) => sum + t.pending_lines, 0);
+  const blockedTotal = orderTasks.reduce((sum, t) => sum + t.unfulfillable_lines, 0);
 
   const warehouseInsights = [
     n('approvedWaiting') > 0
@@ -295,25 +221,25 @@ export default function WarehouseDashboard() {
           href: '/warehouse/putaway',
           action: 'All clear',
         },
-    pendingTasks.length > 0
+    pendingTotal > 0
       ? {
-          title: 'Production materials are ready to send',
-          description: `${pendingTasks.length} material line${pendingTasks.length === 1 ? ' has' : 's have'} available stock. Prioritize orders with the closest production due date.`,
+          title: 'Production materials are ready to stage',
+          description: `${pendingTotal} material line${pendingTotal === 1 ? ' has' : 's have'} a FEFO source picked. Stage them into a staging bin so logistics can confirm delivery.`,
           tone: 'info' as const,
           href: '/warehouse/production',
-          action: 'Issue stock',
+          action: 'Stage materials',
         }
-      : blockedTasks.length > 0
+      : blockedTotal > 0
       ? {
-          title: 'Some production requests have no available batch',
-          description: `${blockedTasks.length} material line${blockedTasks.length === 1 ? ' is' : 's are'} blocked. PPIC may need to expedite supply or wait for QC approval.`,
+          title: 'Some production lines have no available stock',
+          description: `${blockedTotal} material line${blockedTotal === 1 ? ' is' : 's are'} blocked. PPIC may need to expedite supply or wait for QC approval.`,
           tone: 'risk' as const,
           href: '/warehouse/production',
           action: 'Escalate',
         }
       : {
-          title: 'No production material issue is waiting',
-          description: 'Warehouse has no open material request requiring immediate issue right now.',
+          title: 'No production staging is waiting',
+          description: 'Warehouse has no open material request requiring immediate staging right now.',
           tone: 'good' as const,
           href: '/warehouse/production',
           action: 'Monitor',
@@ -353,7 +279,7 @@ export default function WarehouseDashboard() {
             Warehouse Operations
           </Title>
           <Text size="sm" mt={8} style={{ color: '#667085' }}>
-            Receive materials, manage QC flow, assign storage, send to production.
+            Receive materials, manage QC flow, assign storage, stage materials for production.
           </Text>
         </div>
       </Group>
@@ -408,7 +334,7 @@ export default function WarehouseDashboard() {
           <SimpleGrid cols={{ base: 1, lg: 2 }} spacing={18} style={{ alignItems: 'stretch' }}>
             <OperationalInsightPanel
               title="Warehouse Planning Insights"
-              subtitle="Decision support for receiving, QC staging, storage, and production issue."
+              subtitle="Decision support for receiving, QC staging, storage, and production staging."
               items={warehouseInsights}
             />
 
@@ -475,99 +401,91 @@ export default function WarehouseDashboard() {
             <Group justify="space-between" align="center" mb={10}>
               <Group gap={10}>
                 <Text fw={850} size="md" style={{ color: '#07142A', letterSpacing: 0 }}>
-                  Materials Needed for Production
+                  Production Orders Awaiting Staging
                 </Text>
-                {!loadingPick && pendingTasks.length > 0 && (
+                {!loadingProduction && pendingTotal > 0 && (
                   <Text size="xs" fw={800} style={{ color: '#2F8F2F' }}>
-                    Ready to Send - {pendingTasks.length}
+                    {pendingTotal} line{pendingTotal === 1 ? '' : 's'} ready
                   </Text>
                 )}
               </Group>
+              <Anchor
+                href="/warehouse/production"
+                size="xs"
+                fw={800}
+                style={{ color: '#2F8F2F', display: 'inline-flex', alignItems: 'center', gap: 6, lineHeight: 1 }}
+              >
+                Open all <ArrowRight size={13} aria-hidden="true" style={{ display: 'block' }} />
+              </Anchor>
             </Group>
 
-            {loadingPick ? (
+            {loadingProduction ? (
               <DashboardListLoading rows={3} />
-            ) : pickTasks.length === 0 ? (
+            ) : orderTasks.length === 0 ? (
               <Paper p="md" radius={8} style={emptyRowStyle}>
                 <Group gap={14} align="center">
                   <Box style={emptyIconStyle}>
                     <CheckCircle2 size={21} strokeWidth={2.1} />
                   </Box>
                   <div>
-                    <Text fw={800} size="sm" style={{ color: '#07142A' }}>No materials need to be sent right now</Text>
-                    <Text size="xs" style={{ color: '#667085' }}>Production has no open material requests waiting on the warehouse.</Text>
+                    <Text fw={800} size="sm" style={{ color: '#07142A' }}>No staging needed right now</Text>
+                    <Text size="xs" style={{ color: '#667085' }}>No released production orders are waiting on materials.</Text>
                   </div>
                 </Group>
               </Paper>
             ) : (
-              <Stack gap={14}>
-                {pendingTasks.length > 0 && (
-                  <Paper withBorder radius={8} style={{ borderColor: '#E2E8E2', overflow: 'hidden' }}>
-                    <Table highlightOnHover highlightOnHoverColor="#F8FBF8">
-                      <Table.Thead style={tableHeadStyle}>
-                        <Table.Tr>
-                          {['Order', 'Material', 'Batch', 'Location', 'Qty', 'Action'].map(header => (
-                            <Table.Th key={header} style={tableThStyle}>{header}</Table.Th>
-                          ))}
-                        </Table.Tr>
-                      </Table.Thead>
-                      <Table.Tbody>
-                        {pendingTasks.map(task => (
-                          <Table.Tr key={task.mr_item_id} style={{ height: 42 }}>
-                            <Table.Td>
-                              <Text
-                                size="sm"
-                                fw={750}
-                                style={{ color: '#2F8F2F', cursor: 'pointer' }}
-                                onClick={() => router.push(`/warehouse/production/${task.production_order_id}`)}
-                              >
-                                {task.order_number}
-                              </Text>
-                            </Table.Td>
-                            <Table.Td><Text size="sm" style={{ color: '#344054' }}>{task.material_name}</Text></Table.Td>
-                            <Table.Td><Text size="xs" style={{ color: '#667085', fontFamily: 'monospace' }}>{task.available_batch_number}</Text></Table.Td>
-                            <Table.Td><Badge size="sm" color="green" variant="light">{task.batch_location ?? '-'}</Badge></Table.Td>
-                            <Table.Td><Text size="sm" style={{ color: '#344054' }}>{task.available_qty} {task.unit}</Text></Table.Td>
-                            <Table.Td>
-                              <Button
-                                size="compact-sm"
-                                color="green"
-                                leftSection={<Send size={13} />}
-                                loading={issuing === task.mr_item_id}
-                                onClick={() => issueBatch(task)}
-                              >
-                                Send to Production
-                              </Button>
-                            </Table.Td>
-                          </Table.Tr>
-                        ))}
-                      </Table.Tbody>
-                    </Table>
-                  </Paper>
-                )}
-
-                {blockedTasks.length > 0 && (
-                  <Paper p="md" radius={8} style={blockedCardStyle}>
-                    <Group gap={8} mb={12} align="center">
-                      <AlertTriangle size={16} color="#C2410C" />
-                      <Text size="sm" fw={850} style={{ color: '#C2410C' }}>
-                        No Stock Available - {blockedTasks.length} material{blockedTasks.length > 1 ? 's' : ''} blocked
-                      </Text>
-                    </Group>
-                    <Stack gap={8}>
-                      {blockedTasks.map(task => (
-                        <Group key={task.mr_item_id} justify="space-between" wrap="nowrap">
-                          <Text size="sm" style={{ color: '#344054' }}>{task.material_name}</Text>
-                          <Group gap={16} wrap="nowrap">
-                            <Text size="xs" style={{ color: '#667085' }}>{task.requested_qty} {task.unit}</Text>
-                            <Text size="xs" style={{ color: '#667085' }}>Order: {task.order_number}</Text>
-                          </Group>
-                        </Group>
+              <Paper withBorder radius={8} style={{ borderColor: '#E2E8E2', overflow: 'hidden' }}>
+                <Table highlightOnHover highlightOnHoverColor="#F8FBF8">
+                  <Table.Thead style={tableHeadStyle}>
+                    <Table.Tr>
+                      {['Order', 'Product', 'Materials Staged', 'Issues', 'Action'].map(header => (
+                        <Table.Th key={header} style={tableThStyle}>{header}</Table.Th>
                       ))}
-                    </Stack>
-                  </Paper>
-                )}
-              </Stack>
+                    </Table.Tr>
+                  </Table.Thead>
+                  <Table.Tbody>
+                    {orderTasks.map(task => (
+                      <Table.Tr key={task.production_order_id} style={{ height: 42 }}>
+                        <Table.Td>
+                          <Text
+                            size="sm"
+                            fw={750}
+                            style={{ color: '#2F8F2F', cursor: 'pointer' }}
+                            onClick={() => router.push(`/warehouse/production/${task.production_order_id}`)}
+                          >
+                            {task.order_number}
+                          </Text>
+                        </Table.Td>
+                        <Table.Td><Text size="sm" style={{ color: '#344054' }}>{task.product_name}</Text></Table.Td>
+                        <Table.Td>
+                          <Text size="sm" style={{ color: '#344054' }}>{task.staged_lines}/{task.total_lines}</Text>
+                        </Table.Td>
+                        <Table.Td>
+                          {task.unfulfillable_lines > 0 ? (
+                            <Badge size="sm" color="red" variant="light" leftSection={<AlertTriangle size={11} />}>
+                              {task.unfulfillable_lines} blocked
+                            </Badge>
+                          ) : task.pending_lines > 0 ? (
+                            <Badge size="sm" color="orange" variant="light">{task.pending_lines} pending</Badge>
+                          ) : (
+                            <Badge size="sm" color="green" variant="light">All staged</Badge>
+                          )}
+                        </Table.Td>
+                        <Table.Td>
+                          <Button
+                            size="compact-sm"
+                            color="green"
+                            leftSection={<PackageIcon size={13} />}
+                            onClick={() => router.push(`/warehouse/production/${task.production_order_id}`)}
+                          >
+                            Stage Materials
+                          </Button>
+                        </Table.Td>
+                      </Table.Tr>
+                    ))}
+                  </Table.Tbody>
+                </Table>
+              </Paper>
             )}
           </Paper>
         </>

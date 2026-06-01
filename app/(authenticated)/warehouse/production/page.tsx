@@ -3,7 +3,7 @@
 import { Stack, Title, Text, Group, Badge, Paper, Loader, Alert, Table, Button, Progress } from '@mantine/core';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, useCallback } from 'react';
-import { IconRefresh, IconPlayerPlay, IconCircleCheck, IconAlertTriangle } from '@tabler/icons-react';
+import { IconRefresh, IconPackage, IconCircleCheck } from '@tabler/icons-react';
 
 interface OrderRow {
   id: string;
@@ -13,8 +13,9 @@ interface OrderRow {
   planned_qty: number;
   unit: string;
   total_lines: number;
-  fully_issued_lines: number;
-  all_issued: boolean;
+  staged_lines: number;
+  pending_lines: number;
+  unfulfillable_lines: number;
 }
 
 const STATUS_COLORS: Record<string, string> = {
@@ -51,7 +52,6 @@ export default function WarehouseProductionListPage() {
 
       if (orders.length === 0) { setRows([]); return; }
 
-      // Resolve product names
       const productIds = [...new Set(orders.map(o => o.product_id).filter(Boolean))];
       const productMap: Record<string, string> = {};
       if (productIds.length > 0) {
@@ -61,7 +61,6 @@ export default function WarehouseProductionListPage() {
         for (const p of (await prodRes.json())?.data ?? []) productMap[p.id] = p.name;
       }
 
-      // Resolve material request items per order
       const orderIds = orders.map(o => o.id);
       const mrRes = await fetch(
         `/api/items/material_requests?filter[production_order_id][_in]=${orderIds.join(',')}` +
@@ -71,30 +70,31 @@ export default function WarehouseProductionListPage() {
       const mrToOrder: Record<string, string> = {};
       for (const mr of mrs) mrToOrder[mr.id] = mr.production_order_id;
 
-      const linesByOrder: Record<string, { total: number; fullyIssued: number }> = {};
-      for (const o of orders) linesByOrder[o.id] = { total: 0, fullyIssued: 0 };
+      const linesByOrder: Record<string, { total: number; staged: number; pending: number; unfulfillable: number }> = {};
+      for (const o of orders) linesByOrder[o.id] = { total: 0, staged: 0, pending: 0, unfulfillable: 0 };
 
       if (mrs.length > 0) {
         const mrIds = mrs.map(m => m.id);
         const itemsRes = await fetch(
           `/api/items/material_request_items?filter[material_request_id][_in]=${mrIds.join(',')}` +
-          `&fields[]=material_request_id&fields[]=requested_qty&fields[]=issued_qty&limit=2000`
+          `&fields[]=material_request_id&fields[]=status&limit=2000`
         );
-        const items: Array<{ material_request_id: string; requested_qty: number; issued_qty: number }> =
+        const items: Array<{ material_request_id: string; status: string }> =
           (await itemsRes.json())?.data ?? [];
 
         for (const item of items) {
           const orderId = mrToOrder[item.material_request_id];
           if (!orderId || !linesByOrder[orderId]) continue;
           linesByOrder[orderId].total += 1;
-          if ((item.issued_qty ?? 0) >= item.requested_qty) {
-            linesByOrder[orderId].fullyIssued += 1;
-          }
+          const s = item.status ?? 'pending';
+          if (s === 'pending') linesByOrder[orderId].pending += 1;
+          else if (s === 'unfulfillable') linesByOrder[orderId].unfulfillable += 1;
+          else linesByOrder[orderId].staged += 1; // staged / delivered / received all count as "moved"
         }
       }
 
       setRows(orders.map(o => {
-        const counts = linesByOrder[o.id] ?? { total: 0, fullyIssued: 0 };
+        const c = linesByOrder[o.id] ?? { total: 0, staged: 0, pending: 0, unfulfillable: 0 };
         return {
           id: o.id,
           order_number: o.order_number,
@@ -102,9 +102,10 @@ export default function WarehouseProductionListPage() {
           product_name: productMap[o.product_id] ?? o.product_id?.slice(0, 8) ?? '—',
           planned_qty: o.planned_qty,
           unit: o.unit,
-          total_lines: counts.total,
-          fully_issued_lines: counts.fullyIssued,
-          all_issued: counts.total > 0 && counts.total === counts.fullyIssued,
+          total_lines: c.total,
+          staged_lines: c.staged,
+          pending_lines: c.pending,
+          unfulfillable_lines: c.unfulfillable,
         };
       }));
     } catch (err) {
@@ -123,18 +124,13 @@ export default function WarehouseProductionListPage() {
     <Stack gap="md">
       <Group justify="space-between" align="flex-start">
         <div>
-          <Title order={2}>Production Orders</Title>
+          <Title order={2}>Production Orders — Stage Materials</Title>
           <Text c="dimmed" size="sm">
-            Active orders waiting for materials to be issued or already running. Open an order to issue
-            its materials and start production.
+            Active orders waiting for materials to be picked and staged.
+            Open an order to stage each line into a staging bin. Logistic confirms delivery next.
           </Text>
         </div>
-        <Button
-          variant="light"
-          leftSection={<IconRefresh size={14} />}
-          onClick={load}
-          loading={loading}
-        >
+        <Button variant="light" leftSection={<IconRefresh size={14} />} onClick={load} loading={loading}>
           Refresh
         </Button>
       </Group>
@@ -149,10 +145,10 @@ export default function WarehouseProductionListPage() {
         <>
           <Section
             title="Ready for Picking"
-            description="Orders waiting for the warehouse to issue materials and start production."
+            description="Orders waiting for the warehouse to stage materials."
             rows={releasedRows}
             onOpen={(id) => router.push(`/warehouse/production/${id}`)}
-            emptyMessage="No orders waiting on materials."
+            emptyMessage="No orders waiting on staging."
           />
           <Section
             title="In Progress"
@@ -198,14 +194,13 @@ function Section({
                 <Table.Th>Product</Table.Th>
                 <Table.Th>Planned Qty</Table.Th>
                 <Table.Th>Status</Table.Th>
-                <Table.Th>Materials Issued</Table.Th>
+                <Table.Th>Materials Staged</Table.Th>
                 <Table.Th>Action</Table.Th>
               </Table.Tr>
             </Table.Thead>
             <Table.Tbody>
               {rows.map(row => {
-                const pct = row.total_lines === 0 ? 0 : Math.round((row.fully_issued_lines / row.total_lines) * 100);
-                const ready = row.status === 'released' && row.all_issued;
+                const pct = row.total_lines === 0 ? 0 : Math.round((row.staged_lines / row.total_lines) * 100);
                 return (
                   <Table.Tr key={row.id} style={{ cursor: 'pointer' }} onClick={() => onOpen(row.id)}>
                     <Table.Td><Text size="sm" fw={500}>{row.order_number}</Text></Table.Td>
@@ -224,39 +219,30 @@ function Section({
                           <Group gap={6} wrap="nowrap">
                             <Progress
                               value={pct}
-                              color={pct === 100 ? 'green' : 'orange'}
+                              color={pct === 100 ? 'green' : 'blue'}
                               size="sm"
                               style={{ flex: 1 }}
                             />
                             <Text size="xs" c="dimmed" fw={500}>
-                              {row.fully_issued_lines}/{row.total_lines}
+                              {row.staged_lines}/{row.total_lines}
                             </Text>
                           </Group>
-                          {pct < 100 && row.status === 'released' && (
-                            <Group gap={4} wrap="nowrap">
-                              <IconAlertTriangle size={12} color="orange" />
-                              <Text size="xs" c="orange">Issue all materials before starting</Text>
-                            </Group>
+                          {row.unfulfillable_lines > 0 && (
+                            <Text size="xs" c="red">{row.unfulfillable_lines} blocked (no stock)</Text>
                           )}
                         </Stack>
                       )}
                     </Table.Td>
                     <Table.Td onClick={(e) => e.stopPropagation()}>
-                      {row.status === 'released' ? (
-                        <Button
-                          size="xs"
-                          color={ready ? 'violet' : 'gray'}
-                          variant={ready ? 'filled' : 'light'}
-                          leftSection={<IconPlayerPlay size={12} />}
-                          onClick={() => onOpen(row.id)}
-                        >
-                          {ready ? 'Start Production' : 'Open / Issue'}
-                        </Button>
-                      ) : (
-                        <Button size="xs" variant="subtle" onClick={() => onOpen(row.id)}>
-                          View
-                        </Button>
-                      )}
+                      <Button
+                        size="xs"
+                        color="blue"
+                        variant="filled"
+                        leftSection={<IconPackage size={12} />}
+                        onClick={() => onOpen(row.id)}
+                      >
+                        Open
+                      </Button>
                     </Table.Td>
                   </Table.Tr>
                 );

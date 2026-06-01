@@ -96,7 +96,7 @@ export default function MaterialRequestDetailPage() {
         enableDelete={status === 'draft'}
         enableSort
         filter={{ material_request_id: { _eq: id } }}
-        fields={['material_id', 'requested_qty', 'unit', 'approved_qty', 'issued_qty', 'shortage_qty']}
+        fields={['material_id', 'requested_qty', 'unit', 'status', 'shortage_qty', 'received_qty']}
         onCreate={() => router.push(`/ppic/requests/${id}/items/create`)}
         onItemClick={(item) => router.push(`/ppic/requests/${id}/items/${item.id}`)}
         renderCell={(item, header) => {

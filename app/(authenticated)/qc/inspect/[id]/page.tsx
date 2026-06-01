@@ -10,7 +10,9 @@ import { Textarea } from '@/components/ui/textarea';
 interface Batch {
   id: string;
   batch_number: string;
-  material_id: string;
+  material_id: string | null;
+  product_id: string | null;
+  source_production_order_id: string | null;
   batch_type: string;
   qty: number;
   unit: string;
@@ -53,6 +55,7 @@ export default function QCInspectPage() {
   const batchId = id as string;
 
   const [batch, setBatch] = useState<Batch | null>(null);
+  const [itemName, setItemName] = useState<string>('');
   const [inspection, setInspection] = useState<Inspection | null>(null);
   const [cvResult, setCvResult] = useState<CVResult | null>(null);
   const [reason, setReason] = useState('');
@@ -74,9 +77,22 @@ export default function QCInspectPage() {
   };
 
   useEffect(() => {
-    // Load batch
-    fetch(`/api/items/batches/${batchId}`)
-      .then(r => r.json()).then(d => setBatch(d?.data ?? null)).catch(() => {});
+    // Load batch with both possible name sources (material_id for RM, product_id for FG)
+    fetch(`/api/items/batches/${batchId}?fields[]=*`)
+      .then(r => r.json())
+      .then(async (d) => {
+        const b: Batch | null = d?.data ?? null;
+        setBatch(b);
+        if (!b) return;
+        if (b.batch_type === 'finished_product' && b.product_id) {
+          const pr = await fetch(`/api/items/products/${b.product_id}?fields[]=name`).then(r => r.json()).catch(() => null);
+          setItemName(pr?.data?.name ?? '');
+        } else if (b.material_id) {
+          const mr = await fetch(`/api/items/raw_materials/${b.material_id}?fields[]=name`).then(r => r.json()).catch(() => null);
+          setItemName(mr?.data?.name ?? '');
+        }
+      })
+      .catch(() => {});
 
     // Load existing inspection (auto-created by backend when batch hit qc_pending)
     fetch(`/api/items/qc_inspections?filter[batch_id][_eq]=${batchId}&sort[]=-started_at&limit=1`)
@@ -159,12 +175,22 @@ export default function QCInspectPage() {
       {/* Header */}
       <Group justify="space-between">
         <div>
-          <Title order={2}>QC Inspection</Title>
-          <Text c="dimmed" size="sm">Batch: <strong>{batch.batch_number}</strong></Text>
+          <Title order={2}>
+            {batch.batch_type === 'finished_product' ? 'Finished Goods QC' : 'QC Inspection'}
+          </Title>
+          <Text c="dimmed" size="sm">
+            Batch: <strong>{batch.batch_number}</strong>
+            {itemName ? <> — <strong>{itemName}</strong></> : null}
+          </Text>
         </div>
-        <Badge size="lg" color={STATUS_COLORS[batch.status] ?? 'gray'} variant="light">
-          {batch.status.replace(/_/g, ' ')}
-        </Badge>
+        <Group gap="xs">
+          {batch.batch_type === 'finished_product' && (
+            <Badge size="lg" color="grape" variant="light">Finished Goods</Badge>
+          )}
+          <Badge size="lg" color={STATUS_COLORS[batch.status] ?? 'gray'} variant="light">
+            {batch.status.replace(/_/g, ' ')}
+          </Badge>
+        </Group>
       </Group>
 
       {/* Batch summary */}
@@ -173,6 +199,9 @@ export default function QCInspectPage() {
           <Text size="sm"><strong>Quantity:</strong> {batch.qty} {batch.unit}</Text>
           <Text size="sm"><strong>Type:</strong> {batch.batch_type?.replace(/_/g, ' ') ?? 'N/A'}</Text>
           <Text size="sm"><strong>Expiry:</strong> {batch.expiry_date ? new Date(batch.expiry_date).toLocaleDateString() : 'N/A'}</Text>
+          {batch.source_production_order_id && (
+            <Text size="sm"><strong>Source order:</strong> <span style={{ fontFamily: 'monospace' }}>{batch.source_production_order_id.slice(0, 8)}</span></Text>
+          )}
         </Group>
       </Paper>
 

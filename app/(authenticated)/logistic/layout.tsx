@@ -7,11 +7,13 @@ import {
   IconDashboard,
   IconPackage,
   IconTransferOut,
+  IconTruck,
 } from '@tabler/icons-react';
 import { RoleAppShell, type RoleNavItem } from '@/components/layout/role-app-shell';
 
 const NAV_ITEMS: RoleNavItem[] = [
   { label: 'Dashboard', href: '/logistic', icon: IconDashboard, section: 'Overview' },
+  { label: 'Production Deliveries', href: '/logistic/deliveries', icon: IconTruck, section: 'Coordination' },
   { label: 'Material Requests to Review', href: '/logistic/requests', icon: IconClipboardList, section: 'Coordination' },
   { label: 'Material Move Priorities', href: '/logistic/priority', icon: IconArrowsSort, section: 'Coordination' },
   { label: 'Material Release Progress', href: '/logistic/issue-monitor', icon: IconTransferOut, section: 'Monitoring' },

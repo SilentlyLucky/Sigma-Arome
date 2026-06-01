@@ -90,11 +90,11 @@ Screenshots are stored in the `./screenshots/` folder.
 
 ### PPIC / Production Module
 
-#### Production Planning
-![Production Planning](./screenshots/ppic-production.png)
+#### Order Raw Material
+![Order Raw Material](./screenshots/ppic-material.png)
 
-#### Production Execution
-![Production Execution](./screenshots/production-orders.png)
+#### Production Planning
+![Production Planning](./screenshots/production-planning.png)
 
 ### Manager Module
 

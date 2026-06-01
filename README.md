@@ -1,16 +1,16 @@
-# Sigma Arome Smart Operations
+# 🏭 Sigma Arome Smart Operations
 
 > A role-based smart manufacturing operations platform for fragrance, essential oil, and chemical production, covering the full flow from raw material ordering to finished goods putaway.
 
 ---
 
-## Overview
+## ✨ Overview
 
 Sigma Arome Smart Operations is a web-based manufacturing operations system for fragrance and chemical factories. It connects raw material ordering, receiving, quality control, rule-based warehouse slotting, production planning, and finished goods storage in one traceable platform.
 
 Each user role receives a dedicated dashboard with the data, permissions, and actions needed for its workflow. The system reduces spreadsheet dependency, improves batch traceability, and creates an automatic audit trail for critical operational changes.
 
-### What It Does
+### 🧩 What It Does
 
 - Digitizes the internal manufacturing flow from PPIC raw material ordering to finished goods putaway.
 - Tracks raw material batches through receiving, QC, storage, production consumption, and finished product creation.
@@ -18,7 +18,7 @@ Each user role receives a dedicated dashboard with the data, permissions, and ac
 - Gives Admin, Manager, PPIC, Warehouse, QC, Logistic, and Production users role-specific dashboards.
 - Maintains batch traceability and audit history across warehouse and production activities.
 
-### Target Users
+### 👥 Target Users
 
 - Admin teams managing users, master data, access control, and audit logs
 - PPIC planners managing material orders, BOMs, and production readiness
@@ -30,9 +30,7 @@ Each user role receives a dedicated dashboard with the data, permissions, and ac
 
 ---
 
----
-
-## Team Members Citak Bana
+## 🧑‍💻 Team Members: Citak Bana
 
 | Name | Role |
 | --- | --- |
@@ -42,18 +40,18 @@ Each user role receives a dedicated dashboard with the data, permissions, and ac
 
 ---
 
-## Live Demo
+## 🚀 Live Demo
 
 - **Live Website:** https://main.dl8kg34ne80.amplifyapp.com
 - **Demo Video:** https://youtu.be/gzTRbtz-OIA
 
 ---
 
-## Screenshots
+## 📸 Screenshots
 
 Screenshots are stored in the `./screenshots/` folder.
 
-### Core / Shared
+### 🧭 Core / Shared
 
 #### Login / Sign Up Page
 ![Login Page](./screenshots/login-page.png)
@@ -61,7 +59,7 @@ Screenshots are stored in the `./screenshots/` folder.
 #### Setting Page
 ![Setting Page](./screenshots/setting-page.png)
 
-### Admin Module
+### 🛠️ Admin Module
 
 #### Admin Dashboard
 ![Admin Dashboard](./screenshots/admin-dashboard.png)
@@ -72,7 +70,7 @@ Screenshots are stored in the `./screenshots/` folder.
 #### Warehouse Location Floor Plan / Hierarchy
 ![Warehouse Location](./screenshots/admin-warehouse-location.png)
 
-### Warehouse Operation Module
+### 📦 Warehouse Operation Module
 
 #### Warehouse Dashboard
 ![Warehouse Dashboard](./screenshots/warehouse-dashboard.png)
@@ -83,12 +81,12 @@ Screenshots are stored in the `./screenshots/` folder.
 #### Putaway Flow
 ![Putaway](./screenshots/warehouse-putaway.png)
 
-### Quality Control Module
+### 🧪 Quality Control Module
 
 #### QC Inspection
 ![QC Inspection](./screenshots/qc-inspection.png)
 
-### PPIC / Production Module
+### 🏗️ PPIC / Production Module
 
 #### Order Raw Material
 ![Order Raw Material](./screenshots/ppic-material.png)
@@ -96,14 +94,14 @@ Screenshots are stored in the `./screenshots/` folder.
 #### Production Planning
 ![Production Planning](./screenshots/production-planning.png)
 
-### Manager Module
+### 📊 Manager Module
 
 #### Manager Overview / Data Visualization
 ![Manager Overview](./screenshots/manager-overview.png)
 
 ---
 
-## Problem Statement
+## ⚠️ Problem Statement
 
 Sigma Arome's internal factory flow needs stronger digital control across raw material ordering, receiving, QC, storage, production readiness, execution, and finished product release.
 
@@ -118,11 +116,11 @@ Current operational pain points include:
 
 ---
 
-## Solution
+## 💡 Solution
 
 Sigma Arome Smart Operations provides a role-based operations platform that acts as the single source of truth for internal factory workflows. The platform enforces business rules on the backend so critical steps cannot be skipped, while every major action is captured in an audit trail.
 
-A key component is the rule-based storage slotting engine. When a batch is released by QC, the engine scores eligible storage bins and recommends the best options. Each recommendation includes an auditable reason, making the result explainable instead of black-box.
+A key component is the rule-based storage slotting engine. When a batch is released by QC, the engine scores eligible storage bins and recommends the best options. Each recommendation includes an auditable reason, making the result explainable instead of black box.
 
 The slotting engine evaluates:
 
@@ -136,7 +134,7 @@ Incompatible bins are eliminated before scoring, helping warehouse teams make sa
 
 ---
 
-## Core Workflow
+## 🔄 Core Workflow
 
 1. **PPIC creates or reviews raw material requirements.**
 2. **Warehouse receives incoming raw material batches.**
@@ -149,15 +147,15 @@ Incompatible bins are eliminated before scoring, helping warehouse teams make sa
 
 ---
 
-## Key Features
+## 🌟 Key Features
 
-### Admin
+### 🛠️ Admin
 
 - Master data management for suppliers, raw materials, products, hazard classes, QC templates, and warehouse hierarchy
 - Role-based access control for permissions, field visibility, and allowed actions
 - Read-only audit log for critical changes
 
-### Warehouse Operation
+### 📦 Warehouse Operation
 
 - Receiving and putaway workflows
 - Rule-based auto slotting with explainable storage recommendations
@@ -165,7 +163,7 @@ Incompatible bins are eliminated before scoring, helping warehouse teams make sa
 - Movement log for storage and transfer activity
 - Warehouse floor plan grouped by warehouse, zone, rack, and bin
 
-### Quality Control
+### 🧪 Quality Control
 
 - QC inspection queue
 - Batch inspection workflow
@@ -173,7 +171,7 @@ Incompatible bins are eliminated before scoring, helping warehouse teams make sa
 - Downstream status updates based on QC results
 - Computer-vision-assisted review simulation for the MVP
 
-### PPIC / Production
+### 🏗️ PPIC / Production
 
 - Raw material ordering and production planning
 - Bill of Materials management
@@ -181,7 +179,7 @@ Incompatible bins are eliminated before scoring, helping warehouse teams make sa
 - Production execution tracking
 - Material consumption, yield, and finished goods batch creation
 
-### Manager
+### 📊 Manager
 
 - Operational overview dashboard
 - KPI and exception monitoring
@@ -191,9 +189,9 @@ Incompatible bins are eliminated before scoring, helping warehouse teams make sa
 
 ---
 
-## Tech Stack
+## 🧰 Tech Stack
 
-### Frontend
+### 🎨 Frontend
 
 - Next.js 16 App Router
 - React 19
@@ -202,27 +200,27 @@ Incompatible bins are eliminated before scoring, helping warehouse teams make sa
 - Buildpad UI components
 - Tailwind CSS
 
-### Backend
+### ⚙️ Backend
 
 - Next.js API routes as a server-side proxy
 - Buildpad DaaS for data access, runtime extensions, and business logic
 
-### Database
+### 🗄️ Database
 
-- PostgreSQL via Supabase (Row-Level Security)
+- PostgreSQL via Supabase with Row-Level Security
 
-### APIs / Services
+### 🔌 APIs / Services
 
 - Buildpad DaaS REST API for collections, items, permissions, and extensions
 - Supabase Auth for server-side, cookie-based authentication
 
-### Deployment
+### ☁️ Deployment
 
 - AWS Amplify with automatic deployment from the `main` branch
 
 ---
 
-## Getting Started
+## 🏁 Getting Started
 
 This project uses `pnpm`.
 
@@ -242,7 +240,7 @@ pnpm dev
 
 Open `http://localhost:3000` in your browser.
 
-You can also use npm:
+You can also use npm, but it’s not recommended due to slower performance, higher memory usage, and potential security concerns in the npm ecosystem:
 
 ```bash
 npm install
@@ -251,7 +249,7 @@ npm run dev
 
 ---
 
-## Environment Variables
+## 🔐 Environment Variables
 
 Create a `.env.local` file in the project root. A reference template is provided in `.env.example`.
 
@@ -272,7 +270,7 @@ NEXT_PUBLIC_APP_URL=
 
 ---
 
-## Demo Guide
+## 🎮 Demo Guide
 
 For judges and first-time users:
 
@@ -285,21 +283,21 @@ For judges and first-time users:
 7. Open PPIC / Production to review production planning and execution.
 8. Use the Manager module to review KPIs, exceptions, and batch traceability.
 
-### Demo Accounts
+### 🔑 Demo Accounts
 
 | Role | Email | Password |
 | --- | --- | --- |
 | Admin | admin@example.com | admin@example.com |
 | Warehouse | wo@example.com | wo@example.com |
-| QC | wo@example.com | wo@example.com |
-| PPIC | PPIC@example.cpm | admin@example.com |
+| QC | qc@example.com | qc@example.com |
+| PPIC | ppic@example.com | admin@example.com |
 | Production | production@example.com | production@example.com |
 | Logistic | logistic@example.com | logistic@example.com |
-| Manager | manager@example.com |manager@example.comTBD |
+| Manager | manager@example.com | manager@example.com |
 
 ---
 
-## Project Structure
+## 🧱 Project Structure
 
 ```text
 Sigma-Arome/
@@ -308,7 +306,7 @@ Sigma-Arome/
 │   │   ├── admin/          # Master data, RBAC, audit log, warehouse location
 │   │   ├── warehouse/      # Receiving, putaway, auto slotting, floor plan
 │   │   ├── qc/             # Inspection queue and decisions
-│   │   ├── ppic/           # Orders material, BOM, production planning, material requests
+│   │   ├── ppic/           # Raw material orders, BOM, production planning, material requests
 │   │   ├── production/     # Production execution
 │   │   ├── logistic/       # Movement coordination
 │   │   └── manager/        # Dashboards and traceability
@@ -331,35 +329,35 @@ Sigma-Arome/
 
 ---
 
-## Hackathon Theme Fit
+## 🏆 Hackathon Theme Fit
 
 This project demonstrates how a production-grade operations platform can be built rapidly using Buildpad DaaS. It applies digital transformation to a real industrial workflow in fragrance and chemical manufacturing, with a strong focus on role-based access, traceability, explainable automation, and safer warehouse decision-making.
 
 ---
 
-## Challenges Faced
+## 🧗 Challenges Faced
 
 - Designing a multi-role workflow that keeps each user focused while still sharing one source of truth.
 - Building an explainable slotting engine that balances safety rules, capacity, occupancy, and operational practicality.
 - Coordinating data flow between PPIC, Warehouse, QC, Production, Logistic, and Manager modules.
 - Maintaining traceability from raw material receiving through finished goods creation.
-- Not knowing the real manufactur flow.
-- Don't have the dataset to build computer vision model that matches with Sima Arome product.
+- Understanding the real manufacturing flow without direct factory operation experience.
+- Not having a dataset to build a computer vision model that matches Sigma Arome products.
 
 ---
 
-## Future Improvements
+## 🚧 Future Improvements
 
+- Integrate pricing data.
 - Add real computer vision integration for QC-assisted inspection.
 - Expand slotting rules for chemical segregation, expiry control, and FEFO/FIFO strategy.
 - Add barcode or QR scanning for receiving, putaway, movement, and production consumption.
 - Add more advanced analytics for material readiness, QC lead time, warehouse utilization, and production yield.
 - Improve mobile responsiveness for warehouse and production floor usage.
-- Add notification workflows for QC holds, low stock, production readiness, and storage conflicts.
 
 ---
 
-## Acknowledgements
+## 🙌 Acknowledgements
 
 - Buildpad for DaaS, UI components, and starter conventions
 - Supabase for authentication, PostgreSQL, and Row-Level Security

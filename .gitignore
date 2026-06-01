@@ -41,3 +41,67 @@ PITCH-DECK-BUSINESS-VIABILITY.md
 
 # TypeScript build cache
 tsconfig.tsbuildinfo
+
+# ─────────────────────────────────────────────
+# AI assistants / coding agents (local tooling)
+# ─────────────────────────────────────────────
+# Kiro
+.kiro/
+# Cursor
+.cursor/
+.cursorrules
+.cursorignore
+# GitHub Copilot
+.github/copilot-instructions.md
+.copilot/
+copilot-debug.log
+# Claude / Anthropic
+.claude/
+CLAUDE.md
+# OpenAI Codex / ChatGPT / GPT
+.codex/
+.chatgpt/
+.openai/
+# Google Gemini / Antigravity
+.gemini/
+.antigravity/
+# Windsurf
+.windsurf/
+.windsurfrules
+# Aider
+.aider*
+# Continue / Cline / Roo / other agents
+.continue/
+.cline/
+.roo/
+# Generic AI agent / prompt artifacts
+AGENTS.md
+.ai/
+.prompts/
+*.ai.log
+ai-chat-history*
+llm-output*
+
+# ─────────────────────────────────────────────
+# Docs & non-code drafts (keep repo code-only)
+# ─────────────────────────────────────────────
+docs/
+/docs
+*.draft.md
+NOTES.md
+TODO.md
+scratch/
+tmp/
+*.tmp
+*.bak
+*.local
+
+# ─────────────────────────────────────────────
+# Editor / OS junk
+# ─────────────────────────────────────────────
+.idea/
+*.swp
+*.swo
+Thumbs.db
+desktop.ini
+

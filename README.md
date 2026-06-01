@@ -267,7 +267,7 @@ sigma-arome-starter/
 
 ## Hackathon Theme
 
-[Explain how this project fits the hackathon theme. Connect your problem and solution directly to the theme statement.]
+[Explain how this project fits the hackathon theme. For reference, this project demonstrates a production-grade, role-based operations platform built rapidly on the Buildpad DaaS platform, applying digital transformation and explainable rule-based automation to a real industrial workflow in fragrance and chemical manufacturing.]
 
 ---
 
@@ -296,8 +296,9 @@ This project is licensed under the [License Name] License.
 ## Acknowledgements
 
 - Hackathon organizers: [Organizer name]
-- Open-source libraries: [List key libraries you relied on]
-- APIs and services used: [List APIs or services]
+- Platform: Buildpad (DaaS, UI components, and starter conventions)
+- Core libraries: Next.js, React, Mantine, Supabase, Tabler Icons, Recharts
+- APIs and services used: Buildpad DaaS REST API, Supabase Auth, AWS Amplify
 - Mentors and contributors: [Names or thanks]
 
 ---

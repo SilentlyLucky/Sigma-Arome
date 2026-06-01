@@ -139,8 +139,8 @@ function OverviewCard({
   badge?: string;
 }) {
   return (
-    <Anchor href={href} underline="never">
-      <Paper p={22} radius={20} h="100%" style={glassCardStyle({ minHeight: 174, transition: 'border-color 160ms ease, transform 160ms ease' })}>
+    <Anchor href={href} underline="never" className="role-clickable-anchor">
+      <Paper p={22} radius={20} h="100%" className="role-clickable-card" style={glassCardStyle({ minHeight: 174 })}>
         <Stack h="100%" justify="space-between" gap={18}>
           <Group gap={16} align="flex-start" wrap="nowrap">
             <Box
@@ -210,8 +210,8 @@ function InsightRow({
   soft: string;
 }) {
   return (
-    <Anchor href={href} underline="never">
-      <Group py={16} gap={16} wrap="nowrap" style={{ borderBottom: '1px solid #E8EEE6' }}>
+    <Anchor href={href} underline="never" className="role-clickable-anchor">
+      <Group py={16} gap={16} wrap="nowrap" className="role-clickable-row" style={{ borderBottom: '1px solid #E8EEE6' }}>
         <Box
           style={{
             width: 48,
@@ -248,9 +248,10 @@ function InsightRow({
 function SetupTile({ card, count, loading }: { card: StatCard; count: number; loading: boolean }) {
   const Icon = card.icon;
   return (
-    <Anchor href={card.href} underline="never">
+    <Anchor href={card.href} underline="never" className="role-clickable-anchor">
       <Box
         p={16}
+        className="role-clickable-row"
         style={{
           minHeight: 122,
           borderRight: '1px solid #E8EEE6',
@@ -297,11 +298,12 @@ function SetupTile({ card, count, loading }: { card: StatCard; count: number; lo
 function QuickLinkTile({ link }: { link: QuickLink }) {
   const Icon = link.icon;
   return (
-    <Anchor href={link.href} underline="never">
+    <Anchor href={link.href} underline="never" className="role-clickable-anchor">
       <Group
         p={14}
         gap={12}
         wrap="nowrap"
+        className="role-clickable-row"
         style={{
           borderRadius: 14,
           transition: 'background-color 150ms ease',
@@ -539,8 +541,8 @@ export default function AdminDashboard() {
                     Ready setup areas ({setupDataCount}/{SETUP_DATA_TOTAL})
                   </Text>
                   {setupChecklist.map((item) => (
-                    <Anchor key={item.label} href={item.href} underline="never">
-                      <Group gap={10} wrap="nowrap" align="flex-start">
+                    <Anchor key={item.label} href={item.href} underline="never" className="role-clickable-anchor">
+                      <Group gap={10} wrap="nowrap" align="flex-start" className="role-clickable-row" p={6} style={{ borderRadius: 10 }}>
                         <CheckCircle2 size={17} color={item.done ? '#1F8F3A' : '#8B97A7'} strokeWidth={2.3} style={{ marginTop: 2, flexShrink: 0 }} />
                         <Stack gap={1}>
                           <Text fw={850} size="sm" style={{ color: '#102033' }}>{item.label}</Text>

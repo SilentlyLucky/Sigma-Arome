@@ -54,8 +54,8 @@ function RiskBreakdown({ risks }: { risks: RiskItem[] }) {
         {risks.map((risk) => {
           const width = risk.value === 0 ? 0 : Math.max(10, Math.round((risk.value / max) * 100));
           return (
-            <Anchor key={risk.label} href={risk.href} underline="never">
-              <Box>
+            <Anchor key={risk.label} href={risk.href} underline="never" className="role-clickable-anchor">
+              <Box className="role-clickable-row" p={6} style={{ borderRadius: 10 }}>
                 <Group justify="space-between" mb={4} wrap="nowrap">
                   <Stack gap={0}>
                     <Text size="xs" fw={700} tt="uppercase" c="dimmed">{risk.label}</Text>
@@ -220,7 +220,7 @@ export default function PPICDashboard() {
         <>
           {/* ── Priority Cards ─────────────────────────────────────────────── */}
           <SimpleGrid cols={{ base: 2, sm: 4 }} spacing="md">
-            <Paper p="md" radius="md" withBorder style={{ cursor: 'pointer' }} onClick={() => router.push('/ppic/orders')}>
+            <Paper p="md" radius="md" withBorder className="role-clickable-card" style={{ cursor: 'pointer' }} onClick={() => router.push('/ppic/orders')}>
               <Group justify="space-between" wrap="nowrap">
                 <Stack gap={2}>
                   <Text size="xs" c="dimmed" fw={600} tt="uppercase">Orders Need Follow-Up</Text>
@@ -231,7 +231,7 @@ export default function PPICDashboard() {
               </Group>
             </Paper>
 
-            <Paper p="md" radius="md" withBorder style={{ cursor: 'pointer', borderColor: n('prodBlocked') > 0 ? 'var(--mantine-color-red-5)' : undefined }} onClick={() => router.push('/ppic/production')}>
+            <Paper p="md" radius="md" withBorder className="role-clickable-card" style={{ cursor: 'pointer', borderColor: n('prodBlocked') > 0 ? 'var(--mantine-color-red-5)' : undefined }} onClick={() => router.push('/ppic/production')}>
               <Group justify="space-between" wrap="nowrap">
                 <Stack gap={2}>
                   <Text size="xs" c="dimmed" fw={600} tt="uppercase">Material Shortages</Text>
@@ -242,7 +242,7 @@ export default function PPICDashboard() {
               </Group>
             </Paper>
 
-            <Paper p="md" radius="md" withBorder style={{ cursor: 'pointer', borderColor: n('ordersOverdue') > 0 ? 'var(--mantine-color-orange-5)' : undefined }} onClick={() => router.push('/ppic/orders')}>
+            <Paper p="md" radius="md" withBorder className="role-clickable-card" style={{ cursor: 'pointer', borderColor: n('ordersOverdue') > 0 ? 'var(--mantine-color-orange-5)' : undefined }} onClick={() => router.push('/ppic/orders')}>
               <Group justify="space-between" wrap="nowrap">
                 <Stack gap={2}>
                   <Text size="xs" c="dimmed" fw={600} tt="uppercase">Late Deliveries</Text>
@@ -253,7 +253,7 @@ export default function PPICDashboard() {
               </Group>
             </Paper>
 
-            <Paper p="md" radius="md" withBorder style={{ cursor: 'pointer' }} onClick={() => router.push('/ppic/requests')}>
+            <Paper p="md" radius="md" withBorder className="role-clickable-card" style={{ cursor: 'pointer' }} onClick={() => router.push('/ppic/requests')}>
               <Group justify="space-between" wrap="nowrap">
                 <Stack gap={2}>
                   <Text size="xs" c="dimmed" fw={600} tt="uppercase">Requests Waiting for Logistics</Text>

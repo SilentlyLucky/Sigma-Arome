@@ -6,7 +6,6 @@ import {
   IconBuildingWarehouse,
   IconDashboard,
   IconHistory,
-  IconMap,
   IconMapPin,
   IconTruckDelivery,
   IconWand,
@@ -15,17 +14,16 @@ import { RoleAppShell, type RoleNavItem } from '@/components/layout/role-app-she
 
 const NAV_ITEMS: RoleNavItem[] = [
   { label: 'Dashboard', href: '/warehouse', icon: IconDashboard, section: 'Overview' },
-  { label: 'Floor Plan', href: '/warehouse/map', icon: IconMap, section: 'Overview' },
+  { label: 'Warehouse Locations', href: '/warehouse/warehouse-locations', icon: IconBuildingWarehouse, section: 'Overview' },
   { label: 'Expected Deliveries', href: '/warehouse/incoming', icon: IconTruckDelivery, section: 'Receiving' },
   { label: 'Receive Raw Materials', href: '/warehouse/receive', icon: IconTruckDelivery, section: 'Receiving' },
   { label: 'Batch Inventory', href: '/warehouse/batches', icon: IconBarcode, section: 'Inventory' },
   { label: 'Put Away Approved', href: '/warehouse/putaway', icon: IconMapPin, section: 'Inventory' },
   { label: 'Storage Suggestions', href: '/warehouse/slotting', icon: IconWand, section: 'Inventory' },
   { label: 'Movement Log', href: '/warehouse/movements', icon: IconHistory, section: 'History' },
-  { label: 'Warehouse Locations', href: '/warehouse/warehouse-locations', icon: IconBuildingWarehouse, section: 'Reference' },
 ];
 
-const SECTIONS = ['Overview', 'Receiving', 'Inventory', 'History', 'Reference'];
+const SECTIONS = ['Overview', 'Receiving', 'Inventory', 'History'];
 
 export default function WarehouseLayout({ children }: { children: ReactNode }) {
   return (

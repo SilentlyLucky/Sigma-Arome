@@ -2,7 +2,7 @@
 
 import { Stack, Title, Text, Tabs } from '@mantine/core';
 import {
-  IconLayoutDashboard,
+  IconMap,
   IconBinaryTree2,
   IconBuildingWarehouse,
   IconViewfinder,
@@ -10,7 +10,7 @@ import {
   IconBox,
 } from '@tabler/icons-react';
 import { CollectionList } from '@/components/ui/collection-list';
-import { OverviewTab } from '@/app/(authenticated)/admin/warehouse-locations/_tabs/overview-tab';
+import { FloorPlanTab } from '@/app/(authenticated)/admin/warehouse-locations/_tabs/floor-plan-tab';
 import { TreeViewTab } from '@/app/(authenticated)/admin/warehouse-locations/_tabs/tree-view-tab';
 
 function ReadOnlyTab({
@@ -50,7 +50,7 @@ export default function WarehouseLocationsPage() {
 
       <Tabs defaultValue="overview" keepMounted={false}>
         <Tabs.List>
-          <Tabs.Tab value="overview" leftSection={<IconLayoutDashboard size={16} />}>
+          <Tabs.Tab value="overview" leftSection={<IconMap size={16} />}>
             Overview
           </Tabs.Tab>
           <Tabs.Tab value="tree" leftSection={<IconBinaryTree2 size={16} />}>
@@ -71,7 +71,7 @@ export default function WarehouseLocationsPage() {
         </Tabs.List>
 
         <Tabs.Panel value="overview" pt="md">
-          <OverviewTab />
+          <FloorPlanTab />
         </Tabs.Panel>
         <Tabs.Panel value="tree" pt="md">
           <TreeViewTab />

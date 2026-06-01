@@ -368,7 +368,7 @@ export default function WarehouseDashboard() {
                 key={label}
                 p={22}
                 radius={8}
-                className="min-h-[132px] cursor-pointer transition duration-150 hover:-translate-y-0.5"
+                className="role-clickable-card min-h-[132px] cursor-pointer"
                 onClick={() => router.push(href)}
                 style={surfaceStyle}
               >

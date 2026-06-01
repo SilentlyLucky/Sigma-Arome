@@ -115,9 +115,10 @@ export function OperationalInsightPanel({
           );
 
           return item.href ? (
-            <Anchor key={`${item.title}-${item.description}`} href={item.href} underline="never">
+            <Anchor key={`${item.title}-${item.description}`} href={item.href} underline="never" className="role-clickable-anchor">
               <Box
                 p="sm"
+                className="role-clickable-row"
                 style={{
                   borderRadius: 12,
                   border: '1px solid #E5E8E5',
@@ -218,7 +219,7 @@ export function OperationalBar({
   );
 
   return href ? (
-    <Anchor href={href} underline="never">
+    <Anchor href={href} underline="never" className="role-clickable-anchor">
       {content}
     </Anchor>
   ) : content;

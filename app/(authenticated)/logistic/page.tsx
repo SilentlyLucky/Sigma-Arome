@@ -115,7 +115,7 @@ export default function LogisticDashboard() {
         <>
           {/* ── Priority Cards ─────────────────────────────────────────────── */}
           <SimpleGrid cols={{ base: 2, sm: 4 }} spacing="md">
-            <Paper p="md" radius="md" withBorder style={{ cursor: 'pointer', borderColor: n('submitted') > 0 ? 'var(--mantine-color-orange-4)' : undefined }} onClick={() => router.push('/logistic/requests')}>
+            <Paper p="md" radius="md" withBorder className="role-clickable-card" style={{ cursor: 'pointer', borderColor: n('submitted') > 0 ? 'var(--mantine-color-orange-4)' : undefined }} onClick={() => router.push('/logistic/requests')}>
               <Group justify="space-between" wrap="nowrap">
                 <Stack gap={2}>
                   <Text size="xs" c="dimmed" fw={600} tt="uppercase">Requests to Review</Text>
@@ -126,7 +126,7 @@ export default function LogisticDashboard() {
               </Group>
             </Paper>
 
-            <Paper p="md" radius="md" withBorder style={{ cursor: 'pointer', borderColor: n('approved') > 0 ? 'var(--mantine-color-blue-4)' : undefined }} onClick={() => router.push('/logistic/requests')}>
+            <Paper p="md" radius="md" withBorder className="role-clickable-card" style={{ cursor: 'pointer', borderColor: n('approved') > 0 ? 'var(--mantine-color-blue-4)' : undefined }} onClick={() => router.push('/logistic/requests')}>
               <Group justify="space-between" wrap="nowrap">
                 <Stack gap={2}>
                   <Text size="xs" c="dimmed" fw={600} tt="uppercase">Approved — Ready to Send</Text>
@@ -137,7 +137,7 @@ export default function LogisticDashboard() {
               </Group>
             </Paper>
 
-            <Paper p="md" radius="md" withBorder style={{ cursor: 'pointer' }} onClick={() => router.push('/logistic/requests')}>
+            <Paper p="md" radius="md" withBorder className="role-clickable-card" style={{ cursor: 'pointer' }} onClick={() => router.push('/logistic/requests')}>
               <Group justify="space-between" wrap="nowrap">
                 <Stack gap={2}>
                   <Text size="xs" c="dimmed" fw={600} tt="uppercase">Materials Being Sent</Text>
@@ -148,7 +148,7 @@ export default function LogisticDashboard() {
               </Group>
             </Paper>
 
-            <Paper p="md" radius="md" withBorder style={{ cursor: 'pointer', borderColor: n('fgApproved') > 0 ? 'var(--mantine-color-green-4)' : undefined }} onClick={() => router.push('/logistic/fg-putaway')}>
+            <Paper p="md" radius="md" withBorder className="role-clickable-card" style={{ cursor: 'pointer', borderColor: n('fgApproved') > 0 ? 'var(--mantine-color-green-4)' : undefined }} onClick={() => router.push('/logistic/fg-putaway')}>
               <Group justify="space-between" wrap="nowrap">
                 <Stack gap={2}>
                   <Text size="xs" c="dimmed" fw={600} tt="uppercase">Finished Goods to Store</Text>

@@ -85,8 +85,42 @@ body {
 }
 
 .mantine-Anchor-root:hover {
-  text-decoration: underline;
+  text-decoration: none;
   color: var(--ds-primary);
+}
+
+.role-clickable-anchor {
+  color: inherit;
+  display: block;
+  text-decoration: none;
+}
+
+.role-clickable-anchor:hover {
+  color: inherit;
+  text-decoration: none;
+}
+
+.role-clickable-card,
+.role-clickable-row {
+  transition:
+    transform var(--ds-transition-fast, 160ms ease),
+    border-color var(--ds-transition-fast, 160ms ease),
+    box-shadow var(--ds-transition-fast, 160ms ease),
+    background-color var(--ds-transition-fast, 160ms ease);
+  will-change: transform;
+}
+
+.role-clickable-card:hover {
+  border-color: rgba(31, 143, 58, 0.28);
+  box-shadow: 0 16px 36px rgba(15, 23, 42, 0.09);
+  transform: translateY(-2px) scale(1.004);
+}
+
+.role-clickable-row:hover {
+  background-color: rgba(247, 248, 247, 0.92);
+  border-color: rgba(31, 143, 58, 0.22);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.055);
+  transform: translateX(5px);
 }
 
 .mantine-ActionIcon-root {

@@ -2,7 +2,7 @@
 
 import { Stack, Title, Text, Tabs } from '@mantine/core';
 import {
-  IconLayoutDashboard,
+  IconMap,
   IconBinaryTree2,
   IconBuildingWarehouse,
   IconViewfinder,
@@ -10,7 +10,7 @@ import {
   IconBox,
   IconPackages,
 } from '@tabler/icons-react';
-import { OverviewTab } from './_tabs/overview-tab';
+import { FloorPlanTab } from './_tabs/floor-plan-tab';
 import { TreeViewTab } from './_tabs/tree-view-tab';
 import { WarehousesTab } from './_tabs/warehouses-tab';
 import { ZonesTab } from './_tabs/zones-tab';
@@ -23,6 +23,7 @@ import { InventoryViewTab } from './_tabs/inventory-view-tab';
  *
  * Hierarchy: Warehouse → Zone → Rack → Bin (= warehouse_locations).
  * Actual inventory always lives at the Bin level.
+ * Overview tab shows the live Warehouse Floor Plan.
  * Auto Slotting lives in the Warehouse Operation module (/warehouse/slotting).
  */
 export default function WarehouseLocationPage() {
@@ -38,7 +39,7 @@ export default function WarehouseLocationPage() {
 
       <Tabs defaultValue="overview" keepMounted={false}>
         <Tabs.List>
-          <Tabs.Tab value="overview" leftSection={<IconLayoutDashboard size={16} />}>
+          <Tabs.Tab value="overview" leftSection={<IconMap size={16} />}>
             Overview
           </Tabs.Tab>
           <Tabs.Tab value="tree" leftSection={<IconBinaryTree2 size={16} />}>
@@ -62,7 +63,7 @@ export default function WarehouseLocationPage() {
         </Tabs.List>
 
         <Tabs.Panel value="overview" pt="md">
-          <OverviewTab />
+          <FloorPlanTab />
         </Tabs.Panel>
         <Tabs.Panel value="tree" pt="md">
           <TreeViewTab />

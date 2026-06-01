@@ -132,7 +132,7 @@ export default function ManagerDashboard() {
           {/* ── Priority Cards ─────────────────────────────────────────────── */}
           <SimpleGrid cols={{ base: 2, sm: 4 }} spacing="md">
             <Paper
-              p="md" radius="md" withBorder style={{ cursor: 'pointer', borderColor: n('prodBlocked') > 0 ? 'var(--mantine-color-red-5)' : undefined }}
+              p="md" radius="md" withBorder className="role-clickable-card" style={{ cursor: 'pointer', borderColor: n('prodBlocked') > 0 ? 'var(--mantine-color-red-5)' : undefined }}
               onClick={() => router.push('/ppic/production')}
             >
               <Group justify="space-between" wrap="nowrap">
@@ -148,7 +148,7 @@ export default function ManagerDashboard() {
             </Paper>
 
             <Paper
-              p="md" radius="md" withBorder style={{ cursor: 'pointer', borderColor: qcIssues > 0 ? 'var(--mantine-color-orange-5)' : undefined }}
+              p="md" radius="md" withBorder className="role-clickable-card" style={{ cursor: 'pointer', borderColor: qcIssues > 0 ? 'var(--mantine-color-orange-5)' : undefined }}
               onClick={() => router.push('/manager/qc')}
             >
               <Group justify="space-between" wrap="nowrap">
@@ -164,7 +164,7 @@ export default function ManagerDashboard() {
             </Paper>
 
             <Paper
-              p="md" radius="md" withBorder style={{ cursor: 'pointer', borderColor: n('ordersOverdue') > 0 ? 'var(--mantine-color-orange-5)' : undefined }}
+              p="md" radius="md" withBorder className="role-clickable-card" style={{ cursor: 'pointer', borderColor: n('ordersOverdue') > 0 ? 'var(--mantine-color-orange-5)' : undefined }}
               onClick={() => router.push('/ppic/orders')}
             >
               <Group justify="space-between" wrap="nowrap">
@@ -180,7 +180,7 @@ export default function ManagerDashboard() {
             </Paper>
 
             <Paper
-              p="md" radius="md" withBorder style={{ cursor: 'pointer' }}
+              p="md" radius="md" withBorder className="role-clickable-card" style={{ cursor: 'pointer' }}
               onClick={() => router.push('/production/active')}
             >
               <Group justify="space-between" wrap="nowrap">

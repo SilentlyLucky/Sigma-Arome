@@ -117,7 +117,7 @@ export default function QCDashboard() {
         <>
           {/* ── Priority Cards ─────────────────────────────────────────────── */}
           <SimpleGrid cols={{ base: 2, sm: 4 }} spacing="md">
-            <Paper p="md" radius="md" withBorder style={{ cursor: 'pointer', borderColor: n('qcPending') > 0 ? 'var(--mantine-color-orange-4)' : undefined }} onClick={() => router.push('/qc/queue')}>
+            <Paper p="md" radius="md" withBorder className="role-clickable-card" style={{ cursor: 'pointer', borderColor: n('qcPending') > 0 ? 'var(--mantine-color-orange-4)' : undefined }} onClick={() => router.push('/qc/queue')}>
               <Group justify="space-between" wrap="nowrap">
                 <Stack gap={2}>
                   <Text size="xs" c="dimmed" fw={600} tt="uppercase">Waiting for Inspection</Text>
@@ -130,7 +130,7 @@ export default function QCDashboard() {
               </Group>
             </Paper>
 
-            <Paper p="md" radius="md" withBorder style={{ cursor: 'pointer' }} onClick={() => router.push('/qc/queue')}>
+            <Paper p="md" radius="md" withBorder className="role-clickable-card" style={{ cursor: 'pointer' }} onClick={() => router.push('/qc/queue')}>
               <Group justify="space-between" wrap="nowrap">
                 <Stack gap={2}>
                   <Text size="xs" c="dimmed" fw={600} tt="uppercase">Being Inspected</Text>
@@ -143,7 +143,7 @@ export default function QCDashboard() {
               </Group>
             </Paper>
 
-            <Paper p="md" radius="md" withBorder style={{ cursor: 'pointer', borderColor: n('hold') > 0 ? 'var(--mantine-color-yellow-4)' : undefined }} onClick={() => router.push('/qc/holds')}>
+            <Paper p="md" radius="md" withBorder className="role-clickable-card" style={{ cursor: 'pointer', borderColor: n('hold') > 0 ? 'var(--mantine-color-yellow-4)' : undefined }} onClick={() => router.push('/qc/holds')}>
               <Group justify="space-between" wrap="nowrap">
                 <Stack gap={2}>
                   <Text size="xs" c="dimmed" fw={600} tt="uppercase">On Hold — Decision Needed</Text>
@@ -156,7 +156,7 @@ export default function QCDashboard() {
               </Group>
             </Paper>
 
-            <Paper p="md" radius="md" withBorder style={{ cursor: 'pointer', borderColor: n('rejected') > 0 ? 'var(--mantine-color-red-4)' : undefined }} onClick={() => router.push('/qc/holds')}>
+            <Paper p="md" radius="md" withBorder className="role-clickable-card" style={{ cursor: 'pointer', borderColor: n('rejected') > 0 ? 'var(--mantine-color-red-4)' : undefined }} onClick={() => router.push('/qc/holds')}>
               <Group justify="space-between" wrap="nowrap">
                 <Stack gap={2}>
                   <Text size="xs" c="dimmed" fw={600} tt="uppercase">Rejected</Text>

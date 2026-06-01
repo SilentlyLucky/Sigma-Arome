@@ -6,7 +6,7 @@
 
 ## Overview
 
-Sigma Arome Smart Operations is a web-based manufacturing operations system for fragrance and chemical factories. It connects raw material ordering, receiving, quality control, rule-based warehouse slotting, production execution, and finished goods storage in one traceable platform.
+Sigma Arome Smart Operations is a web-based manufacturing operations system for fragrance and chemical factories. It connects raw material ordering, receiving, quality control, rule-based warehouse slotting, production planning, and finished goods storage in one traceable platform.
 
 Each user role receives a dedicated dashboard with the data, permissions, and actions needed for its workflow. The system reduces spreadsheet dependency, improves batch traceability, and creates an automatic audit trail for critical operational changes.
 

@@ -1,4 +1,4 @@
-# Sigma Arome Smart Operations
+# Sigma Arome Smart Operations 
 
 > A role-based smart manufacturing operations platform for fragrance, essential oil, and chemical production, from raw material ordering to finished goods putaway.
 

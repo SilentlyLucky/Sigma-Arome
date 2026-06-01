@@ -1,0 +1,31 @@
+.topBar {
+  display: flex;
+  width: 100%;
+  min-height: 40px;
+  align-items: center;
+  justify-content: flex-end;
+  margin-bottom: 18px;
+}
+
+.pageFrame {
+  width: 100%;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 20px 38px 42px;
+}
+
+@media (max-width: 48em) {
+  .topBar {
+    justify-content: space-between;
+  }
+
+  .pageFrame {
+    padding: 16px 18px 42px;
+  }
+}
+
+@media (min-width: 48.0625em) and (max-width: 62em) {
+  .pageFrame {
+    padding: 20px 28px 42px;
+  }
+}

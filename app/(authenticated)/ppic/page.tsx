@@ -10,6 +10,7 @@ import {
   IconCircleCheck,
 } from '@tabler/icons-react';
 import { DashboardLoading } from '@/components/ui/dashboard-loading';
+import { OperationalInsightPanel } from '@/components/ui/operational-dashboard';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
@@ -21,60 +22,6 @@ interface MaterialRequest {
   status: string;
   needed_date: string | null;
   priority: string | null;
-}
-
-interface FlowStage {
-  label: string;
-  value: number;
-  description: string;
-  color: string;
-  href: string;
-}
-
-function FlowGraph({ stages }: { stages: FlowStage[] }) {
-  const max = Math.max(...stages.map((stage) => stage.value), 1);
-  const openWork = stages.reduce((sum, stage) => sum + stage.value, 0);
-
-  return (
-    <Paper p="md" radius="md" withBorder>
-      <Group justify="space-between" align="flex-start" mb="md">
-        <div>
-          <Text fw={700} size="sm">Material-to-Production Flow</Text>
-          <Text size="xs" c="dimmed">
-            See where planning work is sitting before it reaches production.
-          </Text>
-        </div>
-        <Badge color={openWork > 0 ? 'orange' : 'green'} variant="light">
-          {openWork > 0 ? `${openWork} open items` : 'No bottleneck'}
-        </Badge>
-      </Group>
-
-      <SimpleGrid cols={{ base: 1, sm: 2, lg: 5 }} spacing="sm">
-        {stages.map((stage) => {
-          const width = stage.value === 0 ? 0 : Math.max(12, Math.round((stage.value / max) * 100));
-          return (
-            <Anchor key={stage.label} href={stage.href} underline="never">
-              <Paper p="sm" radius="sm" withBorder>
-                <Group justify="space-between" mb="xs" wrap="nowrap">
-                  <Text size="xs" c="dimmed" fw={700} tt="uppercase">{stage.label}</Text>
-                  <Text fw={800} c={stage.value > 0 ? stage.color : 'dimmed'}>{stage.value}</Text>
-                </Group>
-                <Box h={6} style={{ borderRadius: 999, overflow: 'hidden', backgroundColor: '#E5E7EB' }}>
-                  <Box
-                    h="100%"
-                    w={`${width}%`}
-                    bg={stage.value > 0 ? `var(--mantine-color-${stage.color}-6)` : 'transparent'}
-                    style={{ borderRadius: 999, transition: 'width 180ms ease' }}
-                  />
-                </Box>
-                <Text size="xs" c="dimmed" mt="xs">{stage.description}</Text>
-              </Paper>
-            </Anchor>
-          );
-        })}
-      </SimpleGrid>
-    </Paper>
-  );
 }
 
 interface RiskItem {
@@ -184,43 +131,6 @@ export default function PPICDashboard() {
 
   const n = (k: string) => counts[k] ?? 0;
   const ordersActive = n('ordersWaiting') + n('ordersPartial');
-  const flowStages: FlowStage[] = [
-    {
-      label: 'Supplier Orders',
-      value: ordersActive,
-      description: 'Raw material orders still open',
-      color: 'blue',
-      href: '/ppic/orders',
-    },
-    {
-      label: 'Late Deliveries',
-      value: n('ordersOverdue'),
-      description: 'Expected date has passed',
-      color: 'orange',
-      href: '/ppic/orders',
-    },
-    {
-      label: 'Logistics Queue',
-      value: n('requestsPending'),
-      description: 'Material requests waiting for review',
-      color: 'blue',
-      href: '/ppic/requests',
-    },
-    {
-      label: 'Blocked Orders',
-      value: n('prodBlocked'),
-      description: 'Production waiting for materials',
-      color: 'red',
-      href: '/ppic/production',
-    },
-    {
-      label: 'Ready / Running',
-      value: n('prodReady') + n('prodActive'),
-      description: 'Production can proceed',
-      color: 'green',
-      href: '/ppic/production',
-    },
-  ];
   const riskItems: RiskItem[] = [
     {
       label: 'Late supplier deliveries',
@@ -251,6 +161,53 @@ export default function PPICDashboard() {
       href: '/ppic/production',
     },
   ];
+  const planningInsights = [
+    n('prodBlocked') > 0
+      ? {
+          title: 'Material shortages are the first planning risk',
+          description: `${n('prodBlocked')} production order${n('prodBlocked') === 1 ? '' : 's'} cannot move forward until required materials are available and approved.`,
+          tone: 'risk' as const,
+          href: '/ppic/production',
+          action: 'Review orders',
+        }
+      : {
+          title: 'No material shortage is blocking production',
+          description: 'Released production can continue as long as warehouse issue and production handoff stay on time.',
+          tone: 'good' as const,
+          href: '/ppic/production',
+          action: 'Monitor',
+        },
+    n('ordersOverdue') > 0
+      ? {
+          title: 'Late supplier deliveries may affect the next plan',
+          description: `${n('ordersOverdue')} raw material order${n('ordersOverdue') === 1 ? ' is' : 's are'} past the expected arrival date. Check whether the material is needed by active production.`,
+          tone: 'watch' as const,
+          href: '/ppic/orders',
+          action: 'Follow up',
+        }
+      : {
+          title: 'Supplier deliveries are not overdue',
+          description: 'Use the material readiness view before releasing more production orders.',
+          tone: 'good' as const,
+          href: '/ppic/orders',
+          action: 'Plan ahead',
+        },
+    n('requestsPending') > 0
+      ? {
+          title: 'Logistics review is part of production readiness',
+          description: `${n('requestsPending')} material request${n('requestsPending') === 1 ? ' is' : 's are'} waiting for logistics. Prioritize requests with the nearest needed date.`,
+          tone: 'info' as const,
+          href: '/ppic/requests',
+          action: 'Coordinate',
+        }
+      : {
+          title: 'No material requests are waiting for logistics',
+          description: 'New production plans should still include a material check before release.',
+          tone: 'good' as const,
+          href: '/ppic/requests',
+          action: 'Ready',
+        },
+  ];
 
   return (
     <Stack gap="lg">
@@ -259,7 +216,7 @@ export default function PPICDashboard() {
         <Text c="dimmed" size="sm">Track raw material supply, spot production risks, and keep upcoming production on schedule.</Text>
       </div>
 
-      {loading ? <DashboardLoading cards={4} graphPanels={2} queuePanels={3} /> : (
+      {loading ? <DashboardLoading cards={4} graphPanels={1} queuePanels={3} /> : (
         <>
           {/* ── Priority Cards ─────────────────────────────────────────────── */}
           <SimpleGrid cols={{ base: 2, sm: 4 }} spacing="md">
@@ -308,11 +265,14 @@ export default function PPICDashboard() {
             </Paper>
           </SimpleGrid>
 
-          {/* Planning graphs */}
-          <SimpleGrid cols={{ base: 1, lg: 2 }} spacing="md">
-            <FlowGraph stages={flowStages} />
-            <RiskBreakdown risks={riskItems} />
-          </SimpleGrid>
+          <OperationalInsightPanel
+            title="Planning Insights"
+            subtitle="Decision support for schedule risk, material readiness, and handoffs."
+            items={planningInsights}
+          />
+
+          {/* Planning graph: only shows risks not already visible as detailed rows below */}
+          <RiskBreakdown risks={riskItems} />
 
           {/* Exception queues */}
           <Divider label="Exceptions Needing Attention" labelPosition="left" />

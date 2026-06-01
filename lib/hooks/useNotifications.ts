@@ -16,9 +16,63 @@ export interface AppNotification {
 
 /** Show at most this many recent notifications in the bell, mixing read + unread. */
 const MAX_VISIBLE = 7;
+const POLL_INTERVAL_MS = 30_000;
+const CACHE_FRESH_MS = 10_000;
+
+const notificationCache = new Map<string, AppNotification[]>();
+const notificationFetchedAt = new Map<string, number>();
+const notificationInFlight = new Map<string, Promise<AppNotification[]>>();
+
+function areNotificationsEqual(a: AppNotification[], b: AppNotification[]) {
+  if (a.length !== b.length) return false;
+  return a.every((item, index) => item.id === b[index]?.id && item.read === b[index]?.read);
+}
+
+async function fetchNotificationsForRole(role: string, force = false) {
+  if (!role) return [];
+
+  const cached = notificationCache.get(role) ?? [];
+  const fetchedAt = notificationFetchedAt.get(role) ?? 0;
+  if (!force && fetchedAt > 0 && Date.now() - fetchedAt < CACHE_FRESH_MS) return cached;
+
+  const existing = notificationInFlight.get(role);
+  if (existing) return existing;
+
+  const params = new URLSearchParams({
+    'filter[recipient_role][_eq]': role,
+    'sort[]': '-created_at',
+    limit: String(MAX_VISIBLE),
+  });
+
+  const request = fetch(`/api/items/notifications?${params}`)
+    .then(async (res) => {
+      if (!res.ok) {
+        if (res.status === 429) {
+          console.warn(`Notifications rate limited for role "${role}"; keeping cached notifications.`);
+        }
+        return cached;
+      }
+
+      const json = await res.json();
+      const next = ((json.data ?? []) as AppNotification[]).slice(0, MAX_VISIBLE);
+      notificationCache.set(role, next);
+      notificationFetchedAt.set(role, Date.now());
+      return next;
+    })
+    .catch((error) => {
+      console.warn(`Notifications fetch failed for role "${role}"`, error);
+      return cached;
+    })
+    .finally(() => {
+      notificationInFlight.delete(role);
+    });
+
+  notificationInFlight.set(role, request);
+  return request;
+}
 
 export function useNotifications(role: string) {
-  const [notifications, setNotifications] = useState<AppNotification[]>([]);
+  const [notifications, setNotifications] = useState<AppNotification[]>(() => notificationCache.get(role) ?? []);
   const channelRef = useRef<ReturnType<ReturnType<typeof createClient>['channel']> | null>(null);
 
   /**
@@ -27,23 +81,30 @@ export function useNotifications(role: string) {
    * to show it for context, until it scrolls off the cap.
    */
   const fetchRecent = useCallback(async () => {
-    const params = new URLSearchParams({
-      'filter[recipient_role][_eq]': role,
-      'sort[]': '-created_at',
-      'limit': String(MAX_VISIBLE),
-    });
-    const res = await fetch(`/api/items/notifications?${params}`);
-    if (!res.ok) return;
-    const json = await res.json();
-    setNotifications((json.data ?? []).slice(0, MAX_VISIBLE));
+    return fetchNotificationsForRole(role);
   }, [role]);
 
   useEffect(() => {
-    fetchRecent();
+    if (!role) {
+      setNotifications([]);
+      return;
+    }
 
-    // Poll every 5s for near-live updates. Self-hosted Supabase often doesn't
-    // expose the supabase_realtime publication, so polling is the safe default.
-    const pollInterval = setInterval(fetchRecent, 5000);
+    let cancelled = false;
+    fetchRecent().then((next) => {
+      if (!cancelled) {
+        setNotifications((prev) => (areNotificationsEqual(prev, next) ? prev : next));
+      }
+    });
+
+    // Poll as a fallback when realtime is unavailable, but keep it gentle so
+    // the notification bell cannot exhaust the API rate limit by itself.
+    const pollInterval = setInterval(() => {
+      fetchNotificationsForRole(role, true).then((next) => {
+        if (cancelled) return;
+        setNotifications((prev) => (areNotificationsEqual(prev, next) ? prev : next));
+      });
+    }, POLL_INTERVAL_MS);
 
     const supabase = createClient();
     const channel = supabase
@@ -59,11 +120,14 @@ export function useNotifications(role: string) {
         (payload) => {
           const newNotif = payload.new as AppNotification;
           // Avoid duplicates if the poll already picked this up
-          setNotifications((prev) =>
-            prev.some((n) => n.id === newNotif.id)
+          setNotifications((prev) => {
+            const next = prev.some((n) => n.id === newNotif.id)
               ? prev
-              : [newNotif, ...prev].slice(0, MAX_VISIBLE)
-          );
+              : [newNotif, ...prev].slice(0, MAX_VISIBLE);
+            notificationCache.set(role, next);
+            notificationFetchedAt.set(role, Date.now());
+            return next;
+          });
         }
       )
       .subscribe();
@@ -71,6 +135,7 @@ export function useNotifications(role: string) {
     channelRef.current = channel;
 
     return () => {
+      cancelled = true;
       clearInterval(pollInterval);
       supabase.removeChannel(channel);
     };
@@ -84,10 +149,12 @@ export function useNotifications(role: string) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ read: true }),
     });
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, read: true } : n))
-    );
-  }, []);
+    setNotifications((prev) => {
+      const next = prev.map((n) => (n.id === id ? { ...n, read: true } : n));
+      notificationCache.set(role, next);
+      return next;
+    });
+  }, [role]);
 
   const markAllRead = useCallback(async () => {
     const unread = notifications.filter((n) => !n.read);
@@ -100,8 +167,12 @@ export function useNotifications(role: string) {
         })
       )
     );
-    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
-  }, [notifications]);
+    setNotifications((prev) => {
+      const next = prev.map((n) => ({ ...n, read: true }));
+      notificationCache.set(role, next);
+      return next;
+    });
+  }, [notifications, role]);
 
   return { notifications, unreadCount, markRead, markAllRead };
 }

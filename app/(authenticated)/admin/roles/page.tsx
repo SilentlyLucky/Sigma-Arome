@@ -47,7 +47,7 @@ interface RoleFormValues {
 const SYSTEM_ROLES = ['Administrator', 'User'];
 
 export default function RolesPage() {
-  const { buildUrl, getHeaders } = useDaaSContext();
+  const { getHeaders } = useDaaSContext();
   const [roles, setRoles] = useState<Role[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -60,9 +60,12 @@ export default function RolesPage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch('/api/roles', { headers: await getHeaders() });
-      if (!res.ok) throw new Error('Failed to fetch roles');
+      const res = await fetch('/api/roles');
       const data = await res.json();
+      if (!res.ok) {
+        const msg = data?.errors?.[0]?.message ?? `HTTP ${res.status}`;
+        throw new Error(msg);
+      }
       setRoles(data?.data ?? []);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load roles');

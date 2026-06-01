@@ -9,7 +9,7 @@ export default function AccountLayout({ children }: { children: ReactNode }) {
   const router = useRouter();
 
   return (
-    <Box style={{ minHeight: '100vh', background: 'radial-gradient(circle at 72% 0%, rgba(13,74,31,0.12) 0%, rgba(13,74,31,0.05) 28%, transparent 52%), radial-gradient(circle at 18% 18%, rgba(26,107,46,0.10) 0%, transparent 34%), linear-gradient(180deg, #f9fdf9 0%, #f0f6f0 48%, #eaf3ea 100%)' }}>
+    <Box style={{ minHeight: '100vh', background: 'radial-gradient(circle at 78% 0%, rgba(255,255,255,0.92) 0%, rgba(247,248,247,0.72) 28%, transparent 52%), radial-gradient(circle at 14% 8%, rgba(243,244,245,0.9) 0%, rgba(247,248,247,0.5) 34%, transparent 58%), linear-gradient(180deg, #F3F4F5 0%, #F7F8F7 22%, #F7F8F7 100%)' }}>
       <Box
         style={{
           height: 64,

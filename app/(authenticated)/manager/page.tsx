@@ -4,13 +4,14 @@ import {
   SimpleGrid, Paper, Text, Title, Group, Stack, ThemeIcon,
   Anchor, Divider, Badge, Alert, Table,
 } from '@mantine/core';
-import { BarChart, DonutChart } from '@mantine/charts';
+import { BarChart } from '@mantine/charts';
 import {
   IconAlertTriangle, IconCheck, IconClock, IconChevronRight,
   IconBuildingFactory, IconFlask, IconTruckDelivery, IconPackage,
   IconCircleCheck, IconX,
 } from '@tabler/icons-react';
 import { DashboardLoading } from '@/components/ui/dashboard-loading';
+import { OperationalInsightPanel } from '@/components/ui/operational-dashboard';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
@@ -71,6 +72,53 @@ export default function ManagerDashboard() {
 
   const n = (k: string) => counts[k] ?? 0;
   const qcIssues = n('batchesHold') + n('batchesRejected');
+  const managerInsights = [
+    n('prodBlocked') > 0
+      ? {
+          title: 'Main production risk is material availability',
+          description: `${n('prodBlocked')} production order${n('prodBlocked') === 1 ? ' is' : 's are'} blocked. Escalate PPIC, logistics, and warehouse coordination before the schedule slips.`,
+          tone: 'risk' as const,
+          href: '/ppic/production',
+          action: 'Escalate',
+        }
+      : {
+          title: 'Production is not blocked by materials',
+          description: 'No production order is currently waiting for material availability.',
+          tone: 'good' as const,
+          href: '/production/active',
+          action: 'Monitor',
+        },
+    qcIssues > 0
+      ? {
+          title: 'Quality exceptions need management visibility',
+          description: `${qcIssues} batch${qcIssues === 1 ? ' is' : 'es are'} on hold or rejected. Confirm owner, decision notes, and downstream impact.`,
+          tone: 'watch' as const,
+          href: '/manager/qc',
+          action: 'Review QC',
+        }
+      : {
+          title: 'No quality exception is open',
+          description: 'There are no held or rejected batches creating visible release risk right now.',
+          tone: 'good' as const,
+          href: '/manager/qc',
+          action: 'Stable',
+        },
+    n('ordersOverdue') > 0
+      ? {
+          title: 'Late deliveries can become production blockers',
+          description: `${n('ordersOverdue')} supplier delivery${n('ordersOverdue') === 1 ? ' is' : 'ies are'} overdue. Ask PPIC whether the delayed material is tied to active production.`,
+          tone: 'watch' as const,
+          href: '/ppic/orders',
+          action: 'Follow up',
+        }
+      : {
+          title: 'Supplier delivery timing looks healthy',
+          description: 'No raw material order is past its expected arrival date.',
+          tone: 'good' as const,
+          href: '/ppic/orders',
+          action: 'All clear',
+        },
+  ];
 
   return (
     <Stack gap="lg">
@@ -79,7 +127,7 @@ export default function ManagerDashboard() {
         <Text c="dimmed" size="sm">Cross-department view — surface blockers, quality issues, and overdue work before they impact production.</Text>
       </div>
 
-      {loading ? <DashboardLoading cards={4} graphPanels={2} queuePanels={2} /> : (
+      {loading ? <DashboardLoading cards={4} graphPanels={1} queuePanels={2} /> : (
         <>
           {/* ── Priority Cards ─────────────────────────────────────────────── */}
           <SimpleGrid cols={{ base: 2, sm: 4 }} spacing="md">
@@ -148,6 +196,12 @@ export default function ManagerDashboard() {
             </Paper>
           </SimpleGrid>
 
+          <OperationalInsightPanel
+            title="Manager Planning Insights"
+            subtitle="Cross-role risks, likely bottlenecks, and the next owner to check."
+            items={managerInsights}
+          />
+
           {/* ── Operations Pipeline ─────────────────────────────────────────── */}
           <Paper p="md" radius="md" withBorder>
             <Text fw={600} size="sm" mb="sm">End-to-End Operations Pipeline</Text>
@@ -166,43 +220,6 @@ export default function ManagerDashboard() {
             />
             <Text size="xs" c="dimmed" mt="xs">Larger numbers in early stages = upstream bottleneck. Ideal: even or growing toward right.</Text>
           </Paper>
-
-          {/* ── Status Breakdowns ───────────────────────────────────────────── */}
-          <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
-            <Paper p="md" radius="md" withBorder>
-              <Text fw={600} size="sm" mb="sm">Production Orders</Text>
-              <DonutChart
-                data={[
-                  { name: 'Blocked', value: n('prodBlocked'), color: 'red.5' },
-                  { name: 'Ready to start', value: n('prodReady'), color: 'lime.5' },
-                  { name: 'Running', value: n('prodActive'), color: 'blue.5' },
-                  { name: 'Completed', value: n('prodCompleted'), color: 'green.5' },
-                ]}
-                size={160}
-                thickness={30}
-                withLabels
-                withLabelsLine={false}
-                tooltipDataSource="segment"
-              />
-            </Paper>
-            <Paper p="md" radius="md" withBorder>
-              <Text fw={600} size="sm" mb="sm">Batch Quality Status</Text>
-              <DonutChart
-                data={[
-                  { name: 'Waiting', value: n('batchesQcPending'), color: 'orange.5' },
-                  { name: 'In review', value: n('batchesUnderQc'), color: 'blue.5' },
-                  { name: 'On hold', value: n('batchesHold'), color: 'yellow.5' },
-                  { name: 'Rejected', value: n('batchesRejected'), color: 'red.5' },
-                  { name: 'Stored & ready', value: n('batchesStored'), color: 'green.5' },
-                ]}
-                size={160}
-                thickness={30}
-                withLabels
-                withLabelsLine={false}
-                tooltipDataSource="segment"
-              />
-            </Paper>
-          </SimpleGrid>
 
           {/* ── Exception Queues ────────────────────────────────────────────── */}
           <Divider label="Exceptions Needing Attention" labelPosition="left" />

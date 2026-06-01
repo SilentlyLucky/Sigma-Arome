@@ -4,9 +4,9 @@ import {
   SimpleGrid, Paper, Text, Title, Group, Stack, ThemeIcon,
   Anchor, Divider, Badge, Alert, Table,
 } from '@mantine/core';
-import { DonutChart } from '@mantine/charts';
-import { IconFlask, IconEye, IconAlertTriangle, IconCheck, IconX, IconCircleCheck, IconChevronRight } from '@tabler/icons-react';
+import { IconFlask, IconEye, IconAlertTriangle, IconX, IconCircleCheck } from '@tabler/icons-react';
 import { DashboardLoading } from '@/components/ui/dashboard-loading';
+import { OperationalInsightPanel } from '@/components/ui/operational-dashboard';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
@@ -58,6 +58,53 @@ export default function QCDashboard() {
   }, []);
 
   const n = (k: string) => counts[k] ?? 0;
+  const qcInsights = [
+    n('qcPending') > 0
+      ? {
+          title: 'Inspect the oldest waiting batches first',
+          description: `${n('qcPending')} batch${n('qcPending') === 1 ? ' is' : 'es are'} waiting for inspection. Prioritize items that block production or finished goods release.`,
+          tone: 'watch' as const,
+          href: '/qc/queue',
+          action: 'Open queue',
+        }
+      : {
+          title: 'No batch is waiting for inspection',
+          description: 'QC intake is clear. Keep monitoring new receiving and finished goods handoffs.',
+          tone: 'good' as const,
+          href: '/qc/queue',
+          action: 'All clear',
+        },
+    n('hold') > 0
+      ? {
+          title: 'Holds need a clear decision path',
+          description: `${n('hold')} batch${n('hold') === 1 ? ' is' : 'es are'} on hold. Decide whether to approve, reject, or keep investigating with notes.`,
+          tone: 'risk' as const,
+          href: '/qc/holds',
+          action: 'Review holds',
+        }
+      : {
+          title: 'No held batches need review',
+          description: 'There are no open hold decisions creating downstream uncertainty.',
+          tone: 'good' as const,
+          href: '/qc/holds',
+          action: 'Stable',
+        },
+    n('rejected') > 0
+      ? {
+          title: 'Rejected batches need follow-up',
+          description: `${n('rejected')} rejected batch${n('rejected') === 1 ? ' requires' : 'es require'} warehouse or manager attention before it disappears from the workflow.`,
+          tone: 'risk' as const,
+          href: '/qc/holds',
+          action: 'Escalate',
+        }
+      : {
+          title: 'No rejected batch is waiting for follow-up',
+          description: 'Quality exceptions are low right now. Keep decisions documented for traceability.',
+          tone: 'good' as const,
+          href: '/qc/holds',
+          action: 'Monitor',
+        },
+  ];
 
   return (
     <Stack gap="lg">
@@ -66,7 +113,7 @@ export default function QCDashboard() {
         <Text c="dimmed" size="sm">Inspect raw materials and finished goods, review AI suggestions, and record your quality decisions.</Text>
       </div>
 
-      {loading ? <DashboardLoading cards={4} graphPanels={1} queuePanels={2} /> : (
+      {loading ? <DashboardLoading cards={4} graphPanels={0} queuePanels={2} /> : (
         <>
           {/* ── Priority Cards ─────────────────────────────────────────────── */}
           <SimpleGrid cols={{ base: 2, sm: 4 }} spacing="md">
@@ -123,23 +170,11 @@ export default function QCDashboard() {
             </Paper>
           </SimpleGrid>
 
-          {/* ── Status Breakdown ────────────────────────────────────────────── */}
-          <Paper p="md" radius="md" withBorder>
-            <Text fw={600} size="sm" mb="sm">Batch Quality Status Breakdown</Text>
-            <DonutChart
-              data={[
-                { name: 'Waiting', value: n('qcPending'), color: 'orange.5' },
-                { name: 'In review', value: n('underQc'), color: 'blue.5' },
-                { name: 'On hold', value: n('hold'), color: 'yellow.5' },
-                { name: 'Rejected', value: n('rejected'), color: 'red.5' },
-                { name: 'Approved (total)', value: n('approved'), color: 'green.5' },
-              ]}
-              size={160}
-              thickness={30}
-              withLabels
-              withLabelsLine={false}
-            />
-          </Paper>
+          <OperationalInsightPanel
+            title="QC Planning Insights"
+            subtitle="Prioritize inspections by queue pressure, release risk, and unresolved quality decisions."
+            items={qcInsights}
+          />
 
           {/* ── Queue Tables ────────────────────────────────────────────────── */}
           <Divider label="Inspection Queue" labelPosition="left" />

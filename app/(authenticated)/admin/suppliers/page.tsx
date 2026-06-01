@@ -1,6 +1,6 @@
 'use client';
 
-import { Stack, Title, Text } from '@mantine/core';
+import { Group, Stack, Text, Title } from '@mantine/core';
 import { CollectionList } from '@/components/ui/collection-list';
 import { useRouter } from 'next/navigation';
 
@@ -8,11 +8,15 @@ export default function SuppliersPage() {
   const router = useRouter();
   return (
     <Stack gap="md">
-      <div>
-        <Title order={2}>Suppliers</Title>
-        <Text c="dimmed" size="sm">Manage supplier master data for raw material ordering.</Text>
-        <Text c="dimmed" size="xs" mt={4}>💡 Right-click column header to sort, align, or hide. Drag the ⋮⋮ grip to reorder columns. Drag edges to resize.</Text>
-      </div>
+      <Group justify="space-between" align="flex-end" gap="md">
+        <div>
+          <Title order={2}>Suppliers</Title>
+          <Text c="dimmed" size="sm">Manage supplier master data for raw material ordering.</Text>
+        </div>
+        <Text c="dimmed" size="xs" ta="right" maw={580} style={{ lineHeight: 1.45 }}>
+          💡 Right-click column header to sort, align, or hide. Drag the ⋮⋮ grip to reorder columns. Drag edges to resize.
+        </Text>
+      </Group>
       <CollectionList
         collection="suppliers"
         enableSearch

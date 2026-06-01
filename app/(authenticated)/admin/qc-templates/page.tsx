@@ -1,6 +1,6 @@
 'use client';
 
-import { Stack, Title, Text } from '@mantine/core';
+import { Group, Stack, Text, Title } from '@mantine/core';
 import { CollectionList } from '@/components/ui/collection-list';
 import { useRouter } from 'next/navigation';
 import { useNameLookup } from '@/lib/hooks/useNameLookup';
@@ -12,11 +12,15 @@ export default function QCTemplatesPage() {
 
   return (
     <Stack gap="md">
-      <div>
-        <Title order={2}>Quality Check Forms</Title>
-        <Text c="dimmed" size="sm">Manage inspection forms and acceptable limits for raw materials and finished products.</Text>
-        <Text c="dimmed" size="xs" mt={4}>💡 Right-click column header to sort, align, or hide. Drag the ⋮⋮ grip to reorder columns. Drag edges to resize.</Text>
-      </div>
+      <Group justify="space-between" align="flex-end" gap="md">
+        <div>
+          <Title order={2}>Quality Check Forms</Title>
+          <Text c="dimmed" size="sm">Manage inspection forms and acceptable limits for raw materials and finished products.</Text>
+        </div>
+        <Text c="dimmed" size="xs" ta="right" maw={580} style={{ lineHeight: 1.45 }}>
+          💡 Right-click column header to sort, align, or hide. Drag the ⋮⋮ grip to reorder columns. Drag edges to resize.
+        </Text>
+      </Group>
       <CollectionList
         collection="qc_templates"
         enableSearch

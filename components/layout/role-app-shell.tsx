@@ -75,15 +75,15 @@ export function RoleAppShell({
         navbar: {
           top: 0,
           height: '100dvh',
-          background: 'rgba(255, 255, 255, 0.92)',
-          borderRight: '1px solid rgba(218, 226, 214, 0.9)',
-          boxShadow: '12px 0 38px rgba(16, 24, 40, 0.035)',
+          background: 'linear-gradient(180deg, rgba(255,255,255,0.98) 0%, rgba(248,249,248,0.96) 100%)',
+          borderRight: '1px solid rgba(226, 229, 226, 0.95)',
+          boxShadow: '10px 0 34px rgba(15, 23, 42, 0.035)',
           backdropFilter: 'blur(16px)',
         },
         main: {
           minHeight: '100vh',
           background:
-            'radial-gradient(circle at 72% 0%, rgba(13,74,31,0.12) 0%, rgba(13,74,31,0.05) 28%, transparent 52%), radial-gradient(circle at 18% 18%, rgba(26,107,46,0.10) 0%, transparent 34%), linear-gradient(180deg, #f9fdf9 0%, #f0f6f0 48%, #eaf3ea 100%)',
+            'radial-gradient(circle at 78% 0%, rgba(255,255,255,0.92) 0%, rgba(247,248,247,0.72) 28%, transparent 52%), radial-gradient(circle at 14% 8%, rgba(243,244,245,0.9) 0%, rgba(247,248,247,0.5) 34%, transparent 58%), linear-gradient(180deg, #F3F4F5 0%, #F7F8F7 22%, #F7F8F7 100%)',
         },
       }}
     >

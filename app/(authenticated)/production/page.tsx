@@ -4,12 +4,12 @@ import {
   SimpleGrid, Paper, Text, Title, Group, Stack, ThemeIcon,
   Anchor, Divider, Badge, Alert, Table,
 } from '@mantine/core';
-import { DonutChart } from '@mantine/charts';
 import {
   IconPlayerPlay, IconClock, IconCheck, IconPackage,
   IconAlertTriangle, IconCircleCheck,
 } from '@tabler/icons-react';
 import { DashboardLoading } from '@/components/ui/dashboard-loading';
+import { OperationalInsightPanel } from '@/components/ui/operational-dashboard';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
@@ -37,7 +37,7 @@ export default function ProductionDashboard() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             counts: [
-              { key: 'ready', collection: 'production_orders', filter: { status: { _in: ['ready', 'released'] } } },
+              { key: 'ready', collection: 'production_orders', filter: { status: { _eq: 'released' } } },
               { key: 'inProgress', collection: 'production_orders', filter: { status: { _eq: 'in_progress' } } },
               { key: 'blocked', collection: 'production_orders', filter: { status: { _eq: 'waiting_issue' } } },
               { key: 'completed', collection: 'production_orders', filter: { status: { _eq: 'completed' } } },
@@ -47,7 +47,7 @@ export default function ProductionDashboard() {
           }),
         }).then(async r => r.ok ? (await r.json())?.counts ?? {} : {}).catch(() => ({})),
 
-        fetch('/api/items/production_orders?filter[status][_in]=ready,released&fields[]=id&fields[]=order_number&fields[]=status&fields[]=planned_qty&fields[]=unit&fields[]=due_date&limit=6&sort[]=due_date')
+        fetch('/api/items/production_orders?filter[status][_eq]=released&fields[]=id&fields[]=order_number&fields[]=status&fields[]=planned_qty&fields[]=unit&fields[]=due_date&limit=6&sort[]=due_date')
           .then(async r => r.ok ? (await r.json())?.data ?? [] : []).catch(() => []),
 
         fetch('/api/items/production_orders?filter[status][_eq]=in_progress&fields[]=id&fields[]=order_number&fields[]=status&fields[]=planned_qty&fields[]=unit&fields[]=due_date&limit=6&sort[]=due_date')
@@ -64,24 +64,71 @@ export default function ProductionDashboard() {
 
   const n = (k: string) => counts[k] ?? 0;
   const fgWaiting = n('fgWaitingQc') + n('fgApproved');
+  const productionInsights = [
+    n('inProgress') > 0
+      ? {
+          title: 'Active orders need progress and completion discipline',
+          description: `${n('inProgress')} production order${n('inProgress') === 1 ? ' is' : 's are'} running. Keep stage notes, actual consumption, and output records current.`,
+          tone: 'info' as const,
+          href: '/production/active',
+          action: 'Update work',
+        }
+      : {
+          title: 'No order is currently running',
+          description: 'Wait for warehouse handoff or review released orders that are available for production.',
+          tone: 'good' as const,
+          href: '/production/orders',
+          action: 'Monitor',
+        },
+    n('ready') > 0
+      ? {
+          title: 'Released orders are available to prepare',
+          description: `${n('ready')} released order${n('ready') === 1 ? ' is' : 's are'} available. Confirm materials are issued before recording execution.`,
+          tone: 'watch' as const,
+          href: '/production/orders',
+          action: 'Prepare',
+        }
+      : {
+          title: 'No released order is waiting on production',
+          description: 'There is no new production order ready for the production team right now.',
+          tone: 'good' as const,
+          href: '/production/orders',
+          action: 'Stable',
+        },
+    fgWaiting > 0
+      ? {
+          title: 'Finished goods still need downstream release',
+          description: `${fgWaiting} finished goods batch${fgWaiting === 1 ? ' is' : 'es are'} waiting for QC or storage. This affects when output becomes available.`,
+          tone: 'info' as const,
+          href: '/production/completed',
+          action: 'Track output',
+        }
+      : {
+          title: 'No finished goods handoff is waiting',
+          description: 'Completed output has no visible QC or storage wait from this dashboard.',
+          tone: 'good' as const,
+          href: '/production/completed',
+          action: 'All clear',
+        },
+  ];
 
   return (
     <Stack gap="lg">
       <div>
         <Title order={2}>Production Workbench</Title>
-        <Text c="dimmed" size="sm">Start production orders, record materials used, and confirm finished output.</Text>
+        <Text c="dimmed" size="sm">Work production orders, keep execution records current, and confirm finished output.</Text>
       </div>
 
-      {loading ? <DashboardLoading cards={4} graphPanels={1} queuePanels={2} /> : (
+      {loading ? <DashboardLoading cards={4} graphPanels={0} queuePanels={2} /> : (
         <>
           {/* ── Priority Cards ─────────────────────────────────────────────── */}
           <SimpleGrid cols={{ base: 2, sm: 4 }} spacing="md">
             <Paper p="md" radius="md" withBorder style={{ cursor: 'pointer', borderColor: n('ready') > 0 ? 'var(--mantine-color-green-4)' : undefined }} onClick={() => router.push('/production/orders')}>
               <Group justify="space-between" wrap="nowrap">
                 <Stack gap={2}>
-                  <Text size="xs" c="dimmed" fw={600} tt="uppercase">Ready to Start</Text>
+                  <Text size="xs" c="dimmed" fw={600} tt="uppercase">Released to Production</Text>
                   <Title order={2} c={n('ready') > 0 ? 'green' : undefined}>{n('ready')}</Title>
-                  <Text size="xs" c="dimmed">Orders cleared to begin</Text>
+                  <Text size="xs" c="dimmed">Orders available after planning release</Text>
                 </Stack>
                 <ThemeIcon size="xl" radius="md" variant={n('ready') > 0 ? 'filled' : 'light'} color="green"><IconPlayerPlay size={22} /></ThemeIcon>
               </Group>
@@ -121,34 +168,23 @@ export default function ProductionDashboard() {
             </Paper>
           </SimpleGrid>
 
-          {/* ── Status Breakdown ────────────────────────────────────────────── */}
-          <Paper p="md" radius="md" withBorder>
-            <Text fw={600} size="sm" mb="sm">Production Order Status</Text>
-            <DonutChart
-              data={[
-                { name: 'Blocked', value: n('blocked'), color: 'red.5' },
-                { name: 'Ready to start', value: n('ready'), color: 'lime.5' },
-                { name: 'Running', value: n('inProgress'), color: 'blue.5' },
-                { name: 'Completed', value: n('completed'), color: 'green.5' },
-              ]}
-              size={160}
-              thickness={30}
-              withLabels
-              withLabelsLine={false}
-            />
-          </Paper>
+          <OperationalInsightPanel
+            title="Production Planning Insights"
+            subtitle="Keep execution, material handoff, and finished output aligned."
+            items={productionInsights}
+          />
 
           {/* ── Work Queues ─────────────────────────────────────────────────── */}
           <Divider label="Work Queue" labelPosition="left" />
           <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
             <Paper p="md" radius="md" withBorder>
               <Group justify="space-between" mb="sm">
-                <Text fw={600} size="sm">Ready to Start</Text>
+                <Text fw={600} size="sm">Released to Production</Text>
                 <Anchor href="/production/orders" size="xs">View all →</Anchor>
               </Group>
               {readyOrders.length === 0 ? (
                 <Alert color="blue" variant="light" icon={<IconCircleCheck size={14} />}>
-                  No orders are ready to start right now.
+                  No released orders are waiting on production right now.
                 </Alert>
               ) : (
                 <Table withTableBorder>

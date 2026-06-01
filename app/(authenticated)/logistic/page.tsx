@@ -4,12 +4,12 @@ import {
   SimpleGrid, Paper, Text, Title, Group, Stack, ThemeIcon,
   Anchor, Divider, Badge, Alert, Table,
 } from '@mantine/core';
-import { BarChart } from '@mantine/charts';
 import {
   IconClipboardList, IconTransferOut, IconClock, IconPackage,
-  IconAlertTriangle, IconCircleCheck, IconChevronRight,
+  IconCircleCheck,
 } from '@tabler/icons-react';
 import { DashboardLoading } from '@/components/ui/dashboard-loading';
+import { OperationalInsightPanel } from '@/components/ui/operational-dashboard';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
@@ -56,6 +56,53 @@ export default function LogisticDashboard() {
 
   const n = (k: string) => counts[k] ?? 0;
   const inProgress = n('partialIssued') + n('issued');
+  const logisticInsights = [
+    n('submitted') > 0
+      ? {
+          title: 'Requests waiting review are the first coordination task',
+          description: `${n('submitted')} material request${n('submitted') === 1 ? ' needs' : 's need'} logistics review before warehouse can prepare the handoff.`,
+          tone: 'watch' as const,
+          href: '/logistic/requests',
+          action: 'Review',
+        }
+      : {
+          title: 'No material request is waiting for review',
+          description: 'The coordination queue is clear. Watch approved requests for warehouse execution delays.',
+          tone: 'good' as const,
+          href: '/logistic/requests',
+          action: 'Monitor',
+        },
+    n('approved') > 0
+      ? {
+          title: 'Approved requests still need warehouse execution',
+          description: `${n('approved')} approved request${n('approved') === 1 ? ' is' : 's are'} ready for warehouse picking and issue. Follow the nearest needed date first.`,
+          tone: 'info' as const,
+          href: '/logistic/requests',
+          action: 'Coordinate',
+        }
+      : {
+          title: 'No approved request is waiting to be sent',
+          description: 'There is no open handoff waiting on warehouse picking right now.',
+          tone: 'good' as const,
+          href: '/logistic/requests',
+          action: 'Stable',
+        },
+    n('fgApproved') > 0
+      ? {
+          title: 'Finished goods are ready for putaway coordination',
+          description: `${n('fgApproved')} finished goods batch${n('fgApproved') === 1 ? ' has' : 'es have'} cleared QC and should be moved into finished goods storage.`,
+          tone: 'info' as const,
+          href: '/logistic/fg-putaway',
+          action: 'Plan FG',
+        }
+      : {
+          title: 'No QC-cleared finished goods are waiting for putaway',
+          description: 'Production output has no finished goods storage handoff pending at the moment.',
+          tone: 'good' as const,
+          href: '/logistic/fg-putaway',
+          action: 'All clear',
+        },
+  ];
 
   return (
     <Stack gap="lg">
@@ -64,7 +111,7 @@ export default function LogisticDashboard() {
         <Text c="dimmed" size="sm">Review material requests, coordinate sending materials to production, and handle finished goods storage.</Text>
       </div>
 
-      {loading ? <DashboardLoading cards={4} graphPanels={1} queuePanels={2} /> : (
+      {loading ? <DashboardLoading cards={4} graphPanels={0} queuePanels={2} /> : (
         <>
           {/* ── Priority Cards ─────────────────────────────────────────────── */}
           <SimpleGrid cols={{ base: 2, sm: 4 }} spacing="md">
@@ -113,22 +160,11 @@ export default function LogisticDashboard() {
             </Paper>
           </SimpleGrid>
 
-          {/* ── Request Pipeline ─────────────────────────────────────────────── */}
-          <Paper p="md" radius="md" withBorder>
-            <Text fw={600} size="sm" mb="sm">Material Request Pipeline</Text>
-            <BarChart
-              h={180}
-              data={[
-                { stage: 'Submitted', count: n('submitted') },
-                { stage: 'Approved', count: n('approved') },
-                { stage: 'Being Sent', count: n('partialIssued') },
-                { stage: 'Completed', count: n('issued') },
-              ]}
-              dataKey="stage"
-              series={[{ name: 'count', label: 'Count', color: 'orange.6' }]}
-              withLegend={false}
-            />
-          </Paper>
+          <OperationalInsightPanel
+            title="Logistics Planning Insights"
+            subtitle="Coordinate ownership, handoff timing, and the next role responsible for movement."
+            items={logisticInsights}
+          />
 
           {/* ── Request Queues ───────────────────────────────────────────────── */}
           <Divider label="Action Queues" labelPosition="left" />

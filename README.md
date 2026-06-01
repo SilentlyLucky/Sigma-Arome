@@ -55,10 +55,10 @@ Screenshots are stored in the `./screenshots/` folder.
 
 ### Core / Shared
 
-#### Landing Page
-![Landing Page](./screenshots/landing-page.png)
-
 #### Login / Sign Up Page
+![Login Page](./screenshots/login-page.png)
+
+#### Setting Page
 ![Login Page](./screenshots/login-page.png)
 
 ### Admin Module
@@ -289,13 +289,13 @@ For judges and first-time users:
 
 | Role | Email | Password |
 | --- | --- | --- |
-| Admin | TBD | TBD |
-| Warehouse | TBD | TBD |
-| QC | TBD | TBD |
-| PPIC | TBD | TBD |
-| Production | TBD | TBD |
-| Logistic | TBD | TBD |
-| Manager | TBD | TBD |
+| Admin | admin@example.com | admin@example.com |
+| Warehouse | wo@example.com | wo@example.com |
+| QC | wo@example.com | wo@example.com |
+| PPIC | PPIC@example.cpm | admin@example.com |
+| Production | production@example.com | production@example.com |
+| Logistic | logistic@example.com | logistic@example.com |
+| Manager | manager@example.com |manager@example.comTBD |
 
 ---
 
@@ -308,7 +308,7 @@ Sigma-Arome/
 │   │   ├── admin/          # Master data, RBAC, audit log, warehouse location
 │   │   ├── warehouse/      # Receiving, putaway, auto slotting, floor plan
 │   │   ├── qc/             # Inspection queue and decisions
-│   │   ├── ppic/           # Orders, BOM, production planning, requests
+│   │   ├── ppic/           # Orders material, BOM, production planning, material requests
 │   │   ├── production/     # Production execution
 │   │   ├── logistic/       # Movement coordination
 │   │   └── manager/        # Dashboards and traceability
@@ -343,6 +343,8 @@ This project demonstrates how a production-grade operations platform can be buil
 - Building an explainable slotting engine that balances safety rules, capacity, occupancy, and operational practicality.
 - Coordinating data flow between PPIC, Warehouse, QC, Production, Logistic, and Manager modules.
 - Maintaining traceability from raw material receiving through finished goods creation.
+- Not knowing the real manufactur flow.
+- Don't have the dataset to build computer vision model that matches with Sima Arome product.
 
 ---
 

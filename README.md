@@ -290,7 +290,7 @@ For judges and first-time users:
 | Admin | admin@example.com | admin@example.com |
 | Warehouse | wo@example.com | wo@example.com |
 | QC | qc@example.com | qc@example.com |
-| PPIC | ppic@example.com | admin@example.com |
+| PPIC | PPIC@example.com | PPIC@example.com |
 | Production | production@example.com | production@example.com |
 | Logistic | logistic@example.com | logistic@example.com |
 | Manager | manager@example.com | manager@example.com |
